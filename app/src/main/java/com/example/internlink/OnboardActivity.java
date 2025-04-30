@@ -69,7 +69,7 @@ public class OnboardActivity extends AppCompatActivity {
             if (viewPager.getCurrentItem() + 1 < onboardingItems.size()) {
                 viewPager.setCurrentItem(viewPager.getCurrentItem() + 1);
             } else {
-                startActivity(new Intent(this, MainActivity.class));
+                startActivity(new Intent(this, RoleActivity.class));
                 finish();
             }
         });

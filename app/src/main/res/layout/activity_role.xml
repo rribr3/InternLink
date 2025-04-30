@@ -10,110 +10,112 @@
 
     <androidx.cardview.widget.CardView
         android:id="@+id/professionCard"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginBottom="90dp"
+        app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@android:color/white"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp">
+
             <TextView
                 android:id="@+id/titleText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="Choose Your Role"
+                android:textColor="#1D1D1F"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#1D1D1F"
-                android:gravity="center"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/subtitleText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Select your role to get started with building your career!"
-                android:textSize="14sp"
-                android:textColor="#444"
-                android:gravity="center"
                 android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/titleText"
+                android:gravity="center"
+                android:text="Select your role to get started with building your career!"
+                android:textColor="#444"
+                android:textSize="14sp"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/titleText" />
 
             <LinearLayout
                 android:id="@+id/card1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_orange"
-                android:padding="16dp"
                 android:layout_margin="8dp"
+                android:background="@drawable/bg_card_orange"
                 android:elevation="4dp"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <ImageView
                     android:layout_width="100dp"
                     android:layout_height="100dp"
-                    android:src="@drawable/logo"
-                    android:contentDescription="Entrepreneur"/>
+                    android:contentDescription="Student"
+                    android:src="@drawable/student" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Entrepreneur"
-                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"
+                    android:text="Student"
                     android:textSize="16sp"
-                    android:layout_marginTop="8dp"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Start Now"
-                    android:textSize="12sp"
-                    android:textColor="#555"/>
+                    android:textColor="#555"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/card2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_blue"
-                android:padding="16dp"
                 android:layout_margin="8dp"
+                android:background="@drawable/bg_card_orange"
                 android:elevation="4dp"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <ImageView
                     android:layout_width="100dp"
                     android:layout_height="100dp"
-                    android:src="@drawable/logo"
-                    android:contentDescription="Businessman"/>
+                    android:contentDescription="Company"
+                    android:src="@drawable/company" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Business Man"
-                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"
+                    android:text="Company"
                     android:textSize="16sp"
-                    android:layout_marginTop="8dp"/>
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Start Now"
-                    android:textSize="12sp"
-                    android:textColor="#555"/>
+                    android:textColor="#555"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <!-- Flow to manage card layout -->
@@ -122,12 +124,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:constraint_referenced_ids="card1,card2"
-                app:flow_wrapMode="chain"
                 app:flow_horizontalGap="8dp"
                 app:flow_verticalGap="8dp"
-                app:layout_constraintTop_toBottomOf="@id/subtitleText"
+                app:flow_wrapMode="chain"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/subtitleText" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
