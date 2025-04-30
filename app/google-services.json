@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1028110501477",
+    "firebase_url": "https://internlink-defe9-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "internlink-defe9",
+    "storage_bucket": "internlink-defe9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1028110501477:android:974ddb047cc8425c35a88c",
+        "android_client_info": {
+          "package_name": "com.example.internlink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6x9hc39EdmPwuE1c6NXqQQ2FEpc1-oeQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
