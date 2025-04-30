@@ -3,7 +3,7 @@ package com.example.internlink;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.LinearLayout;
-
+import com.google.firebase.FirebaseApp;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -23,17 +23,23 @@ public class RoleActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        FirebaseApp.initializeApp(this);
+
         card1 = findViewById(R.id.card1);
         card2 = findViewById(R.id.card2);
 
         card1.setOnClickListener(v -> {
             Intent intent = new Intent(RoleActivity.this, LoginActivity.class);
+            intent.putExtra("role", "student");
             startActivity(intent);
         });
+
         card2.setOnClickListener(v -> {
             Intent intent = new Intent(RoleActivity.this, LoginActivity.class);
+            intent.putExtra("role", "company");
             startActivity(intent);
         });
+
 
     }
 }

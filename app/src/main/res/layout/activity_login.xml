@@ -7,6 +7,18 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:drawableEnd="@drawable/left_arrow"
+        android:padding="0dp"
+        android:layout_marginEnd="190sp"
+        android:layout_marginTop="-50sp"
+        android:focusable="true" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
