@@ -67,6 +67,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/dashboard_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -99,6 +100,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/User_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -131,6 +133,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/Project_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -163,6 +166,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/Report_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -195,6 +199,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/Feedback_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -227,6 +232,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/Notification_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
@@ -258,6 +264,7 @@
             app:cardElevation="6dp">
 
             <LinearLayout
+                android:id="@+id/Setting_card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"

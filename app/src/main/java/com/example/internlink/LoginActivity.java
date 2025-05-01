@@ -17,11 +17,18 @@ import android.widget.Toast;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import javax.annotation.Nullable;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -134,6 +141,28 @@ public class LoginActivity extends AppCompatActivity {
                         loginConfirm.setEnabled(true);
 
                         if (task.isSuccessful()) {
+                            String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("user_activity").child(today).child("count");
+
+                            ref.runTransaction(new Transaction.Handler() {
+                                @NonNull
+                                @Override
+                                public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                                    Long currentCount = currentData.getValue(Long.class);
+                                    if (currentCount == null) {
+                                        currentData.setValue(1);
+                                    } else {
+                                        currentData.setValue(currentCount + 1);
+                                    }
+                                    return Transaction.success(currentData);
+                                }
+
+                                @Override
+                                public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                                    // Optional: Log or toast on success
+                                }
+                            });
+
                             String userId = auth.getCurrentUser().getUid();
                             DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
