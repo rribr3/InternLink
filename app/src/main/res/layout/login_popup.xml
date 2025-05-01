@@ -36,17 +36,37 @@
         android:padding="12dp"
         android:textColor="@color/black" />
 
-    <EditText
-        android:id="@+id/password_login"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/edittext_bg"
-        android:drawableStart="@android:drawable/ic_lock_idle_lock"
         android:fontFamily="sans-serif-black"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:padding="12dp" />
+        android:layout_marginBottom="12dp">
+
+        <EditText
+            android:id="@+id/password_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:drawableStart="@android:drawable/ic_lock_idle_lock"
+            android:padding="12dp"
+            android:background="@drawable/edittext_bg"
+            android:fontFamily="sans-serif-black"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:paddingEnd="48dp"/>
+
+        <ImageView
+            android:id="@+id/toggle_password_login"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignEnd="@+id/password_login"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_eye_closed"
+            android:contentDescription="Toggle Password Visibility"/>
+    </RelativeLayout>
+
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/login_confirm_button"

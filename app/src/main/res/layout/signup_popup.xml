@@ -5,6 +5,7 @@
     android:background="@color/white">
 
     <LinearLayout
+        android:id="@+id/signup_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -63,31 +64,65 @@
             android:fontFamily="sans-serif-black"
             />
 
-        <EditText
-            android:id="@+id/password_signup"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
-            android:inputType="textPassword"
-            android:drawableStart="@android:drawable/ic_lock_idle_lock"
-            android:padding="12dp"
-            android:background="@drawable/edittext_bg"
-            android:layout_marginBottom="12dp"
             android:fontFamily="sans-serif-black"
-            />
+            android:layout_marginBottom="12dp">
 
-        <EditText
-            android:id="@+id/confirm_password_signup"
+            <EditText
+                android:id="@+id/password_signup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:drawableStart="@android:drawable/ic_lock_idle_lock"
+                android:padding="12dp"
+                android:background="@drawable/edittext_bg"
+                android:fontFamily="sans-serif-black"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:paddingEnd="48dp"/>
+
+            <ImageView
+                android:id="@+id/toggle_password_signup1"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignEnd="@+id/password_signup"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_eye_closed"
+                android:contentDescription="Toggle Password Visibility"/>
+        </RelativeLayout>
+
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Confirm Password"
-            android:inputType="textPassword"
-            android:drawableStart="@android:drawable/ic_lock_idle_lock"
-            android:padding="12dp"
-            android:background="@drawable/edittext_bg"
-            android:layout_marginBottom="16dp"
             android:fontFamily="sans-serif-black"
-            />
+            android:layout_marginBottom="12dp">
+
+            <EditText
+                android:id="@+id/confirm_password_signup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Confirm Password"
+                android:inputType="textPassword"
+                android:drawableStart="@android:drawable/ic_lock_idle_lock"
+                android:padding="12dp"
+                android:background="@drawable/edittext_bg"
+                android:fontFamily="sans-serif-black"/>
+
+            <ImageView
+                android:id="@+id/toggle_password_signup2"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignEnd="@+id/confirm_password_signup"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_eye_closed"
+                android:contentDescription="Toggle Password Visibility"/>
+        </RelativeLayout>
+
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/signup_confirm_button"

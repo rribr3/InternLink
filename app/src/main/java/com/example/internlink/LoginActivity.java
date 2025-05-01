@@ -3,9 +3,14 @@ package com.example.internlink;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -66,50 +71,69 @@ public class LoginActivity extends AppCompatActivity {
                 getResources().getDisplayMetrics().heightPixels / 2
         );
 
+        ImageView togglePassword = loginDialog.findViewById(R.id.toggle_password_login);
+        EditText passwordEditTextlog = loginDialog.findViewById(R.id.password_login);
+
+        togglePassword.setOnClickListener(v -> {
+            if (passwordEditTextlog.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                passwordEditTextlog.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                togglePassword.setImageResource(R.drawable.ic_eye_open);
+            } else {
+                passwordEditTextlog.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                togglePassword.setImageResource(R.drawable.ic_eye_closed);
+            }
+            passwordEditTextlog.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            passwordEditTextlog.setSelection(passwordEditTextlog.getText().length()); // Move cursor to end
+        });
+
+
         EditText emailEditText = loginDialog.findViewById(R.id.email_login);
-        EditText passwordEditText = loginDialog.findViewById(R.id.password_login);
         Button loginConfirm = loginDialog.findViewById(R.id.login_confirm_button);
 
         loginConfirm.setOnClickListener(v -> {
             String email = emailEditText.getText().toString().trim();
-            String password = passwordEditText.getText().toString().trim();
+            String password = passwordEditTextlog.getText().toString().trim();
 
-            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+            FirebaseAuth auth = FirebaseAuth.getInstance();
 
-            usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    boolean found = false;
-                    for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                        String dbEmail = userSnapshot.child("email").getValue(String.class);
-                        String dbPassword = userSnapshot.child("password").getValue(String.class);
-                        String role = userSnapshot.child("role").getValue(String.class);
+            auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            String userId = auth.getCurrentUser().getUid();
+                            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
-                        if (email.equals(dbEmail) && password.equals(dbPassword)) {
-                            found = true;
-                            if ("admin@internlink.com".equals(dbEmail)) {
-                                startActivity(new Intent(LoginActivity.this, AdminActivity.class));
-                            } else if ("student".equals(role)) {
-                                startActivity(new Intent(LoginActivity.this, StudentActivity.class));
-                            } else if ("company".equals(role)) {
-                                startActivity(new Intent(LoginActivity.this, CompanyActivity.class));
-                            } else {
-                                Toast.makeText(LoginActivity.this, "Unknown role", Toast.LENGTH_SHORT).show();
-                            }
-                            break;
+                            usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(DataSnapshot snapshot) {
+                                    if (snapshot.exists()) {
+                                        String userRole = snapshot.child("role").getValue(String.class);
+                                        String dbEmail = snapshot.child("email").getValue(String.class);
+
+                                        if ("admin@internlink.com".equals(dbEmail)) {
+                                            startActivity(new Intent(LoginActivity.this, AdminActivity.class));
+                                        } else if ("student".equals(userRole)) {
+                                            startActivity(new Intent(LoginActivity.this, StudentActivity.class));
+                                        } else if ("company".equals(userRole)) {
+                                            startActivity(new Intent(LoginActivity.this, CompanyActivity.class));
+                                        } else {
+                                            Toast.makeText(LoginActivity.this, "Unknown role", Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(LoginActivity.this, "User data not found", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(DatabaseError error) {
+                                    Toast.makeText(LoginActivity.this, "Database error", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                         }
-                    }
+                    });
 
-                    if (!found) {
-                        Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    Toast.makeText(LoginActivity.this, "Database error", Toast.LENGTH_SHORT).show();
-                }
-            });
         });
 
 
@@ -120,17 +144,56 @@ public class LoginActivity extends AppCompatActivity {
     private void showSignupPopup() {
         Dialog signupDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         signupDialog.setContentView(R.layout.signup_popup);
+        signupDialog.getWindow().getAttributes().windowAnimations = R.style.DialogSlideUpAnimation;
 
         EditText nameEditText = signupDialog.findViewById(R.id.full_name_signup);
         EditText emailEditText = signupDialog.findViewById(R.id.email_signup);
         EditText passwordEditText = signupDialog.findViewById(R.id.password_signup);
+        EditText confirmPasswordEditText = signupDialog.findViewById(R.id.confirm_password_signup);
         Button signupConfirm = signupDialog.findViewById(R.id.signup_confirm_button);
         Button lowerButton = signupDialog.findViewById(R.id.lowerButton);
+        ImageView toggleSignupPassword1 = signupDialog.findViewById(R.id.toggle_password_signup1);
+        ImageView toggleSignupPassword2 = signupDialog.findViewById(R.id.toggle_password_signup2);
+
+        toggleSignupPassword1.setOnClickListener(v -> {
+            if (passwordEditText.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleSignupPassword1.setImageResource(R.drawable.ic_eye_open);
+            } else {
+                passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleSignupPassword1.setImageResource(R.drawable.ic_eye_closed);
+            }
+            passwordEditText.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL));
+            passwordEditText.setSelection(passwordEditText.getText().length());
+        });
+
+        toggleSignupPassword2.setOnClickListener(v -> {
+            if (confirmPasswordEditText.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                confirmPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                toggleSignupPassword2.setImageResource(R.drawable.ic_eye_open);
+            } else {
+                confirmPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                toggleSignupPassword2.setImageResource(R.drawable.ic_eye_closed);
+            }
+            confirmPasswordEditText.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL));
+            confirmPasswordEditText.setSelection(confirmPasswordEditText.getText().length());
+        });
 
         signupConfirm.setOnClickListener(v -> {
             String name = nameEditText.getText().toString().trim();
             String email = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
+            String confirmPassword = confirmPasswordEditText.getText().toString().trim();
+
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             FirebaseAuth auth = FirebaseAuth.getInstance();
             DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
@@ -148,14 +211,34 @@ public class LoginActivity extends AppCompatActivity {
                                     .addOnCompleteListener(task1 -> {
                                         if (task1.isSuccessful()) {
                                             Toast.makeText(this, "Signup successful", Toast.LENGTH_SHORT).show();
-                                            signupDialog.dismiss();
+                                            View dialogView = signupDialog.findViewById(R.id.signup_root); // The root layout in signup_popup.xml
+                                            Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
+
+                                            slideDown.setAnimationListener(new Animation.AnimationListener() {
+                                                @Override
+                                                public void onAnimationStart(Animation animation) {}
+
+                                                @Override
+                                                public void onAnimationEnd(Animation animation) {
+                                                    signupDialog.dismiss();
+                                                }
+
+                                                @Override
+                                                public void onAnimationRepeat(Animation animation) {}
+                                            });
+
+                                            dialogView.startAnimation(slideDown);
+
                                         } else {
                                             Toast.makeText(this, "Failed to save user data", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                         } else {
-                            Toast.makeText(this, "Signup failed", Toast.LENGTH_SHORT).show();
+                            Exception e = task.getException();
+                            Toast.makeText(this, "Signup failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            e.printStackTrace(); // Logs to Logcat
                         }
+
                     });
         });
 

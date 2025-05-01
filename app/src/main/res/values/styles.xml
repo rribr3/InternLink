@@ -8,4 +8,10 @@
         <item name="android:layout_height">match_parent</item>
     </style>
 
+    <style name="DialogSlideUpAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_up</item>
+        <item name="android:windowExitAnimation">@anim/slide_down</item>
+    </style>
+
+
 </resources>
