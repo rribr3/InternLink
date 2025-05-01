@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/white">
+    android:layout_height="match_parent">
+
 
     <LinearLayout
         android:id="@+id/signup_root"
@@ -13,15 +12,15 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/lowerButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="28dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="10dp"
             android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:drawableEnd="@drawable/down"
-            android:padding="0dp"
-            android:layout_marginEnd="320sp"
-            android:layout_marginTop="-10sp"
-            android:focusable="true" />
+            android:focusable="true"
+            android:text=" " />
 
         <TextView
             android:layout_width="match_parent"
@@ -42,47 +41,45 @@
             android:id="@+id/full_name_signup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_bg"
+            android:drawableStart="@android:drawable/ic_menu_myplaces"
+            android:fontFamily="sans-serif-black"
             android:hint="Full Name"
             android:inputType="textPersonName"
-            android:drawableStart="@android:drawable/ic_menu_myplaces"
-            android:padding="12dp"
-            android:background="@drawable/edittext_bg"
-            android:layout_marginBottom="12dp"
-            android:fontFamily="sans-serif-black"
-            />
+            android:padding="12dp" />
 
         <EditText
             android:id="@+id/email_signup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/edittext_bg"
+            android:drawableStart="@android:drawable/ic_dialog_email"
+            android:fontFamily="sans-serif-black"
             android:hint="Email"
             android:inputType="textEmailAddress"
-            android:drawableStart="@android:drawable/ic_dialog_email"
-            android:padding="12dp"
-            android:background="@drawable/edittext_bg"
-            android:layout_marginBottom="12dp"
-            android:fontFamily="sans-serif-black"
-            />
+            android:padding="12dp" />
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:fontFamily="sans-serif-black">
 
             <EditText
                 android:id="@+id/password_signup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:drawableStart="@android:drawable/ic_lock_idle_lock"
-                android:padding="12dp"
-                android:background="@drawable/edittext_bg"
-                android:fontFamily="sans-serif-black"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:paddingEnd="48dp"/>
+                android:background="@drawable/edittext_bg"
+                android:drawableStart="@android:drawable/ic_lock_idle_lock"
+                android:fontFamily="sans-serif-black"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:padding="12dp"
+                android:paddingEnd="48dp" />
 
             <ImageView
                 android:id="@+id/toggle_password_signup1"
@@ -91,26 +88,26 @@
                 android:layout_alignEnd="@+id/password_signup"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_eye_closed"
-                android:contentDescription="Toggle Password Visibility"/>
+                android:contentDescription="Toggle Password Visibility"
+                android:src="@drawable/ic_eye_closed" />
         </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="12dp"
+            android:fontFamily="sans-serif-black">
 
             <EditText
                 android:id="@+id/confirm_password_signup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/edittext_bg"
+                android:drawableStart="@android:drawable/ic_lock_idle_lock"
+                android:fontFamily="sans-serif-black"
                 android:hint="Confirm Password"
                 android:inputType="textPassword"
-                android:drawableStart="@android:drawable/ic_lock_idle_lock"
-                android:padding="12dp"
-                android:background="@drawable/edittext_bg"
-                android:fontFamily="sans-serif-black"/>
+                android:padding="12dp" />
 
             <ImageView
                 android:id="@+id/toggle_password_signup2"
@@ -119,15 +116,14 @@
                 android:layout_alignEnd="@+id/confirm_password_signup"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="12dp"
-                android:src="@drawable/ic_eye_closed"
-                android:contentDescription="Toggle Password Visibility"/>
+                android:contentDescription="Toggle Password Visibility"
+                android:src="@drawable/ic_eye_closed" />
         </RelativeLayout>
-
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/signup_confirm_button"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="30dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/rounded_button_blue"
@@ -137,5 +133,16 @@
             android:textColor="#0969E6"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+
     </LinearLayout>
-</ScrollView>
+
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:layout_gravity="bottom"
+        android:contentDescription="Blue Wave"
+        android:scaleType="fitXY"
+        android:src="@drawable/wave_background" />
+</FrameLayout>

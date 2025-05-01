@@ -67,6 +67,22 @@
             android:contentDescription="Toggle Password Visibility"/>
     </RelativeLayout>
 
+    <TextView
+        android:id="@+id/forgot_password_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Forgot Your Password?"
+        android:textColor="#0B206A"
+        android:textStyle="bold"
+        android:layout_gravity="end"
+        android:layout_marginBottom="16dp"
+        android:paddingEnd="4dp"
+        android:textSize="14sp"
+        android:clickable="true"
+        android:focusable="true"/>
+
+
+
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/login_confirm_button"

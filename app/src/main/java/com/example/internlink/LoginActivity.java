@@ -1,6 +1,7 @@
 package com.example.internlink;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -11,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -56,9 +58,8 @@ public class LoginActivity extends AppCompatActivity {
         backButton.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RoleActivity.class);
             startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right); // RoleActivity slides in from left
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         });
-
 
         gestureDetector = new GestureDetector(this, new SwipeGestureListener());
     }
@@ -66,6 +67,28 @@ public class LoginActivity extends AppCompatActivity {
     private void showLoginPopup() {
         BottomSheetDialog loginDialog = new BottomSheetDialog(this);
         loginDialog.setContentView(R.layout.login_popup);
+        TextView forgotPasswordText = loginDialog.findViewById(R.id.forgot_password_text);
+
+        forgotPasswordText.setOnClickListener(v -> {
+            EditText emailEditText = loginDialog.findViewById(R.id.email_login);
+            String email = emailEditText.getText().toString().trim();
+
+            if (email.isEmpty()) {
+                Toast.makeText(LoginActivity.this, "Please enter your email first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginActivity.this, "Password reset email sent", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Failed to send reset email", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
+
 
         loginDialog.getBehavior().setPeekHeight(
                 getResources().getDisplayMetrics().heightPixels / 2
@@ -82,10 +105,8 @@ public class LoginActivity extends AppCompatActivity {
                 passwordEditTextlog.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 togglePassword.setImageResource(R.drawable.ic_eye_closed);
             }
-            passwordEditTextlog.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-            passwordEditTextlog.setSelection(passwordEditTextlog.getText().length()); // Move cursor to end
+            passwordEditTextlog.setSelection(passwordEditTextlog.getText().length());
         });
-
 
         EditText emailEditText = loginDialog.findViewById(R.id.email_login);
         Button loginConfirm = loginDialog.findViewById(R.id.login_confirm_button);
@@ -94,10 +115,24 @@ public class LoginActivity extends AppCompatActivity {
             String email = emailEditText.getText().toString().trim();
             String password = passwordEditTextlog.getText().toString().trim();
 
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please enter both email and password", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            loginConfirm.setEnabled(false);
+            ProgressDialog progressDialog = new ProgressDialog(this);
+            progressDialog.setMessage("Logging in...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+
             FirebaseAuth auth = FirebaseAuth.getInstance();
 
             auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
+                        progressDialog.dismiss();
+                        loginConfirm.setEnabled(true);
+
                         if (task.isSuccessful()) {
                             String userId = auth.getCurrentUser().getUid();
                             DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
@@ -109,7 +144,7 @@ public class LoginActivity extends AppCompatActivity {
                                         String userRole = snapshot.child("role").getValue(String.class);
                                         String dbEmail = snapshot.child("email").getValue(String.class);
 
-                                        if ("admin@internlink.com".equals(dbEmail)) {
+                                        if ("serrenava543@gmail.com".equals(dbEmail)) {
                                             startActivity(new Intent(LoginActivity.this, AdminActivity.class));
                                         } else if ("student".equals(userRole)) {
                                             startActivity(new Intent(LoginActivity.this, StudentActivity.class));
@@ -133,10 +168,7 @@ public class LoginActivity extends AppCompatActivity {
                             Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                         }
                     });
-
         });
-
-
 
         loginDialog.show();
     }
@@ -202,16 +234,13 @@ public class LoginActivity extends AppCompatActivity {
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             String userId = auth.getCurrentUser().getUid();
+                            User user = new User(name, email, role);
 
-                            // Create a new User object with the necessary data
-                            User user = new User(name, email, role); // Assuming 'User' is your model class
-
-                            // Save the user details in Realtime Database
                             usersRef.child(userId).setValue(user)
                                     .addOnCompleteListener(task1 -> {
                                         if (task1.isSuccessful()) {
                                             Toast.makeText(this, "Signup successful", Toast.LENGTH_SHORT).show();
-                                            View dialogView = signupDialog.findViewById(R.id.signup_root); // The root layout in signup_popup.xml
+                                            View dialogView = signupDialog.findViewById(R.id.signup_root);
                                             Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
 
                                             slideDown.setAnimationListener(new Animation.AnimationListener() {
@@ -236,9 +265,8 @@ public class LoginActivity extends AppCompatActivity {
                         } else {
                             Exception e = task.getException();
                             Toast.makeText(this, "Signup failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            e.printStackTrace(); // Logs to Logcat
+                            e.printStackTrace();
                         }
-
                     });
         });
 
@@ -246,8 +274,6 @@ public class LoginActivity extends AppCompatActivity {
 
         signupDialog.show();
     }
-
-
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -263,10 +289,10 @@ public class LoginActivity extends AppCompatActivity {
             float diffX = e2.getX() - e1.getX();
             float diffY = e2.getY() - e1.getY();
 
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD &&
+            if (Math.abs(diffX) > Math.abs(diffY) &&
+                    Math.abs(diffX) > SWIPE_THRESHOLD &&
                     Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
                 if (diffX > 0) {
-                    // Swipe right
                     Intent intent = new Intent(LoginActivity.this, RoleActivity.class);
                     startActivity(intent);
                     overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
@@ -276,5 +302,4 @@ public class LoginActivity extends AppCompatActivity {
             return false;
         }
     }
-
 }
