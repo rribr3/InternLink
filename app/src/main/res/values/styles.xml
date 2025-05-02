@@ -3,15 +3,28 @@
     <style name="FullScreenBottomSheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/FullScreenBottomSheetStyle</item>
     </style>
-
     <style name="FullScreenBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:layout_height">match_parent</item>
     </style>
-
     <style name="DialogSlideUpAnimation">
         <item name="android:windowEnterAnimation">@anim/slide_up</item>
         <item name="android:windowExitAnimation">@anim/slide_down</item>
     </style>
-
-
+    <style name="ActionButtonStyle">
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+    </style>
+    <style name="FilterChip" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipCornerRadius">8dp</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/chip_text_selector</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="chipEndPadding">8dp</item>
+        <item name="closeIconSize">16dp</item>
+        <item name="closeIconTint">@color/chip_close_icon</item>
+    </style>
 </resources>

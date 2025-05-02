@@ -1,10 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AdminNotification">
+    android:fillViewport="true"
+    android:background="@drawable/teal_gradient_bg"
+    android:padding="16dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/backButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:drawableStart="@drawable/white_arrow"
+            android:focusable="true"
+            android:padding="8dp"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
+        <!-- Header -->
+        <TextView
+            android:id="@+id/notificationTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Notification Center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Send Announcement Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#FFFFFF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Send Announcement"
+                    android:textColor="#2ACFCF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+                <EditText
+                    android:id="@+id/titleInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/edit_text_bg"
+                    android:gravity="top|start"
+                    android:hint="Announcement Title"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:inputType="textMultiLine"
+                    android:maxLines="6"
+                    android:layout_marginBottom="10dp"
+                    android:scrollbars="vertical" />
+
+                <EditText
+                    android:id="@+id/announcementInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:background="@drawable/edit_text_bg"
+                    android:gravity="top|start"
+                    android:hint="Type your announcement here..."
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:inputType="textMultiLine"
+                    android:maxLines="6"
+                    android:scrollbars="vertical" />
+
+                <Button
+                    android:id="@+id/sendAnnouncementBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Send to All Users"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2ACFCF"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginTop="12dp" />
+
+                <Button
+                    android:id="@+id/notifyActiveBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Notify Active Users"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2ACFCF"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/notifySpecificBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Notify by Email/Group"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2ACFCF" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+
+
+            </LinearLayout>
+
+</ScrollView>

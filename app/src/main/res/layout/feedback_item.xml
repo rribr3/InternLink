@@ -1,6 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="12dp" app:cardElevation="2dp" app:strokeColor="#E1BEE7" app:strokeWidth="1dp">
+    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp">
+        <!--  User Avatar and Type Indicator  -->
+        <ImageView android:id="@+id/imgUserType" android:layout_width="36dp" android:layout_height="36dp" android:src="@drawable/ic_student" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" app:tint="#A16EFF"/>
+        <!--  User Name and Date  -->
+        <TextView android:id="@+id/txtUserName" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:text="John Doe" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold" app:layout_constraintEnd_toStartOf="@+id/txtDate" app:layout_constraintStart_toEndOf="@id/imgUserType" app:layout_constraintTop_toTopOf="@id/imgUserType"/>
+        <TextView android:id="@+id/txtDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2 days ago" android:textColor="#9E9E9E" android:textSize="12sp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="@id/txtUserName"/>
+        <!--  Rating Stars  -->
+        <RatingBar android:id="@+id/ratingBar" style="?android:attr/ratingBarStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:isIndicator="true" android:numStars="5" android:rating="4" android:stepSize="0.5" app:layout_constraintStart_toStartOf="@id/txtUserName" app:layout_constraintTop_toBottomOf="@id/txtUserName"/>
+        <!--  Feedback Content  -->
+        <TextView android:id="@+id/txtFeedbackContent" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="The app works great but I'm having issues with the notification system. Sometimes I don't receive notifications for new messages." android:textColor="#424242" android:textSize="14sp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="@id/txtUserName" app:layout_constraintTop_toBottomOf="@id/ratingBar"/>
+        <!--  Feedback Type Tags  -->
+        <LinearLayout android:id="@+id/layoutTags" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal" app:layout_constraintEnd_toStartOf="@+id/layoutActions" app:layout_constraintStart_toStartOf="@id/txtUserName" app:layout_constraintTop_toBottomOf="@id/txtFeedbackContent">
+            <com.google.android.material.chip.Chip android:id="@+id/chipFeedbackType" style="@style/Widget.MaterialComponents.Chip.Entry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Suggestion" app:chipStrokeColor="#A16EFF" app:chipStrokeWidth="1dp"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipUserType" style="@style/Widget.MaterialComponents.Chip.Entry" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Student"/>
+        </LinearLayout>
+        <!--  Action Buttons  -->
+        <LinearLayout android:id="@+id/layoutActions" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" app:layout_constraintBottom_toBottomOf="@id/layoutTags" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toBottomOf="@id/txtFeedbackContent">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnRespond" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="32dp" android:text="Respond" android:textColor="#A16EFF" android:textSize="12sp" app:icon="@drawable/ic_reply" app:iconTint="#A16EFF" tools:ignore="TouchTargetSizeCheck"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnResolve" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="32dp" android:text="Resolve" android:textColor="#4CAF50" android:textSize="12sp" app:icon="@drawable/ic_check" app:iconTint="#4CAF50" tools:ignore="TouchTargetSizeCheck"/>
+        </LinearLayout>
+        <!--  Resolution Status (Visible when resolved)  -->
+        <LinearLayout android:id="@+id/layoutResolved" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:background="@drawable/resolved_bg" android:orientation="horizontal" android:padding="8dp" android:visibility="gone" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="@id/txtUserName" app:layout_constraintTop_toBottomOf="@id/layoutTags">
+            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:layout_marginEnd="8dp" android:src="@drawable/ic_check"/>
+            <TextView android:id="@+id/txtResolutionNote" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Resolved by Admin on 12 May 2023" android:textColor="#4CAF50" android:textSize="12sp"/>
+            <TextView android:id="@+id/btnViewResponse" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="View Response" android:textColor="#A16EFF" android:textSize="12sp" android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

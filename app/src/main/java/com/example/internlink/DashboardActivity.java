@@ -1,24 +1,19 @@
 package com.example.internlink;
 
-import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +21,7 @@ import java.util.List;
 public class DashboardActivity extends AppCompatActivity {
 
     private TextView totalStudentsText, totalCompaniesText;
+    private AppCompatButton backButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +30,9 @@ public class DashboardActivity extends AppCompatActivity {
 
         totalStudentsText = findViewById(R.id.totalStudentsText);
         totalCompaniesText = findViewById(R.id.totalCompaniesText);
+        backButton = findViewById(R.id.backButton);  // Initialize back button
+
+        backButton.setOnClickListener(v -> finish()); // Close this activity on click
 
         countTotalStudents();
         countTotalCompanies();
@@ -42,7 +41,6 @@ public class DashboardActivity extends AppCompatActivity {
         Description description = lineChart.getDescription();
         description.setText("Activity Count by Date");
         loadUserActivityFromFirebase(lineChart);
-
     }
 
     private void countTotalStudents() {
@@ -63,6 +61,7 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
+
     private void countTotalCompanies() {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
 
@@ -81,6 +80,7 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
+
     private void loadUserActivityFromFirebase(LineChart lineChart) {
         DatabaseReference activityRef = FirebaseDatabase.getInstance().getReference("user_activity");
 
@@ -103,23 +103,13 @@ public class DashboardActivity extends AppCompatActivity {
                 }
 
                 LineDataSet dataSet = new LineDataSet(entries, "User Activity");
-                dataSet.setColor(Color.rgb(136, 14, 79));
-                dataSet.setValueTextColor(Color.DKGRAY);
+                dataSet.setColor(android.graphics.Color.rgb(136, 14, 79));
+                dataSet.setValueTextColor(android.graphics.Color.DKGRAY);
                 dataSet.setLineWidth(2f);
 
                 LineData lineData = new LineData(dataSet);
                 lineChart.setData(lineData);
-                lineChart.invalidate(); // refresh
-
-                // Optional: Set x-axis labels if needed
-                // You can use IndexAxisValueFormatter to map indices to dates
-            /*
-            XAxis xAxis = lineChart.getXAxis();
-            xAxis.setValueFormatter(new IndexAxisValueFormatter(dates));
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setGranularity(1f);
-            xAxis.setGranularityEnabled(true);
-            */
+                lineChart.invalidate();
             }
 
             @Override
@@ -128,6 +118,4 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
     }
-
 }
-

@@ -1,10 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ProjectManagementActivity">
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/green_gradient_bg">
+    <!--  Modern Toolbar  -->
+    <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize" android:background="@color/white" android:elevation="1dp" app:navigationIcon="@drawable/left_arrow_green" app:title="Project Management" app:titleTextColor="@color/black"/>
+    <!--  Compact Filter Chips  -->
+    <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="8dp">
+        <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroup" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingHorizontal="8dp" app:chipSpacing="4dp" app:singleSelection="true">
+            <com.google.android.material.chip.Chip android:id="@+id/chipAll" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="All" app:chipBackgroundColor="@color/chip_background_selector"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipPending" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pending" app:chipBackgroundColor="@color/chip_background_selector"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipApproved" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Approved" app:chipBackgroundColor="@color/chip_background_selector"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipRejected" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rejected" app:chipBackgroundColor="@color/chip_background_selector"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipInProgress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="In Progress" app:chipBackgroundColor="@color/chip_background_selector"/>
+            <com.google.android.material.chip.Chip android:id="@+id/chipCompleted" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Completed" app:chipBackgroundColor="@color/chip_background_selector"/>
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+    <!--  Projects List  -->
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerView" android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false" android:padding="8dp" android:scrollbars="vertical"/>
+    <!--  Search Button  -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton android:id="@+id/fabSearch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="bottom|end" android:layout_margin="16dp" android:text="Search" app:icon="@drawable/ic_search" app:iconTint="@color/white"/>
+</LinearLayout>

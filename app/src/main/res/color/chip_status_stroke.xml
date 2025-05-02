@@ -1,4 +1,25 @@
-<?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <!--  Pending  -->
+    <item android:color="#FFA000" android:state_selected="true" android:state_pressed="false"/>
+    <item android:color="#FF8F00" android:state_pressed="true"/>
+    <!--  Approved  -->
+    <item android:color="#4CAF50" android:state_activated="true"/>
+    <!--  Rejected  -->
+    <item android:color="#F44336" android:state_checked="true"/>
+    <!--  In Progress  -->
+    <item android:color="#2196F3" android:state_checkable="true"/>
+    <!--  Completed  -->
+    <item android:color="#5C6BC0" android:state_enabled="true"/>
+    <!--  Default (Pending)  -->
+    <item android:color="#FFA000"/>
+    <!--  Approved  -->
+    <item android:color="@color/greenDark" android:state_activated="true"/>
+    <!--  Rejected  -->
+    <item android:color="@color/redDark" android:state_checked="true"/>
+    <!--  In Progress  -->
+    <item android:color="@color/blueDark" android:state_checkable="true"/>
+    <!--  Completed  -->
+    <item android:color="@color/purpleDark" android:state_enabled="true"/>
+    <!--  Default (Pending)  -->
+    <item android:color="@color/orangeDark"/>
 </selector>

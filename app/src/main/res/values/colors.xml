@@ -9,4 +9,46 @@
     <color name="purple">#A16EFF</color>
     <color name="teal">#2ACFCF</color>
     <color name="orange">#FF9F45</color>
+    <color name="orange_light">#FFF3E0</color>
+    <color name="orange_dark">#FFA000</color>
+    <color name="green_light">#E8F5E9</color>
+    <color name="green_dark">#4CAF50</color>
+    <color name="red_light">#FFEBEE</color>
+    <color name="red_dark">#F44336</color>
+    <color name="blue_light">#E3F2FD</color>
+    <color name="blue_dark">#2196F3</color>
+    <color name="purple_light">#E8EAF6</color>
+    <color name="purple_dark">#5C6BC0</color>
+    <!--  Primary Colors  -->
+    <color name="primaryColor">#28B463</color>
+    <color name="primaryLightColor">#58D68D</color>
+    <color name="primaryDarkColor">#1E8449</color>
+    <!--  Chip Colors  -->
+    <color name="chip_default_background">#F5F5F5</color>
+    <color name="chip_default_text">#424242</color>
+    <color name="chip_close_icon">#757575</color>
+    <!--  Status Colors  -->
+    <color name="orangeLight">#FFF3E0</color>
+    <color name="orangeDark">#FFA000</color>
+    <color name="greenLight">#E8F5E9</color>
+    <color name="greenDark">#4CAF50</color>
+    <color name="redLight">#FFEBEE</color>
+    <color name="redDark">#F44336</color>
+    <color name="blueLight">#E3F2FD</color>
+    <color name="blueDark">#2196F3</color>
+    <color name="purpleLight">#E8EAF6</color>
+    <color name="purpleDark">#5C6BC0</color>
+    <!--  Status Colors  -->
+    <color name="status_pending">#FFF3E0</color>
+    <color name="status_pending_stroke">#FFA000</color>
+    <color name="status_approved">#E8F5E9</color>
+    <color name="status_approved_stroke">#4CAF50</color>
+    <color name="status_rejected">#FFEBEE</color>
+    <color name="status_rejected_stroke">#F44336</color>
+    <color name="status_in_progress">#E3F2FD</color>
+    <color name="status_in_progress_stroke">#2196F3</color>
+    <color name="status_completed">#E8EAF6</color>
+    <color name="status_completed_stroke">#5C6BC0</color>
+    <!--  Tag Chip Color  -->
+    <color name="chip_tag_background">#F5F5F5</color>
 </resources>

@@ -1,10 +1,107 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".AdminFeedbackActivity">
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@drawable/purple_gradient_bg">
+    <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp">
+        <!--  Header Section (unchanged)  -->
+        <androidx.appcompat.widget.AppCompatButton android:id="@+id/backButton" android:layout_width="65dp" android:layout_height="43dp" android:background="?attr/selectableItemBackground" android:clickable="true" android:contentDescription="@string/app_name" android:drawableStart="@drawable/white_arrow" android:focusable="true" android:padding="8dp" android:textColor="#FFFFFF" android:textSize="16sp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+        <TextView android:id="@+id/feedbackTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="110dp" android:layout_marginTop="15dp" android:fontFamily="sans-serif-medium" android:stateListAnimator="@anim/scale_up" android:text="User Feedback" android:textColor="#FFFFFF" android:textSize="33sp" android:textStyle="bold" android:transitionName="feedbackTitle" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintHorizontal_bias="0.854" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
+        <!--  Enhanced Summary Cards Row  -->
+        <androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/summaryRow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="15dp" app:layout_constraintTop_toBottomOf="@id/feedbackTitle" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+            <!--  Enhanced Average Rating Card with Star Distribution  -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardAverageRating" style="@style/Widget.MaterialComponents.CardView" android:layout_width="0dp" android:layout_height="220dp" android:layout_marginEnd="8dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="16dp" app:cardElevation="8dp" app:layout_constraintEnd_toStartOf="@+id/guidelineMiddle" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" android:stateListAnimator="@anim/lift_up">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="Avg. Rating" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center" android:layout_marginTop="8dp">
+                        <ImageView android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107"/>
+                        <TextView android:id="@+id/averageRatingText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="4.5" android:textColor="#A16EFF" android:textSize="28sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="/5" android:textColor="#9E9E9E" android:textSize="18sp" android:layout_marginStart="4dp"/>
+                    </LinearLayout>
+                    <!--  Star Rating Distribution  -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="12dp">
+                        <!--  5 Star Rating  -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                            <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="5" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107" android:layout_marginStart="4dp"/>
+                            <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress5Star" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:progress="75" app:trackColor="#E1BEE7" app:trackCornerRadius="4dp" app:indicatorColor="#FFC107"/>
+                            <TextView android:id="@+id/text5Star" android:layout_width="30dp" android:layout_height="wrap_content" android:text="75%" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <!--  4 Star Rating  -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                            <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="4" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107" android:layout_marginStart="4dp"/>
+                            <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress4Star" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:progress="15" app:trackColor="#E1BEE7" app:trackCornerRadius="4dp" app:indicatorColor="#FFC107"/>
+                            <TextView android:id="@+id/text4Star" android:layout_width="30dp" android:layout_height="wrap_content" android:text="15%" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <!--  3 Star Rating  -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                            <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="3" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107" android:layout_marginStart="4dp"/>
+                            <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress3Star" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:progress="7" app:trackColor="#E1BEE7" app:trackCornerRadius="4dp" app:indicatorColor="#FFC107"/>
+                            <TextView android:id="@+id/text3Star" android:layout_width="30dp" android:layout_height="wrap_content" android:text="7%" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <!--  2 Star Rating  -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                            <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="2" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107" android:layout_marginStart="4dp"/>
+                            <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress2Star" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:progress="2" app:trackColor="#E1BEE7" app:trackCornerRadius="4dp" app:indicatorColor="#FFC107"/>
+                            <TextView android:id="@+id/text2Star" android:layout_width="30dp" android:layout_height="wrap_content" android:text="2%" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <!--  1 Star Rating  -->
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="4dp">
+                            <TextView android:layout_width="30dp" android:layout_height="wrap_content" android:text="1" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                            <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_star_filled" app:tint="#FFC107" android:layout_marginStart="4dp"/>
+                            <com.google.android.material.progressindicator.LinearProgressIndicator android:id="@+id/progress1Star" android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="1" android:layout_marginStart="8dp" android:layout_marginEnd="8dp" android:progress="1" app:trackColor="#E1BEE7" app:trackCornerRadius="4dp" app:indicatorColor="#FFC107"/>
+                            <TextView android:id="@+id/text1Star" android:layout_width="30dp" android:layout_height="wrap_content" android:text="1%" android:textColor="#7B1FA2" android:textSize="12sp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <!--  Feedback Count Card  -->
+            <com.google.android.material.card.MaterialCardView android:id="@+id/cardFeedbackCount" style="@style/Widget.MaterialComponents.CardView" android:layout_width="0dp" android:layout_height="220dp" android:layout_marginStart="8dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="16dp" app:cardElevation="8dp" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="@+id/guidelineMiddle" app:layout_constraintTop_toTopOf="parent" android:stateListAnimator="@anim/lift_up">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp" android:gravity="center">
+                    <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_feedback"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:text="Total Feedback" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold"/>
+                    <TextView android:id="@+id/totalFeedbackText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:text="128" android:textColor="#A16EFF" android:textSize="32sp" android:textStyle="bold"/>
+                    <TextView android:id="@+id/newFeedbackText" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center" android:text="+12 new" android:textColor="#4A148C" android:textSize="14sp"/>
+                    <!--  Mini Statistics  -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:weightSum="2">
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                            <TextView android:id="@+id/companyFeedbackCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="42" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Companies" android:textColor="#9E9E9E" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                            <TextView android:id="@+id/studentFeedbackCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="86" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Students" android:textColor="#9E9E9E" android:textSize="12sp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <androidx.constraintlayout.widget.Guideline android:id="@+id/guidelineMiddle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" app:layout_constraintGuide_percent="0.5"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <!--  Enhanced Feedback Filter Controls  -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/filterCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="12dp" app:cardElevation="4dp" app:layout_constraintTop_toBottomOf="@id/summaryRow" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:text="Filter Feedback" android:textColor="#7B1FA2" android:textSize="16sp" android:textStyle="bold"/>
+                <!--  First Row of Filters  -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:weightSum="3">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnAll" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="-0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="All" android:textColor="#A16EFF" app:strokeColor="#A16EFF" android:textSize="11sp" app:strokeWidth="1dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnCompanyFeedback" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Companies" android:textColor="#A16EFF" android:textSize="10sp" app:strokeColor="#A16EFF" app:strokeWidth="1dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnStudentFeedback" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Students" android:textColor="#A16EFF" android:textSize="11sp" app:strokeColor="#A16EFF" app:strokeWidth="1dp"/>
+                </LinearLayout>
+                <!--  Second Row of Filters  -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal" android:weightSum="3">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnComplaints" android:textSize="10sp" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Complaints" android:textColor="#A16EFF" app:strokeColor="#A16EFF" app:strokeWidth="1dp"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnSuggestions" android:textSize="9sp" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Suggestions" android:textColor="#A16EFF" app:strokeColor="#A16EFF" app:strokeWidth="1dp"/>
+                    <com.google.android.material.button.MaterialButton android:textSize="12sp" android:id="@+id/btnBestFeedback" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Top Rated" android:textColor="#A16EFF" app:strokeColor="#A16EFF" app:strokeWidth="1dp"/>
+                </LinearLayout>
+                <!--  Rating Filter Chips  -->
+                <com.google.android.material.chip.ChipGroup android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" app:singleSelection="true">
+                    <com.google.android.material.chip.Chip android:id="@+id/chipRatingAll" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="All Ratings" app:chipStrokeColor="#A16EFF"/>
+                    <com.google.android.material.chip.Chip android:id="@+id/chipRating5" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5 Stars" app:chipStrokeColor="#A16EFF"/>
+                    <com.google.android.material.chip.Chip android:id="@+id/chipRating4" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="4 Stars" app:chipStrokeColor="#A16EFF"/>
+                    <com.google.android.material.chip.Chip android:id="@+id/chipRating3" style="@style/Widget.MaterialComponents.Chip.Choice" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3 Stars" app:chipStrokeColor="#A16EFF"/>
+                </com.google.android.material.chip.ChipGroup>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <!--  Feedback List  -->
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/feedbackRecyclerView" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:clipToPadding="false" android:paddingBottom="16dp" app:layout_constraintTop_toBottomOf="@id/filterCard" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -31,5 +31,50 @@ public class AdminActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        LinearLayout projectCard = findViewById(R.id.Project_card);
+        projectCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminActivity.this, ProjectManagementActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        LinearLayout reportCard = findViewById(R.id.Report_card);
+        reportCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminActivity.this, ReportsActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        LinearLayout feedbackCard = findViewById(R.id.Feedback_card);
+        feedbackCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminActivity.this, AdminFeedbackActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        LinearLayout notificationCard = findViewById(R.id.Notification_card);
+        notificationCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminActivity.this, AdminNotification.class);
+                startActivity(intent);
+            }
+        });
+
+        LinearLayout settingCard = findViewById(R.id.Setting_card);
+        settingCard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminActivity.this, AdminSettings.class);
+                startActivity(intent);
+            }
+        });
     }
 }

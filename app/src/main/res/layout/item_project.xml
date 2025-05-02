@@ -1,6 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="8dp" android:layout_marginVertical="4dp" app:cardCornerRadius="8dp" app:cardElevation="2dp" app:strokeColor="#10000000" app:strokeWidth="1dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+        <!--  Project Header  -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <ImageView android:id="@+id/ivCompanyLogo" android:layout_width="40dp" android:layout_height="40dp" android:contentDescription="Company logo" android:src="@drawable/ic_company"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:id="@+id/tvProjectTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#212121" android:textSize="16sp" android:textStyle="bold"/>
+                <TextView android:id="@+id/tvCompanyName" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="#757575" android:textSize="14sp"/>
+            </LinearLayout>
+            <com.google.android.material.chip.Chip android:id="@+id/chipStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_vertical" app:chipBackgroundColor="@color/chip_status_background" app:chipStrokeColor="@color/chip_status_stroke" app:chipStrokeWidth="1dp"/>
+        </LinearLayout>
+        <!--  Project Details  -->
+        <TextView android:id="@+id/tvProjectDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:ellipsize="end" android:maxLines="3" android:textColor="#616161" android:textSize="14sp"/>
+        <!--  Tags  -->
+        <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroupTags" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:chipSpacing="4dp"/>
+        <!--  Action Buttons - Improved with separated icon and text  -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal">
+            <!--  Approve Button  -->
+            <LinearLayout android:id="@+id/btnApprove" style="@style/ActionButtonStyle" android:layout_width="0dp" android:layout_height="36dp" android:layout_marginEnd="4dp" android:layout_weight="1" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" tools:ignore="TouchTargetSizeCheck">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_marginEnd="8dp" android:src="@drawable/ic_approve"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Approve" android:textSize="14sp"/>
+            </LinearLayout>
+            <!--  Reject Button  -->
+            <!--  Edit Tags Button  -->
+            <LinearLayout android:id="@+id/btnReject" style="@style/ActionButtonStyle" android:layout_width="0dp" android:layout_height="36dp" android:layout_marginEnd="4dp" android:layout_weight="1" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" tools:ignore="TouchTargetSizeCheck">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_marginEnd="8dp" android:src="@drawable/ic_cancel"/>
+                <TextView android:layout_width="61dp" android:layout_height="wrap_content" android:gravity="center" android:text="Reject" android:textSize="14sp"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/btnTags" style="@style/ActionButtonStyle" android:layout_width="103dp" android:layout_height="match_parent" android:layout_marginStart="8dp" android:background="?attr/selectableItemBackgroundBorderless" android:clickable="true" android:focusable="true" tools:ignore="TouchTargetSizeCheck">
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_marginEnd="8dp" android:src="@drawable/ic_edit"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tags" android:textSize="14sp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
