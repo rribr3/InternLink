@@ -51,4 +51,14 @@
     <color name="status_completed_stroke">#5C6BC0</color>
     <!--  Tag Chip Color  -->
     <color name="chip_tag_background">#F5F5F5</color>
+    <!-- colors.xml -->
+    <color name="primary">#6200EE</color>
+    <color name="primary_dark">#3700B3</color>
+    <color name="primary_light">#BB86FC</color>
+    <color name="light_gray_bg">#F5F5F6</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="green_success">#4CAF50</color>
+    <color name="blue_info">#2196F3</color>
+    <color name="red_error">#F44336</color>
 </resources>

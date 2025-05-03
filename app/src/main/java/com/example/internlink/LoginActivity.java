@@ -18,6 +18,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -28,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.annotation.Nullable;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -158,7 +158,7 @@ public class LoginActivity extends AppCompatActivity {
                                 }
 
                                 @Override
-                                public void onComplete(@Nullable DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
+                                public void onComplete(DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
                                     // Optional: Log or toast on success
                                 }
                             });
@@ -176,7 +176,7 @@ public class LoginActivity extends AppCompatActivity {
                                         if ("serrenava543@gmail.com".equals(dbEmail)) {
                                             startActivity(new Intent(LoginActivity.this, AdminActivity.class));
                                         } else if ("student".equals(userRole)) {
-                                            startActivity(new Intent(LoginActivity.this, StudentActivity.class));
+                                            startActivity(new Intent(LoginActivity.this, StudentHomeActivity.class));
                                         } else if ("company".equals(userRole)) {
                                             startActivity(new Intent(LoginActivity.this, CompanyActivity.class));
                                         } else {

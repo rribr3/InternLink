@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <EditText
+        android:id="@+id/adminNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Admin Name"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/adminEmailEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Admin Email"
+        android:inputType="textEmailAddress"
+        android:layout_marginTop="10dp" />
+
+    <EditText
+        android:id="@+id/adminPasswordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Admin Password"
+        android:inputType="textPassword"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/addAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add New Admin"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#FF9F45"
+        android:layout_marginTop="8dp" />
+</LinearLayout>

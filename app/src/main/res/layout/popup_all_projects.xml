@@ -1,0 +1,6 @@
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="400dp" android:layout_margin="16dp" app:cardCornerRadius="8dp" app:cardElevation="8dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <TextView android:layout_width="407dp" android:layout_height="wrap_content" android:padding="16dp" android:text="All Suggested Projects" android:textColor="@color/black" android:textSize="20sp" android:textStyle="bold"/>
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_all_projects" android:layout_width="425dp" android:layout_height="match_parent" android:padding="8dp"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
