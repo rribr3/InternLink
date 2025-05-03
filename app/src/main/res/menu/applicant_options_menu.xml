@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_download_cv"
+        android:title="Download CV"
+        android:icon="@drawable/ic_download"/>
+    <item
+        android:id="@+id/menu_reject"
+        android:title="Reject"
+        android:icon="@drawable/ic_cancel"/>
+    <item
+        android:id="@+id/menu_shortlist"
+        android:title="Shortlist"
+        android:icon="@drawable/ic_star_filled"/>
+</menu>

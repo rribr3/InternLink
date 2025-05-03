@@ -78,49 +78,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Terms and Policies Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="5dp"
-            app:cardBackgroundColor="#FFFFFF">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:text="Policies and Rules"
-                    android:textColor="#FF9F45"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <Button
-                    android:id="@+id/saveTermsBtn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="#FF9F45"
-                    android:text="Save Terms &amp; Conditions"
-                    android:textColor="#FFFFFF" />
-
-                <Button
-                    android:id="@+id/editTermsBtn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="#FF9F45"
-                    android:text="Edit Terms &amp; Conditions"
-                    android:textColor="#FFFFFF" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
         <!-- Language & Theme Card -->
         <androidx.cardview.widget.CardView

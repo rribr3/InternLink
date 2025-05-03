@@ -166,6 +166,13 @@ public class LoginActivity extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(DataSnapshot snapshot) {
                                     if (snapshot.exists()) {
+                                        String status = snapshot.child("status").getValue(String.class);
+                                        if ("deactivated".equalsIgnoreCase(status)) {
+                                            showReactivationDialog(userId);
+                                            return;
+                                        }
+
+
                                         String userRole = snapshot.child("role").getValue(String.class);
 
                                         if ("admin".equals(userRole)) {
@@ -173,7 +180,7 @@ public class LoginActivity extends AppCompatActivity {
                                         } else if ("student".equals(userRole)) {
                                             startActivity(new Intent(LoginActivity.this, StudentHomeActivity.class));
                                         } else if ("company".equals(userRole)) {
-                                            startActivity(new Intent(LoginActivity.this, CompanyActivity.class));
+                                            startActivity(new Intent(LoginActivity.this, CompanyHomeActivity.class));
                                         } else {
                                             Toast.makeText(LoginActivity.this, "Unknown role", Toast.LENGTH_SHORT).show();
                                         }
@@ -196,6 +203,32 @@ public class LoginActivity extends AppCompatActivity {
 
         loginDialog.show();
     }
+    private void showReactivationDialog(String userId) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Account Deactivated")
+                .setMessage("Your account is currently deactivated. Would you like to reactivate it?")
+                .setPositiveButton("Reactivate", (dialog, which) -> {
+                    FirebaseDatabase.getInstance().getReference("users")
+                            .child(userId)
+                            .child("status")
+                            .setValue("active")
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(this, "Account reactivated. Please log in again.", Toast.LENGTH_SHORT).show();
+                                    FirebaseAuth.getInstance().signOut();
+                                } else {
+                                    Toast.makeText(this, "Failed to reactivate. Try again later.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    FirebaseAuth.getInstance().signOut();
+                    dialog.dismiss();
+                })
+                .setCancelable(false)
+                .show();
+    }
+
 
     private void showSignupPopup() {
         Dialog signupDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
@@ -259,6 +292,8 @@ public class LoginActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             String userId = auth.getCurrentUser().getUid();
                             User user = new User(name, email, role);
+                            usersRef.child(userId).setValue(user);
+                            usersRef.child(userId).child("active").setValue(true);
 
                             usersRef.child(userId).setValue(user)
                                     .addOnCompleteListener(task1 -> {
