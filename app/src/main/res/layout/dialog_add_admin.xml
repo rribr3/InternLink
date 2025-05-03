@@ -9,24 +9,57 @@
         android:id="@+id/adminNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Admin Name"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/edittext_bg"
+        android:drawableStart="@android:drawable/ic_menu_myplaces"
+        android:fontFamily="sans-serif-black"
+        android:padding="12dp"
+        android:hint="Name"
         android:inputType="textPersonName" />
 
     <EditText
         android:id="@+id/adminEmailEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Admin Email"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/edittext_bg"
+        android:drawableStart="@android:drawable/ic_dialog_email"
+        android:fontFamily="sans-serif-black"
+        android:padding="12dp"
+        android:hint="Email"
         android:inputType="textEmailAddress"
         android:layout_marginTop="10dp" />
 
-    <EditText
-        android:id="@+id/adminPasswordEditText"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Admin Password"
-        android:inputType="textPassword"
-        android:layout_marginTop="10dp" />
+        android:layout_marginBottom="12dp"
+        android:fontFamily="sans-serif-black">
+
+        <EditText
+            android:id="@+id/adminPasswordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/edittext_bg"
+            android:drawableStart="@android:drawable/ic_lock_idle_lock"
+            android:fontFamily="sans-serif-black"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:paddingEnd="48dp" />
+
+        <ImageView
+            android:id="@+id/toggle_password_signup1"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignEnd="@+id/adminPasswordEditText"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Toggle Password Visibility"
+            android:src="@drawable/ic_eye_closed" />
+    </RelativeLayout>
 
     <Button
         android:id="@+id/addAdmin"

@@ -95,8 +95,6 @@ public class LoginActivity extends AppCompatActivity {
                     });
         });
 
-
-
         loginDialog.getBehavior().setPeekHeight(
                 getResources().getDisplayMetrics().heightPixels / 2
         );
@@ -158,9 +156,7 @@ public class LoginActivity extends AppCompatActivity {
                                 }
 
                                 @Override
-                                public void onComplete(DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {
-                                    // Optional: Log or toast on success
-                                }
+                                public void onComplete(DatabaseError error, boolean committed, @Nullable DataSnapshot currentData) {}
                             });
 
                             String userId = auth.getCurrentUser().getUid();
@@ -171,9 +167,8 @@ public class LoginActivity extends AppCompatActivity {
                                 public void onDataChange(DataSnapshot snapshot) {
                                     if (snapshot.exists()) {
                                         String userRole = snapshot.child("role").getValue(String.class);
-                                        String dbEmail = snapshot.child("email").getValue(String.class);
 
-                                        if ("serrenava543@gmail.com".equals(dbEmail)) {
+                                        if ("admin".equals(userRole)) {
                                             startActivity(new Intent(LoginActivity.this, AdminActivity.class));
                                         } else if ("student".equals(userRole)) {
                                             startActivity(new Intent(LoginActivity.this, StudentHomeActivity.class));

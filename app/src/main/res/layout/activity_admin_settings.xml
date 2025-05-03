@@ -75,14 +75,6 @@
                     android:backgroundTint="#FF9F45"
                     android:layout_marginTop="8dp" />
 
-                <Button
-                    android:id="@+id/manageRolesBtn"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Define Roles and Permissions"
-                    android:textColor="#FFFFFF"
-                    android:backgroundTint="#FF9F45"
-                    android:layout_marginTop="8dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -104,20 +96,29 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
                     android:text="Policies and Rules"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
                     android:textColor="#FF9F45"
-                    android:gravity="center_horizontal" />
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/saveTermsBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="#FF9F45"
+                    android:text="Save Terms &amp; Conditions"
+                    android:textColor="#FFFFFF" />
 
                 <Button
                     android:id="@+id/editTermsBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Edit Terms and Conditions"
-                    android:textColor="#FFFFFF"
+                    android:layout_marginTop="8dp"
                     android:backgroundTint="#FF9F45"
-                    android:layout_marginTop="8dp" />
+                    android:text="Edit Terms &amp; Conditions"
+                    android:textColor="#FFFFFF" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

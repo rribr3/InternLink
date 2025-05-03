@@ -20,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
@@ -58,18 +59,23 @@ public class StudentHomeActivity extends AppCompatActivity
         notificationBell = findViewById(R.id.notification_bell);
         notificationBadge = findViewById(R.id.notification_badge);
         projectsRecyclerView = findViewById(R.id.projects_recycler_view);
+
+        // Set up logo click to open navigation drawer
+        ImageView logo = findViewById(R.id.logo);
+        logo.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
     }
 
     private void setupNavigationDrawer() {
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        // Remove toolbar navigation since we're using the logo
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(view -> drawerLayout.openDrawer(GravityCompat.START));
+        toolbar.setNavigationIcon(null); // Remove hamburger icon
     }
 
     private void setWelcomeMessage() {
-        String userName = "John Doe";
+        String userName = "John Doe"; // Replace with actual user name
         welcomeText.setText(String.format("Welcome back, %s", userName));
     }
 
@@ -91,7 +97,7 @@ public class StudentHomeActivity extends AppCompatActivity
 
         projectAdapterHome = new ProjectAdapterHome(allProjects, project -> {
             Toast.makeText(this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
-        }, false);
+        }, true); // true for horizontal layout
         projectsRecyclerView.setAdapter(projectAdapterHome);
     }
 
@@ -107,11 +113,8 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void setupClickListeners() {
-        findViewById(R.id.profile_avatar).setOnClickListener(v -> showProfile());
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> showAllApplications());
         findViewById(R.id.see_all_tips_btn).setOnClickListener(v -> showAllTips());
-
-        // Add click listener for the + button
         findViewById(R.id.btn_view_all_projects).setOnClickListener(v -> showAllProjectsPopup());
     }
 
@@ -153,8 +156,46 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void showAllApplications() {
-        Toast.makeText(this, "Showing all applications", Toast.LENGTH_SHORT).show();
+        // Inflate the popup layout
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
+
+        // Initialize views
+        RecyclerView rvApplications = popupView.findViewById(R.id.rv_applications);
+        FloatingActionButton addButton = popupView.findViewById(R.id.btn_add_application);
+        ImageView closeButton = popupView.findViewById(R.id.btn_close_popup);
+
+        // Sample data – replace with actual application model
+        List<String> applications = new ArrayList<>();
+        applications.add("UI/UX Designer – Pending");
+        applications.add("Android Developer – Interview");
+        applications.add("Backend Intern – Accepted");
+
+        // Setup RecyclerView
+        rvApplications.setLayoutManager(new LinearLayoutManager(this));
+        rvApplications.setAdapter(new ApplicationAdapter(applications));
+
+        // Add new application click
+        addButton.setOnClickListener(v -> {
+            Toast.makeText(this, "Add new application clicked", Toast.LENGTH_SHORT).show();
+            // TODO: Launch add application screen
+        });
+
+        // Create full-screen PopupWindow
+        final PopupWindow popupWindow = new PopupWindow(
+                popupView,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                true
+        );
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
+
+        // Close popup
+        closeButton.setOnClickListener(v -> popupWindow.dismiss());
     }
+
+
 
     private void showAllTips() {
         Toast.makeText(this, "Showing all tips", Toast.LENGTH_SHORT).show();
@@ -185,6 +226,7 @@ public class StudentHomeActivity extends AppCompatActivity
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
 
     @Override
     public void onBackPressed() {
