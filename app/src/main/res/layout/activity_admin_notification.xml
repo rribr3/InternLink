@@ -117,13 +117,26 @@
                     android:text="Notify Students"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#2ACFCF"
+                    android:layout_marginBottom="50dp" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/specificUserDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/edit_text_bg"
+                    android:hint="Select user email"
+                    android:padding="12dp"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
                     android:layout_marginBottom="10dp" />
+
+
 
                 <Button
                     android:id="@+id/notifySpecificBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Notify by Email/Group"
+                    android:text="Notify by Email"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#2ACFCF" />
             </LinearLayout>
