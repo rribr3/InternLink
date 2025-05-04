@@ -102,10 +102,19 @@
                     android:layout_marginTop="12dp" />
 
                 <Button
-                    android:id="@+id/notifyActiveBtn"
+                    android:id="@+id/notifyCompanyBtn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Notify Active Users"
+                    android:text="Notify Companies"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#2ACFCF"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/notifyStudentBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Notify Students"
                     android:textColor="#FFFFFF"
                     android:backgroundTint="#2ACFCF"
                     android:layout_marginBottom="10dp" />
