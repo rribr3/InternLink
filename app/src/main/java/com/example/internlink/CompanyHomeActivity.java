@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,17 +40,42 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private TextView welcomeText;
     private ImageView notificationBell;
     private TextView notificationBadge;
+    private DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_company_home);
 
+        welcomeText = findViewById(R.id.welcome_text);
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("users");
+
+        String companyUid = getCurrentCompanyUid();
+
+        databaseReference.child(companyUid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String name = "Welcome, "+dataSnapshot.child("name").getValue(String.class);
+                    welcomeText.setText(name);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle error
+            }
+        });
+
         initializeViews();
         setupNavigationDrawer();
         setupDashboardContent();
         setupClickListeners();
         setupNotificationBell();
+    }
+    private String getCurrentCompanyUid() {
+        return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
     private void setupNotificationBell() {
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
@@ -112,7 +138,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void setupDashboardContent() {
-        welcomeText.setText("Welcome back, TechCorp");
         setupProjectsRecyclerView();
         setupApplicantsRecyclerView();
         updateNotificationBadge(5);
@@ -165,7 +190,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
             startActivity(intent);
         });
-        findViewById(R.id.fab_create_project).setOnClickListener(v -> Toast.makeText(this, "Create new project", Toast.LENGTH_SHORT).show());
+        findViewById(R.id.fab_create_project).setOnClickListener(v -> {
+            Intent intent = new Intent(CompanyHomeActivity.this, CreateProject.class);
+            startActivity(intent);
+        });
 
         // Add click listeners for view all buttons
         findViewById(R.id.view_all_projects_button).setOnClickListener(v -> showAllProjectsDialog());
