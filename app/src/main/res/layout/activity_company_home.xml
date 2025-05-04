@@ -56,14 +56,15 @@
 
                     <TextView
                         android:id="@+id/notification_badge"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:layout_toStartOf="@id/notification_bell"
                         android:layout_alignTop="@id/notification_bell"
                         android:gravity="center"
                         android:textColor="@color/white"
-                        android:textSize="10sp"
-                        android:visibility="visible" />
+                        android:textSize="14sp"
+                        android:visibility="gone" />
+
 
                     <ImageView
                         android:id="@+id/notification_bell"

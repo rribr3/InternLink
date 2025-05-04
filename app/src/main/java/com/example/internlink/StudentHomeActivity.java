@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -22,6 +23,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,16 +86,48 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void setupNotificationBell() {
-        boolean hasNewNotifications = true;
-        if (hasNewNotifications) {
-            notificationBadge.setVisibility(View.VISIBLE);
-            notificationBadge.setText("3");
-        }
+        DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
+        DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("student");
+
+        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
+                final int[] totalCount = {0};
+
+                totalCount[0] += (int) globalSnapshot.getChildrenCount();
+
+                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
+                        totalCount[0] += (int) roleSnapshot.getChildrenCount();
+
+                        if (totalCount[0] > 0) {
+                            notificationBadge.setVisibility(View.VISIBLE);
+                            notificationBadge.setText(String.valueOf(totalCount[0]));
+                        } else {
+                            notificationBadge.setVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        notificationBadge.setVisibility(View.GONE);
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                notificationBadge.setVisibility(View.GONE);
+            }
+        });
 
         notificationBell.setOnClickListener(v -> {
-            Toast.makeText(this, "Opening notifications", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
+            startActivity(intent);
         });
     }
+
 
     private void setupProjectsRecyclerView() {
         projectsRecyclerView.setLayoutManager(new LinearLayoutManager(
@@ -116,6 +154,11 @@ public class StudentHomeActivity extends AppCompatActivity
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> showAllApplications());
         findViewById(R.id.see_all_tips_btn).setOnClickListener(v -> showAllTips());
         findViewById(R.id.btn_view_all_projects).setOnClickListener(v -> showAllProjectsPopup());
+        notificationBell.setOnClickListener(v -> {
+            // Navigate to CompanyAnnounce.java
+            Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
+            startActivity(intent);
+        });
     }
 
     private void showAllProjectsPopup() {

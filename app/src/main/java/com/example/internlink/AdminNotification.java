@@ -5,7 +5,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.HashMap;
+import java.util.Map;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
@@ -37,51 +41,107 @@ public class AdminNotification extends AppCompatActivity {
         notifyStudentBtn = findViewById(R.id.notifyStudentBtn);
         notifySpecificBtn = findViewById(R.id.notifySpecificBtn);
 
-        // Send to All Users
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference announcementsRef = database.getReference("announcements");
+
         sendAnnouncementBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String title = titleInput.getText().toString().trim();
                 String message = announcementInput.getText().toString().trim();
+
                 if (title.isEmpty() || message.isEmpty()) {
                     Toast.makeText(AdminNotification.this, "Please enter both title and message", Toast.LENGTH_SHORT).show();
                 } else {
-                    // Send to all users (replace with real logic)
-                    Toast.makeText(AdminNotification.this, "Announcement sent to all users", Toast.LENGTH_SHORT).show();
+                    String announcementId = announcementsRef.push().getKey(); // Unique ID
+
+                    Map<String, Object> announcement = new HashMap<>();
+                    announcement.put("title", title);
+                    announcement.put("message", message);
+                    announcement.put("timestamp", System.currentTimeMillis());
+
+                    if (announcementId != null) {
+                        announcementsRef.child(announcementId).setValue(announcement)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(AdminNotification.this, "Announcement sent to all users", Toast.LENGTH_SHORT).show();
+                                    titleInput.setText("");
+                                    announcementInput.setText("");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(AdminNotification.this, "Failed to send announcement", Toast.LENGTH_SHORT).show();
+                                });
+                    }
                 }
             }
         });
 
-        // Notify Active Users
         notifyCompanyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String title = titleInput.getText().toString().trim();
                 String message = announcementInput.getText().toString().trim();
+
                 if (title.isEmpty() || message.isEmpty()) {
                     Toast.makeText(AdminNotification.this, "Please enter both title and message", Toast.LENGTH_SHORT).show();
                 } else {
-                    // Replace this with actual logic to notify only active users
-                    Toast.makeText(AdminNotification.this, "Notified all companies", Toast.LENGTH_SHORT).show();
+                    DatabaseReference roleRef = FirebaseDatabase.getInstance()
+                            .getReference("announcements_by_role/company");
+                    String announcementId = roleRef.push().getKey();
+
+                    Map<String, Object> announcement = new HashMap<>();
+                    announcement.put("title", title);
+                    announcement.put("message", message);
+                    announcement.put("timestamp", System.currentTimeMillis());
+
+                    if (announcementId != null) {
+                        roleRef.child(announcementId).setValue(announcement)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(AdminNotification.this, "Announcement sent to companies", Toast.LENGTH_SHORT).show();
+                                    titleInput.setText("");
+                                    announcementInput.setText("");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(AdminNotification.this, "Failed to send to companies", Toast.LENGTH_SHORT).show();
+                                });
+                    }
                 }
             }
         });
+
 
         notifyStudentBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String title = titleInput.getText().toString().trim();
                 String message = announcementInput.getText().toString().trim();
+
                 if (title.isEmpty() || message.isEmpty()) {
                     Toast.makeText(AdminNotification.this, "Please enter both title and message", Toast.LENGTH_SHORT).show();
                 } else {
-                    // Replace this with actual logic to notify only active users
-                    Toast.makeText(AdminNotification.this, "Notified all students", Toast.LENGTH_SHORT).show();
+                    DatabaseReference roleRef = FirebaseDatabase.getInstance()
+                            .getReference("announcements_by_role/student");
+                    String announcementId = roleRef.push().getKey();
+
+                    Map<String, Object> announcement = new HashMap<>();
+                    announcement.put("title", title);
+                    announcement.put("message", message);
+                    announcement.put("timestamp", System.currentTimeMillis());
+
+                    if (announcementId != null) {
+                        roleRef.child(announcementId).setValue(announcement)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(AdminNotification.this, "Announcement sent to students", Toast.LENGTH_SHORT).show();
+                                    titleInput.setText("");
+                                    announcementInput.setText("");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(AdminNotification.this, "Failed to send to students", Toast.LENGTH_SHORT).show();
+                                });
+                    }
                 }
             }
         });
 
-        // Notify Specific Users
         notifySpecificBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
