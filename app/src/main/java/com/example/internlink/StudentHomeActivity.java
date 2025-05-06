@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -86,27 +87,48 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void setupNotificationBell() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
         DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("student");
 
-        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        userReadsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
-                final int[] totalCount = {0};
+            public void onDataChange(@NonNull DataSnapshot readsSnapshot) {
+                final List<String> unreadIds = new ArrayList<>();
 
-                totalCount[0] += (int) globalSnapshot.getChildrenCount();
-
-                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
-                        totalCount[0] += (int) roleSnapshot.getChildrenCount();
-
-                        if (totalCount[0] > 0) {
-                            notificationBadge.setVisibility(View.VISIBLE);
-                            notificationBadge.setText(String.valueOf(totalCount[0]));
-                        } else {
-                            notificationBadge.setVisibility(View.GONE);
+                    public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
+                        for (DataSnapshot snap : globalSnapshot.getChildren()) {
+                            if (!readsSnapshot.hasChild(snap.getKey())) {
+                                unreadIds.add(snap.getKey());
+                            }
                         }
+
+                        roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
+                                for (DataSnapshot snap : roleSnapshot.getChildren()) {
+                                    if (!readsSnapshot.hasChild(snap.getKey())) {
+                                        unreadIds.add(snap.getKey());
+                                    }
+                                }
+
+                                // Update the badge
+                                if (!unreadIds.isEmpty()) {
+                                    notificationBadge.setVisibility(View.VISIBLE);
+                                    notificationBadge.setText(String.valueOf(unreadIds.size()));
+                                } else {
+                                    notificationBadge.setVisibility(View.GONE);
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                notificationBadge.setVisibility(View.GONE);
+                            }
+                        });
                     }
 
                     @Override
@@ -126,6 +148,11 @@ public class StudentHomeActivity extends AppCompatActivity
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
             startActivity(intent);
         });
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setupNotificationBell(); // Refresh the badge when returning to this screen
     }
 
 

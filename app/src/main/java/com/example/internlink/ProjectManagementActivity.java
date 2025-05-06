@@ -6,7 +6,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,9 +35,13 @@ public class ProjectManagementActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ProjectAdapter adapter;
     private List<Project> projectList;
-    private DatabaseReference projectsRef;
+    private DatabaseReference projectsRef, categoryRef;
     private ChipGroup chipGroup;
     private ExtendedFloatingActionButton fabSearch;
+    private EditText etNewCategory;
+    private ImageButton btnAddCategory;
+    private LinearLayout categoryGroup;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +56,27 @@ public class ProjectManagementActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         chipGroup = findViewById(R.id.chipGroup);
         fabSearch = findViewById(R.id.fabSearch);
+
+        etNewCategory = findViewById(R.id.etNewCategory);
+        btnAddCategory = findViewById(R.id.btnAddCategory);
+        categoryGroup = findViewById(R.id.categoryGroup);
+
+        categoryRef = FirebaseDatabase.getInstance().getReference("categories");
+
+        btnAddCategory.setOnClickListener(v -> {
+            String newCategory = etNewCategory.getText().toString().trim();
+            if (!newCategory.isEmpty()) {
+                categoryRef.child(newCategory).setValue(true)
+                        .addOnSuccessListener(unused -> {
+                            Toast.makeText(this, "Category added", Toast.LENGTH_SHORT).show();
+                            etNewCategory.setText("");
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(this, "Failed to add", Toast.LENGTH_SHORT).show());
+            } else {
+                Toast.makeText(this, "Enter category name", Toast.LENGTH_SHORT).show();
+            }
+        });
+        loadCategories();
 
         // Setup toolbar
         setSupportActionBar(findViewById(R.id.toolbar));
@@ -71,6 +99,62 @@ public class ProjectManagementActivity extends AppCompatActivity {
         // Search button click listener
         fabSearch.setOnClickListener(v -> showSearchDialog());
     }
+    private void loadCategories() {
+        categoryRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                categoryGroup.removeAllViews(); // Clear existing views
+                for (DataSnapshot categorySnap : snapshot.getChildren()) {
+                    String category = categorySnap.getKey();
+                    if (category != null) {
+                        // Create a container
+                        LinearLayout itemLayout = new LinearLayout(ProjectManagementActivity.this);
+                        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+                        itemLayout.setPadding(8, 8, 8, 8);
+
+                        // Category name
+                        TextView tvCategory = new TextView(ProjectManagementActivity.this);
+                        tvCategory.setText(category);
+                        tvCategory.setTextSize(16);
+                        tvCategory.setTextColor(getResources().getColor(R.color.black));
+                        tvCategory.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+                        // Delete button
+                        ImageView deleteIcon = new ImageView(ProjectManagementActivity.this);
+                        deleteIcon.setImageResource(R.drawable.ic_close); // Use your delete icon
+                        deleteIcon.setPadding(16, 0, 16, 0);
+                        // Decrease the size here
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,  // Width
+                                LinearLayout.LayoutParams.WRAP_CONTENT   // Height
+                        );
+                        params.width = 48;  // Set width as 48dp (you can modify the size as per your need)
+                        params.height = 48; // Set height as 48dp
+                        deleteIcon.setLayoutParams(params);
+                        deleteIcon.setOnClickListener(v -> {
+                            categoryRef.child(category).removeValue()
+                                    .addOnSuccessListener(unused ->
+                                            Toast.makeText(ProjectManagementActivity.this, "Category deleted", Toast.LENGTH_SHORT).show())
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(ProjectManagementActivity.this, "Failed to delete", Toast.LENGTH_SHORT).show());
+                        });
+
+                        itemLayout.addView(tvCategory);
+                        itemLayout.addView(deleteIcon);
+                        categoryGroup.addView(itemLayout);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ProjectManagementActivity.this, "Failed to load categories", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+
 
     private void setupFilterChips() {
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
