@@ -1,41 +1,75 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/green_gradient_bg">
     <!--  Modern Toolbar  -->
     <com.google.android.material.appbar.MaterialToolbar android:id="@+id/toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize" android:background="@color/white" android:elevation="1dp" app:navigationIcon="@drawable/left_arrow_green" app:title="Project Management" app:titleTextColor="@color/black"/>
-    <!-- Add Category Section -->
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/addCategorySection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:gravity="center_vertical">
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        android:backgroundTint="@android:color/white"
+        app:strokeColor="@color/green"
+        app:strokeWidth="1dp"
+        android:padding="12dp">
 
-        <EditText
-            android:id="@+id/etNewCategory"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="New Category"
-            android:backgroundTint="#2C2C2C"
-            android:padding="8dp"
-            android:inputType="textCapWords" />
+            android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/btnAddCategory"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_add"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Add Category"
-            app:tint="@color/green" />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/categoryGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_marginTop="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="New Category"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                app:boxStrokeColor="@color/green"
+                android:padding="10dp"
+                app:boxBackgroundMode="outline"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etNewCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="5dp"
+                    android:inputType="textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ImageButton
+                android:id="@+id/btnAddCategory"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/btn_round_green"
+                android:src="@drawable/ic_add"
+                android:contentDescription="Add Category"
+                android:padding="10dp"
+                app:tint="@android:color/white" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/categoryGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="12dp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+
 
 
 
