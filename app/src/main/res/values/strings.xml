@@ -10,5 +10,8 @@
         <item>Job</item>
         <item>Event</item>
     </string-array>
-
+    <string-array name="stipend_options">
+        <item>Paid</item>
+        <item>Unpaid</item>
+    </string-array>
 </resources>

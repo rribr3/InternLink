@@ -34,4 +34,5 @@
     <!-- Star sizes -->
     <dimen name="star_size">32dp</dimen>
     <dimen name="small_star_size">16dp</dimen>
+
 </resources>
