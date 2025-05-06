@@ -39,10 +39,36 @@ public class UserManagementActivity extends AppCompatActivity {
 
         databaseRef = FirebaseDatabase.getInstance().getReference();
 
-        // Replace "studentId1" and "companyId1" with real IDs from your database
-        cardStudents.setOnClickListener(v -> showStudentPopup("studentId1"));
-        cardCompanies.setOnClickListener(v -> showCompanyPopup("companyId1"));
+        cardStudents.setOnClickListener(v -> loadAndShowPopupByRole("student"));
+        cardCompanies.setOnClickListener(v -> loadAndShowPopupByRole("company"));
+
     }
+
+    private void loadAndShowPopupByRole(String roleToFetch) {
+        databaseRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot userSnap : snapshot.getChildren()) {
+                    String role = userSnap.child("role").getValue(String.class);
+                    if (role != null && role.equals(roleToFetch)) {
+                        String userId = userSnap.getKey();
+                        if (roleToFetch.equals("student")) {
+                            showStudentPopup(userId);
+                        } else if (roleToFetch.equals("company")) {
+                            showCompanyPopup(userId);
+                        }
+                        break; // Remove this `break` if you want to loop through all
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(UserManagementActivity.this, "Failed to fetch users", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     private void showStudentPopup(String studentId) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
