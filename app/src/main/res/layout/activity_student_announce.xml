@@ -60,26 +60,71 @@
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
 
+        <!-- Search & Filter Bar -->
+        <LinearLayout
+            android:id="@+id/search_filter_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="?attr/actionBarSize"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <!-- SearchView with rounded background -->
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:queryHint="Search announcements"
+                android:background="@drawable/search_background"
+                android:iconifiedByDefault="false" />
+
+            <!-- Filter with icon -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:orientation="horizontal"
+                android:background="@drawable/spinner_background"
+                android:padding="8dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_filter_list"
+                    app:tint="@color/black"
+                    android:contentDescription="Filter Icon"
+                    android:layout_marginEnd="4dp" />
+
+                <Spinner
+                    android:id="@+id/filter_spinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:entries="@array/announcement_filters"
+                    android:spinnerMode="dropdown" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Content ScrollView -->
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize"
+            android:layout_marginTop="80dp"
             android:background="@color/light_gray_bg"
             android:padding="16dp"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <LinearLayout
-                android:id="@+id/announcement_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:divider="?android:attr/dividerHorizontal"
-                android:showDividers="middle"
-                android:dividerPadding="8dp">
-
-
-            </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-</androidx.drawerlayout.widget.DrawerLayout>
+        <LinearLayout
+            android:id="@+id/announcement_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:divider="?android:attr/dividerHorizontal"
+            android:showDividers="middle"
+            android:dividerPadding="8dp" />
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </androidx.drawerlayout.widget.DrawerLayout>

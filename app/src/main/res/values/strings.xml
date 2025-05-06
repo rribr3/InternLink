@@ -4,4 +4,11 @@
         <item>English</item>
         <item>Français</item>
     </string-array>
+    <string-array name="announcement_filters">
+        <item>All</item>
+        <item>Internship</item>
+        <item>Job</item>
+        <item>Event</item>
+    </string-array>
+
 </resources>
