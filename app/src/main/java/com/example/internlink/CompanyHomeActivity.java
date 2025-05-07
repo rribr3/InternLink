@@ -141,14 +141,67 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         setupProjectsRecyclerView();
         setupApplicantsRecyclerView();
         updateNotificationBadge(5);
+        fetchProjectStats();
+    }
+    private void fetchProjectStats() {
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+
+        projectsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int activeCount = 0;
+                int pendingCount = 0;
+                int completedCount = 0;
+
+                for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                    String status = projectSnapshot.child("status").getValue(String.class);
+                    if (status != null) {
+                        switch (status) {
+                            case "active":
+                                activeCount++;
+                                break;
+                            case "pending":
+                                pendingCount++;
+                                break;
+                            case "completed":
+                                completedCount++;
+                                break;
+                        }
+                    }
+                }
+
+                updateProjectStats(activeCount, pendingCount, completedCount);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CompanyHomeActivity.this, "Failed to load project stats: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateProjectStats(int active, int pending, int completed) {
+        // Update the StatItem views with the fetched counts
+        StatItem activeProjects = findViewById(R.id.activeProjects);
+        StatItem pendingProjects = findViewById(R.id.pendingProjects);
+        StatItem completedProjects = findViewById(R.id.completedProjects);
+
+        activeProjects.setCount(active);
+        pendingProjects.setCount(pending);
+        completedProjects.setCount(completed);
     }
 
     private void setupProjectsRecyclerView() {
         RecyclerView projectsRecycler = findViewById(R.id.projects_recycler_view);
         projectsRecycler.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        List<EmployerProject> projects = getSampleProjects();
-        CompanyProjectsAdapter adapter = new CompanyProjectsAdapter(projects);
-        projectsRecycler.setAdapter(adapter);
+
+        getSampleProjectsFromFirebase(new ProjectsCallback() {
+            @Override
+            public void onProjectsLoaded(List<EmployerProject> projects) {
+                CompanyProjectsAdapter adapter = new CompanyProjectsAdapter(projects);
+                projectsRecycler.setAdapter(adapter);
+            }
+        });
     }
 
     private void setupApplicantsRecyclerView() {
@@ -168,13 +221,56 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
-    private List<EmployerProject> getSampleProjects() {
+    private void getSampleProjectsFromFirebase(ProjectsCallback callback) {
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
         List<EmployerProject> projects = new ArrayList<>();
-        projects.add(new EmployerProject("Mobile Developer", 12, 3, R.drawable.ic_edit));
-        projects.add(new EmployerProject("Data Scientist", 8, 5, R.drawable.ic_pending));
-        projects.add(new EmployerProject("UX Designer", 15, 2, R.drawable.ic_approve));
-        return projects;
+
+        projectsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                projects.clear(); // Clear the list to avoid duplicates on subsequent updates
+                for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                    String title = projectSnapshot.child("title").getValue(String.class);
+                    Long positionsCount = projectSnapshot.child("studentsRequired").getValue(Long.class);
+                    Long applicantsCount = projectSnapshot.child("applicants").getChildrenCount();
+                    String status = projectSnapshot.child("status").getValue(String.class);
+
+                    // Determine the project icon based on the status
+                    int projectIcon;
+                    if ("active".equals(status)) {
+                        projectIcon = R.drawable.ic_edit;
+                    } else if ("pending".equals(status)) {
+                        projectIcon = R.drawable.ic_pending;
+                    } else if ("completed".equals(status)) {
+                        projectIcon = R.drawable.ic_approve;
+                    } else {
+                        // Default icon if status is unknown
+                        projectIcon = R.drawable.ic_project;
+                    }
+
+                    // Add the project to the list
+                    projects.add(new EmployerProject(
+                            title != null ? title : "Untitled Project",
+                            applicantsCount != null ? applicantsCount.intValue() : 0,  // Now second param is applicants
+                            positionsCount != null ? positionsCount.intValue() : 0,   // Third param is positions
+                            projectIcon
+                    ));
+
+                }
+                // Pass the list to the callback
+                callback.onProjectsLoaded(projects);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CompanyHomeActivity.this, "Failed to load projects: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+    public interface ProjectsCallback {
+        void onProjectsLoaded(List<EmployerProject> projects);
+    }
+
 
     private List<Applicant> getSampleApplicants() {
         List<Applicant> applicants = new ArrayList<>();
@@ -213,17 +309,22 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         RecyclerView recyclerView = dialog.findViewById(R.id.all_projects_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        List<EmployerProject> allProjects = getSampleProjects();
-        ProjectDetailsAdapter adapter = new ProjectDetailsAdapter(allProjects, project ->
-                Toast.makeText(this, "Selected: " + project.getTitle(), Toast.LENGTH_SHORT).show()
-        );
-        recyclerView.setAdapter(adapter);
+        getSampleProjectsFromFirebase(new ProjectsCallback() {
+            @Override
+            public void onProjectsLoaded(List<EmployerProject> projects) {
+                ProjectDetailsAdapter adapter = new ProjectDetailsAdapter(projects, project ->
+                        Toast.makeText(CompanyHomeActivity.this, "Selected: " + project.getTitle(), Toast.LENGTH_SHORT).show()
+                );
+                recyclerView.setAdapter(adapter);
+            }
+        });
 
         ImageView btnClose = dialog.findViewById(R.id.btn_close);
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
+
 
     private void showAllApplicantsDialog() {
         Dialog dialog = new Dialog(this);

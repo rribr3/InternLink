@@ -5,8 +5,6 @@ public class EmployerProject {
     private int applicantsCount;
     private int positionsCount;
     private int iconResId;
-    private int positions;
-    private int applicants;
 
     public EmployerProject(String title, int applicantsCount, int positionsCount, int iconResId) {
         this.title = title;
@@ -30,19 +28,5 @@ public class EmployerProject {
 
     public int getIconResId() {
         return iconResId;
-    }
-    public int getPositions() {
-        return positions;
-    }
-
-    public void setPositions(int positions) {
-        this.positions = positions;
-    }
-    public int getApplicants() {
-        return applicants;
-    }
-
-    public void setApplicants(int applicants) {
-        this.applicants = applicants;
     }
 }

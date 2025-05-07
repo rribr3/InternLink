@@ -29,6 +29,7 @@
             android:orientation="horizontal">
 
             <com.example.internlink.StatItem
+                android:id="@+id/activeProjects"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -38,6 +39,7 @@
                 tools:ignore="MissingClass" />
 
             <com.example.internlink.StatItem
+                android:id="@+id/pendingProjects"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -46,6 +48,7 @@
                 app:label="Pending" />
 
             <com.example.internlink.StatItem
+                android:id="@+id/completedProjects"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

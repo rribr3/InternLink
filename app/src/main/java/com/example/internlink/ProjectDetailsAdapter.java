@@ -42,8 +42,8 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
 
         // Bind the data to the views
         holder.projectTitle.setText(project.getTitle());
-        holder.positionsCount.setText(String.valueOf(project.getPositions()));
-        holder.applicantsCount.setText(String.valueOf(project.getApplicants()));
+        holder.positionsCount.setText(String.valueOf(project.getPositionsCount()));
+        holder.applicantsCount.setText(String.valueOf(project.getApplicantsCount()));
 
         // Set onClickListener for the "View Details" button
         holder.viewDetailsButton.setOnClickListener(v -> {

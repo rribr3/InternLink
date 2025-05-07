@@ -309,34 +309,7 @@
                         android:inputType="numberDecimal"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- File Upload -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Upload Reference Files (Optional)"
-                    android:textColor="@color/black"
-                    android:textSize="14sp"
-                    android:layout_marginTop="16dp"/>
 
-                <Button
-                    android:id="@+id/upload_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="@color/chip_close_icon"
-                    android:text="+ Add Files"
-                    android:textColor="@color/black"
-                    android:textAllCaps="false"
-                    app:icon="@drawable/ic_download"
-                    app:iconTint="@color/black"/>
-
-                <!-- Uploaded Files Preview -->
-                <LinearLayout
-                    android:id="@+id/uploaded_files_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone"/>
 
                 <!-- Contact Information Section -->
                 <TextView

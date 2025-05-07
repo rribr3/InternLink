@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -52,7 +53,7 @@ public class CreateProject extends AppCompatActivity {
     private TextInputEditText startDateEditText, deadlineEditText;
     private ChipGroup skillsChipGroup;
     private TextView contactPersonText, contactEmailText, contactPhoneText;
-    private LinearLayout uploadedFilesContainer, amountInputLayout;
+    private LinearLayout  amountInputLayout;
 
     // Quiz Fields
     private TextInputEditText quizTitleEditText, quizInstructionsEditText;
@@ -101,8 +102,7 @@ public class CreateProject extends AppCompatActivity {
         // Setup skills input
         setupSkillsInput();
 
-        // Setup file picker
-        setupFilePicker();
+
 
         // Load company contact info
         loadContactInfo();
@@ -124,7 +124,6 @@ public class CreateProject extends AppCompatActivity {
         deadlineEditText = findViewById(R.id.deadline_edit_text);
         skillsChipGroup = findViewById(R.id.skills_chip_group);
         amountInputLayout = findViewById(R.id.amount_input_layout);
-        uploadedFilesContainer = findViewById(R.id.uploaded_files_container);
 
         // Contact info
         contactPersonText = findViewById(R.id.contact_person_text);
@@ -278,43 +277,6 @@ public class CreateProject extends AppCompatActivity {
         skillsChipGroup.addView(chip);
     }
 
-    private void setupFilePicker() {
-        filePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Uri uri = result.getData().getData();
-                        if (uri != null) {
-                            fileUris.add(uri);
-                            showUploadedFiles();
-                        }
-                    }
-                });
-
-        findViewById(R.id.upload_button).setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("/");
-            filePickerLauncher.launch(intent);
-        });
-    }
-
-    private void showUploadedFiles() {
-        uploadedFilesContainer.removeAllViews();
-        uploadedFilesContainer.setVisibility(fileUris.isEmpty() ? View.GONE : View.VISIBLE);
-
-        for (Uri uri : fileUris) {
-            TextView fileView = new TextView(this);
-            fileView.setText(uri.getLastPathSegment());
-            fileView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                    R.drawable.ic_approve, 0, R.drawable.ic_close, 0);
-            fileView.setCompoundDrawablePadding(16);
-            fileView.setOnClickListener(v -> {
-                fileUris.remove(uri);
-                showUploadedFiles();
-            });
-            uploadedFilesContainer.addView(fileView);
-        }
-    }
 
     private void loadContactInfo() {
         DatabaseReference companyRef = FirebaseDatabase.getInstance()
@@ -377,6 +339,12 @@ public class CreateProject extends AppCompatActivity {
         LinearLayout optionsContainer = dialogView.findViewById(R.id.options_container);
         Button addOptionButton = dialogView.findViewById(R.id.add_option_button);
 
+        // Verify all views were found
+        if (questionText == null || questionTypeSpinner == null || optionsContainer == null || addOptionButton == null) {
+            Toast.makeText(this, "Error loading question dialog", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // Setup question type spinner
         ArrayAdapter<CharSequence> typeAdapter = ArrayAdapter.createFromResource(
                 this,
@@ -410,6 +378,11 @@ public class CreateProject extends AppCompatActivity {
             CheckBox correctCheckbox = optionView.findViewById(R.id.correct_checkbox);
             ImageView removeOption = optionView.findViewById(R.id.remove_option);
 
+            if (optionText == null || correctCheckbox == null || removeOption == null) {
+                Toast.makeText(CreateProject.this, "Error loading option fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             removeOption.setOnClickListener(removeView -> {
                 optionsContainer.removeView(optionView);
             });
@@ -440,15 +413,17 @@ public class CreateProject extends AppCompatActivity {
                     TextInputEditText optionText = optionView.findViewById(R.id.option_text);
                     CheckBox correctCheckbox = optionView.findViewById(R.id.correct_checkbox);
 
-                    String option = optionText.getText().toString().trim();
-                    if (!option.isEmpty()) {
-                        Map<String, Object> optionData = new HashMap<>();
-                        optionData.put("text", option);
-                        optionData.put("correct", correctCheckbox.isChecked());
-                        options.add(optionData);
+                    if (optionText != null && correctCheckbox != null) {
+                        String option = optionText.getText().toString().trim();
+                        if (!option.isEmpty()) {
+                            Map<String, Object> optionData = new HashMap<>();
+                            optionData.put("text", option);
+                            optionData.put("correct", correctCheckbox.isChecked());
+                            options.add(optionData);
 
-                        if (correctCheckbox.isChecked()) {
-                            hasCorrectAnswer = true;
+                            if (correctCheckbox.isChecked()) {
+                                hasCorrectAnswer = true;
+                            }
                         }
                     }
                 }
@@ -554,7 +529,7 @@ public class CreateProject extends AppCompatActivity {
         project.put("companyName", FirebaseAuth.getInstance().getCurrentUser().getDisplayName()); // or get from your company data
         project.put("createdAt", ServerValue.TIMESTAMP); // Use server timestamp
         project.put("status", "pending"); // Initial status
-        project.put("applicants", new HashMap<>()); // Empty map for applicants
+        project.put("applicants", 0);
 
         if (compensationType.equals("Paid")) {
             project.put("amount", amountEditText.getText().toString());
@@ -562,7 +537,6 @@ public class CreateProject extends AppCompatActivity {
 
         project.put("companyId", companyId);
         project.put("timestamp", System.currentTimeMillis());
-        project.put("status", "active");
 
         // Add quiz if enabled
         SwitchMaterial quizToggle = findViewById(R.id.quiz_toggle);
@@ -592,21 +566,25 @@ public class CreateProject extends AppCompatActivity {
         progressDialog.setMessage("Publishing project...");
         progressDialog.setCancelable(false);
         progressDialog.show();
+
         // Save to Firebase
         String projectId = databaseReference.push().getKey();
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            progressDialog.dismiss();
+            Toast.makeText(this, "You must be logged in to publish a project", Toast.LENGTH_SHORT).show();
+            return;
+        }
         databaseReference.child(projectId).setValue(project)
                 .addOnSuccessListener(aVoid -> {
+                    progressDialog.dismiss();
                     Toast.makeText(this, "Project published successfully", Toast.LENGTH_SHORT).show();
-
-                    // Optionally clear the form or navigate away
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    // Show more detailed error message
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-
-                    // Optionally keep the form data so user doesn't lose their work
-                    // or implement a "Save Draft" feature
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Failed to publish project: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    // Log the error for debugging
+                    Log.e("CreateProject", "Error publishing project", e);
                 });
     }
 
