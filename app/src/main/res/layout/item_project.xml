@@ -13,6 +13,7 @@
         <TextView android:id="@+id/tvProjectDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:ellipsize="end" android:maxLines="3" android:textColor="#616161" android:textSize="14sp"/>
         <!--  Tags  -->
         <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroupTags" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:chipSpacing="4dp"/>
+
         <!--  Action Buttons - Improved with separated icon and text  -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal">
             <!--  Approve Button  -->

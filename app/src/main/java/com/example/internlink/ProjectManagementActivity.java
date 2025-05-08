@@ -42,7 +42,6 @@ public class ProjectManagementActivity extends AppCompatActivity {
     private ImageButton btnAddCategory;
     private LinearLayout categoryGroup;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +55,6 @@ public class ProjectManagementActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         chipGroup = findViewById(R.id.chipGroup);
         fabSearch = findViewById(R.id.fabSearch);
-
         etNewCategory = findViewById(R.id.etNewCategory);
         btnAddCategory = findViewById(R.id.btnAddCategory);
         categoryGroup = findViewById(R.id.categoryGroup);
@@ -99,6 +97,7 @@ public class ProjectManagementActivity extends AppCompatActivity {
         // Search button click listener
         fabSearch.setOnClickListener(v -> showSearchDialog());
     }
+
     private void loadCategories() {
         categoryRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -121,15 +120,14 @@ public class ProjectManagementActivity extends AppCompatActivity {
 
                         // Delete button
                         ImageView deleteIcon = new ImageView(ProjectManagementActivity.this);
-                        deleteIcon.setImageResource(R.drawable.ic_close); // Use your delete icon
+                        deleteIcon.setImageResource(R.drawable.ic_close);
                         deleteIcon.setPadding(16, 0, 16, 0);
-                        // Decrease the size here
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,  // Width
-                                LinearLayout.LayoutParams.WRAP_CONTENT   // Height
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
                         );
-                        params.width = 48;  // Set width as 48dp (you can modify the size as per your need)
-                        params.height = 48; // Set height as 48dp
+                        params.width = 48;
+                        params.height = 48;
                         deleteIcon.setLayoutParams(params);
                         deleteIcon.setOnClickListener(v -> {
                             categoryRef.child(category).removeValue()
@@ -152,9 +150,6 @@ public class ProjectManagementActivity extends AppCompatActivity {
             }
         });
     }
-
-
-
 
     private void setupFilterChips() {
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
@@ -181,6 +176,11 @@ public class ProjectManagementActivity extends AppCompatActivity {
                     Project project = dataSnapshot.getValue(Project.class);
                     if (project != null) {
                         project.setId(dataSnapshot.getKey());
+                        // Default status to "pending" if not set
+                        if (project.getStatus() == null || project.getStatus().isEmpty()) {
+                            project.setStatus("pending");
+                        }
+
                         if (status.equals("all") || project.getStatus().equalsIgnoreCase(status)) {
                             projectList.add(project);
                         }
@@ -258,9 +258,31 @@ public class ProjectManagementActivity extends AppCompatActivity {
                 }
             }
 
-            // Set click listeners
-            holder.btnApprove.setOnClickListener(v -> approveProject(project));
-            holder.btnReject.setOnClickListener(v -> rejectProject(project));
+            // Set click listeners for approve/reject buttons
+            holder.btnApprove.setOnClickListener(v -> {
+                project.setStatus("approved");
+                projectsRef.child(project.getId()).child("status").setValue("approved")
+                        .addOnSuccessListener(aVoid -> {
+                            notifyItemChanged(position);
+                            Toast.makeText(holder.itemView.getContext(), "Project approved", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(holder.itemView.getContext(), "Failed to approve project", Toast.LENGTH_SHORT).show();
+                        });
+            });
+
+            holder.btnReject.setOnClickListener(v -> {
+                project.setStatus("rejected");
+                projectsRef.child(project.getId()).child("status").setValue("rejected")
+                        .addOnSuccessListener(aVoid -> {
+                            notifyItemChanged(position);
+                            Toast.makeText(holder.itemView.getContext(), "Project rejected", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(holder.itemView.getContext(), "Failed to reject project", Toast.LENGTH_SHORT).show();
+                        });
+            });
+
             holder.btnTags.setOnClickListener(v -> editTags(project));
         }
 
@@ -317,25 +339,9 @@ public class ProjectManagementActivity extends AppCompatActivity {
         }
     }
 
-    private void approveProject(Project project) {
-        projectsRef.child(project.getId()).child("status").setValue("approved")
-                .addOnSuccessListener(aVoid -> showToast("Project approved"))
-                .addOnFailureListener(e -> showToast("Approval failed"));
-    }
-
-    private void rejectProject(Project project) {
-        projectsRef.child(project.getId()).child("status").setValue("rejected")
-                .addOnSuccessListener(aVoid -> showToast("Project rejected"))
-                .addOnFailureListener(e -> showToast("Rejection failed"));
-    }
-
     private void editTags(Project project) {
         // Implement tag editing dialog
         Toast.makeText(this, "Tag editing will be implemented here", Toast.LENGTH_SHORT).show();
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     // Project model class

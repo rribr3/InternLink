@@ -157,7 +157,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     String status = projectSnapshot.child("status").getValue(String.class);
                     if (status != null) {
                         switch (status) {
-                            case "active":
+                            case "approved":
                                 activeCount++;
                                 break;
                             case "pending":
@@ -237,12 +237,14 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
                     // Determine the project icon based on the status
                     int projectIcon;
-                    if ("active".equals(status)) {
+                    if ("approved".equals(status)) {
                         projectIcon = R.drawable.ic_edit;
                     } else if ("pending".equals(status)) {
                         projectIcon = R.drawable.ic_pending;
                     } else if ("completed".equals(status)) {
                         projectIcon = R.drawable.ic_approve;
+                    } else if ("rejected".equals(status)) {
+                        projectIcon = R.drawable.ic_reject;  // Make sure you have this icon
                     } else {
                         // Default icon if status is unknown
                         projectIcon = R.drawable.ic_project;
