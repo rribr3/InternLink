@@ -64,8 +64,8 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
 
         public void bind(Project project) {
             titleText.setText(project.getTitle());
-            companyLogo.setImageResource(project.getCompanyLogo());
-            timeLeftText.setText(project.getTimeLeft());
+            //companyLogo.setImageResource(project.getCompanyLogo());
+            //timeLeftText.setText(project.getTimeLeft());
 
             skillsChipGroup.removeAllViews();
             for (String skill : project.getSkills()) {

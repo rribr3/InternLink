@@ -1,6 +1,7 @@
 package com.example.internlink;
 
 public class EmployerProject {
+    private String projectId;
     private String title;
     private int applicantsCount;
     private int positionsCount;
@@ -11,6 +12,9 @@ public class EmployerProject {
         this.applicantsCount = applicantsCount;
         this.positionsCount = positionsCount;
         this.iconResId = iconResId;
+    }
+    public String getProjectId() {
+        return projectId;
     }
 
     // Getters

@@ -167,14 +167,7 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private List<Project> getSampleProjects() {
-        List<Project> projects = new ArrayList<>();
-        projects.add(new Project("Mobile App Development", "Google", R.drawable.googlelogo,
-                new String[]{"Android", "Kotlin", "UI/UX"}, "3 days left"));
-        projects.add(new Project("Backend API Development", "Amazon", R.drawable.googlelogo,
-                new String[]{"Java", "Spring Boot", "AWS"}, "5 days left"));
-        projects.add(new Project("Data Science Internship", "Microsoft", R.drawable.ic_microsoft,
-                new String[]{"Python", "Machine Learning", "Pandas"}, "2 days left"));
-        return projects;
+        return java.util.Collections.emptyList();
     }
 
     private void setupClickListeners() {

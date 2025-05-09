@@ -37,27 +37,11 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/notification_feed_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="12dp">
+            android:layout_marginTop="12dp"/>
 
-            <!-- Notification Item 1 -->
-            <include layout="@layout/item_notification"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- Notification Item 2 -->
-            <include layout="@layout/item_notification"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"/>
-
-            <!-- Notification Item 3 -->
-            <include layout="@layout/item_notification"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

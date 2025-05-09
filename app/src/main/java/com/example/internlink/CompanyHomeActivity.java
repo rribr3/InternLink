@@ -4,12 +4,14 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +32,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CompanyHomeActivity extends AppCompatActivity implements
@@ -46,6 +49,31 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_company_home);
+
+        /*findViewById(R.id.view_details_button).setOnClickListener(v -> {
+            // For demonstration, we'll use the first project ID from Firebase
+            DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+            projectsRef.limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                            String projectId = projectSnapshot.getKey();
+                            Intent intent = new Intent(CompanyHomeActivity.this, ProjectDetailsActivity.class);
+                            intent.putExtra("PROJECT_ID", projectId);
+                            startActivity(intent);
+                        }
+                    } else {
+                        Toast.makeText(CompanyHomeActivity.this, "No projects found", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(CompanyHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });*/
 
         welcomeText = findViewById(R.id.welcome_text);
 
@@ -71,8 +99,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         initializeViews();
         setupNavigationDrawer();
         setupDashboardContent();
+        fetchRecentCompanyAnnouncements();
         setupClickListeners();
         setupNotificationBell();
+        fetchCompanyStats();
     }
     private String getCurrentCompanyUid() {
         return FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -144,9 +174,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         fetchProjectStats();
     }
     private void fetchProjectStats() {
+        String companyId = getCurrentCompanyUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
 
-        projectsRef.addValueEventListener(new ValueEventListener() {
+        projectsRef.orderByChild("companyId").equalTo(companyId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 int activeCount = 0;
@@ -222,20 +253,20 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void getSampleProjectsFromFirebase(ProjectsCallback callback) {
+        String companyId = getCurrentCompanyUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
         List<EmployerProject> projects = new ArrayList<>();
 
-        projectsRef.addValueEventListener(new ValueEventListener() {
+        projectsRef.orderByChild("companyId").equalTo(companyId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                projects.clear(); // Clear the list to avoid duplicates on subsequent updates
+                projects.clear();
                 for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
                     String title = projectSnapshot.child("title").getValue(String.class);
                     Long positionsCount = projectSnapshot.child("studentsRequired").getValue(Long.class);
                     Long applicantsCount = projectSnapshot.child("applicants").getChildrenCount();
                     String status = projectSnapshot.child("status").getValue(String.class);
 
-                    // Determine the project icon based on the status
                     int projectIcon;
                     if ("approved".equals(status)) {
                         projectIcon = R.drawable.ic_edit;
@@ -244,22 +275,18 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     } else if ("completed".equals(status)) {
                         projectIcon = R.drawable.ic_approve;
                     } else if ("rejected".equals(status)) {
-                        projectIcon = R.drawable.ic_reject;  // Make sure you have this icon
+                        projectIcon = R.drawable.ic_reject;
                     } else {
-                        // Default icon if status is unknown
                         projectIcon = R.drawable.ic_project;
                     }
 
-                    // Add the project to the list
                     projects.add(new EmployerProject(
                             title != null ? title : "Untitled Project",
-                            applicantsCount != null ? applicantsCount.intValue() : 0,  // Now second param is applicants
-                            positionsCount != null ? positionsCount.intValue() : 0,   // Third param is positions
+                            applicantsCount != null ? applicantsCount.intValue() : 0,
+                            positionsCount != null ? positionsCount.intValue() : 0,
                             projectIcon
                     ));
-
                 }
-                // Pass the list to the callback
                 callback.onProjectsLoaded(projects);
             }
 
@@ -325,6 +352,117 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+
+    private void fetchRecentCompanyAnnouncements() {
+        DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
+        DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
+
+        List<DataSnapshot> allAnnouncements = new ArrayList<>();
+
+        ValueEventListenerCollector collector = new ValueEventListenerCollector(2, allAnnouncements, () -> {
+            processAndDisplayRecentAnnouncements(allAnnouncements);
+        });
+
+        globalRef.addListenerForSingleValueEvent(collector.getListener());
+        roleRef.addListenerForSingleValueEvent(collector.getListener());
+    }
+    private static class ValueEventListenerCollector {
+        private final int expected;
+        private int count = 0;
+        private final List<DataSnapshot> collectedSnapshots;
+        private final Runnable onAllCollected;
+
+        public ValueEventListenerCollector(int expectedCalls, List<DataSnapshot> snapshots, Runnable callback) {
+            this.expected = expectedCalls;
+            this.collectedSnapshots = snapshots;
+            this.onAllCollected = callback;
+        }
+
+        public ValueEventListener getListener() {
+            return new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot snap : snapshot.getChildren()) {
+                        collectedSnapshots.add(snap);
+                    }
+                    count++;
+                    if (count == expected) {
+                        onAllCollected.run();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    count++;
+                    if (count == expected) {
+                        onAllCollected.run();
+                    }
+                }
+            };
+        }
+    }
+
+
+
+    private void processAndDisplayRecentAnnouncements(List<DataSnapshot> allAnnouncements) {
+        List<AnnouncementItem> announcementList = new ArrayList<>();
+
+        for (DataSnapshot snap : allAnnouncements) {
+            String title = snap.child("title").getValue(String.class);
+            String message = snap.child("message").getValue(String.class);
+            Long timestamp = snap.child("timestamp").getValue(Long.class);
+            if (title != null && message != null && timestamp != null) {
+                announcementList.add(new AnnouncementItem(title, message, timestamp));
+            }
+        }
+
+        // Sort by timestamp descending
+        Collections.sort(announcementList, (a1, a2) -> Long.compare(a2.timestamp, a1.timestamp));
+
+        // Limit to 3
+        List<AnnouncementItem> topThree = announcementList.subList(0, Math.min(3, announcementList.size()));
+
+        LinearLayout feedLayout = findViewById(R.id.notification_feed_container); // Add this ID in XML
+        feedLayout.removeAllViews();
+
+        for (AnnouncementItem item : topThree) {
+            View view = LayoutInflater.from(this).inflate(R.layout.item_notification, feedLayout, false);
+            ((TextView) view.findViewById(R.id.notification_text)).setText(item.title + ": " + item.message);
+
+            long now = System.currentTimeMillis();
+            long diffMillis = now - item.timestamp;
+
+            String timeAgo;
+            long hours = diffMillis / (1000 * 60 * 60);
+            if (hours < 24) {
+                timeAgo = hours + " hours ago";
+            } else {
+                long days = hours / 24;
+                if (days < 30) {
+                    timeAgo = days + (days == 1 ? " day ago" : " days ago");
+                } else {
+                    long months = days / 30;
+                    timeAgo = months + (months == 1 ? " month ago" : " months ago");
+                }
+            }
+
+            ((TextView) view.findViewById(R.id.notification_time)).setText(timeAgo);
+
+
+            feedLayout.addView(view);
+        }
+    }
+
+    private static class AnnouncementItem {
+        String title, message;
+        long timestamp;
+
+        AnnouncementItem(String title, String message, long timestamp) {
+            this.title = title;
+            this.message = message;
+            this.timestamp = timestamp;
+        }
     }
 
 
@@ -423,6 +561,56 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+    private void fetchCompanyStats() {
+        String companyId = getCurrentCompanyUid();
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+
+        projectsRef.orderByChild("companyId").equalTo(companyId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int totalProjects = 0;
+                int totalApplicants = 0;
+                int totalHired = 0;
+
+                // Count all projects and applicants for this company
+                for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                    totalProjects++;
+
+                    // Get number of applicants for this project
+                    Long applicants = projectSnapshot.child("applicants").getValue(Long.class);
+                    if (applicants != null) {
+                        totalApplicants += applicants;
+                    }
+
+                    // If you have a "hired" field in your project, count hired applicants
+                    if (projectSnapshot.hasChild("hired")) {
+                        Long hired = projectSnapshot.child("hired").getValue(Long.class);
+                        if (hired != null) {
+                            totalHired += hired;
+                        }
+                    }
+                }
+
+                // Update the UI
+                updateCompanyStats(totalProjects, totalApplicants, totalHired);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CompanyHomeActivity.this, "Failed to load company stats", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateCompanyStats(int totalProjects, int totalApplicants, int totalHired) {
+        TextView tvTotalProjects = findViewById(R.id.total_projects);
+        TextView tvTotalApplicants = findViewById(R.id.total_applicants);
+        TextView tvTotalHired = findViewById(R.id.total_hired);
+
+        tvTotalProjects.setText(String.valueOf(totalProjects));
+        tvTotalApplicants.setText(String.valueOf(totalApplicants));
+        tvTotalHired.setText(String.valueOf(totalHired));
     }
 
     private void showProfile() {
