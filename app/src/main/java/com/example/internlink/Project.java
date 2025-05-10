@@ -21,6 +21,7 @@ public class Project {
     private String contactEmail;
     private String contactPhone;
     private Quiz quiz;
+    private String status;
 
     // Empty constructor for Firebase
     public Project() {
@@ -29,6 +30,9 @@ public class Project {
     // Getters and setters for all fields
     public String getTitle() {
         return title;
+    }
+    public String getStatus() {
+        return status;
     }
 
     public void setTitle(String title) {

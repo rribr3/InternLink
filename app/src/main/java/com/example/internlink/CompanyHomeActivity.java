@@ -542,9 +542,11 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         if (id == R.id.nav_dashboard) {
             // Dashboard clicked
         } else if (id == R.id.nav_profile) {
-            showProfile();
+            Intent intent = new Intent(this, CreateCompanyProfileActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_projects) {
-            Toast.makeText(this, "My Projects", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, MyProjectsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_applicant) {
             Toast.makeText(this, "Applicants", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_messages) {
@@ -613,9 +615,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         tvTotalHired.setText(String.valueOf(totalHired));
     }
 
-    private void showProfile() {
-        Toast.makeText(this, "Opening profile", Toast.LENGTH_SHORT).show();
-    }
 
     @Override
     public void onBackPressed() {

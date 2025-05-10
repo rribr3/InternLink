@@ -4,9 +4,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,21 +21,8 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class CreateCompanyProfileActivity extends AppCompatActivity {
 
@@ -51,7 +36,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
     private MaterialButton btnSubmit;
 
     private Uri logoUri = null;
-    private final OkHttpClient httpClient = new OkHttpClient();
 
     private final ActivityResultLauncher<String> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -81,11 +65,7 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
 
         btnSubmit.setOnClickListener(v -> {
             if (validateInputs()) {
-                if (logoUri != null) {
-                    uploadLogoToImgur();
-                } else {
-                    submitProfile(null);
-                }
+                submitProfile(null); // logoUri upload skipped
             }
         });
     }
@@ -118,60 +98,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
                 TextUtils.isEmpty(editIndustry.getText()) ||
                 TextUtils.isEmpty(editLocation.getText()) ||
                 TextUtils.isEmpty(editEmail.getText()));
-    }
-
-    private void uploadLogoToImgur() {
-        ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setMessage("Uploading logo to Imgur...");
-        dialog.setCancelable(false);
-        dialog.show();
-
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(logoUri);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                baos.write(buffer, 0, bytesRead);
-            }
-            String base64Image = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-
-            RequestBody requestBody = RequestBody.create(
-                    MediaType.parse("application/x-www-form-urlencoded"),
-                    "image=" + base64Image);
-
-            Request request = new Request.Builder()
-                    .url("https://api.imgur.com/3/image")
-                    .post(requestBody)
-                    .addHeader("Authorization", "Client-ID YOUR_IMGUR_CLIENT_ID") // Replace with your real Client-ID
-                    .build();
-
-            httpClient.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        Toast.makeText(CreateCompanyProfileActivity.this, "Failed to upload logo", Toast.LENGTH_SHORT).show();
-                    });
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    runOnUiThread(() -> dialog.dismiss());
-                    try {
-                        String responseBody = response.body().string();
-                        JSONObject json = new JSONObject(responseBody);
-                        String imageUrl = json.getJSONObject("data").getString("link");
-                        runOnUiThread(() -> submitProfile(imageUrl));
-                    } catch (Exception e) {
-                        runOnUiThread(() -> Toast.makeText(CreateCompanyProfileActivity.this, "Error parsing Imgur response", Toast.LENGTH_SHORT).show());
-                    }
-                }
-            });
-        } catch (Exception e) {
-            dialog.dismiss();
-            Toast.makeText(this, "Error reading image", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void submitProfile(String logoUrl) {
