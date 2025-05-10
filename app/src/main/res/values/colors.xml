@@ -61,4 +61,11 @@
     <color name="green_success">#4CAF50</color>
     <color name="blue_info">#2196F3</color>
     <color name="red_error">#F44336</color>
+
+    <color name="surface">#FFFFFF</color>
+    <color name="onSurface">#1D1B20</color>
+    <color name="onSurfaceVariant">#49454F</color>
+    <color name="secondaryContainer">#E8DEF8</color>
+    <color name="onSecondaryContainer">#1D192B</color>
+    <color name="outline">#79747E</color>
 </resources>

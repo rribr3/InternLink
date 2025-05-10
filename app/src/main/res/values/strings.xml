@@ -14,4 +14,21 @@
         <item>Paid</item>
         <item>Unpaid</item>
     </string-array>
+    <!-- Expertise -->
+
+    <string name="career_matching">AI Career Matching</string>
+
+    <string name="skill_development">Skill Development</string>
+
+    <string name="employer_solutions">Employer Solutions</string>
+
+
+
+    <!-- Social -->
+
+    <string name="linkedin">Visit InternLink on LinkedIn</string>
+
+    <string name="twitter">Visit InternLink on Twitter</string>
+
+    <string name="website">Visit InternLink Website</string>
 </resources>

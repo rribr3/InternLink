@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-
 public class LoginActivity extends AppCompatActivity {
 
     ImageButton facebookButton;
@@ -172,7 +171,6 @@ public class LoginActivity extends AppCompatActivity {
                                             return;
                                         }
 
-
                                         String userRole = snapshot.child("role").getValue(String.class);
 
                                         if ("admin".equals(userRole)) {
@@ -203,6 +201,7 @@ public class LoginActivity extends AppCompatActivity {
 
         loginDialog.show();
     }
+
     private void showReactivationDialog(String userId) {
         new android.app.AlertDialog.Builder(this)
                 .setTitle("Account Deactivated")
@@ -229,7 +228,6 @@ public class LoginActivity extends AppCompatActivity {
                 .show();
     }
 
-
     private void showSignupPopup() {
         Dialog signupDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         signupDialog.setContentView(R.layout.signup_popup);
@@ -252,7 +250,6 @@ public class LoginActivity extends AppCompatActivity {
                 passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 toggleSignupPassword1.setImageResource(R.drawable.ic_eye_closed);
             }
-            passwordEditText.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL));
             passwordEditText.setSelection(passwordEditText.getText().length());
         });
 
@@ -264,7 +261,6 @@ public class LoginActivity extends AppCompatActivity {
                 confirmPasswordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 toggleSignupPassword2.setImageResource(R.drawable.ic_eye_closed);
             }
-            confirmPasswordEditText.setTypeface(android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL));
             confirmPasswordEditText.setSelection(confirmPasswordEditText.getText().length());
         });
 
@@ -284,55 +280,46 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+            ProgressDialog progressDialog = new ProgressDialog(this);
+            progressDialog.setMessage("Creating account...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
 
+            FirebaseAuth auth = FirebaseAuth.getInstance();
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
+                        progressDialog.dismiss();
                         if (task.isSuccessful()) {
                             String userId = auth.getCurrentUser().getUid();
-                            User user = new User(name, email, role);
-                            usersRef.child(userId).setValue(user);
-                            usersRef.child(userId).child("active").setValue(true);
 
-                            usersRef.child(userId).setValue(user)
-                                    .addOnCompleteListener(task1 -> {
-                                        if (task1.isSuccessful()) {
-                                            Toast.makeText(this, "Signup successful", Toast.LENGTH_SHORT).show();
-                                            View dialogView = signupDialog.findViewById(R.id.signup_root);
-                                            Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down);
+                            if ("company".equals(role)) {
+                                Intent intent = new Intent(LoginActivity.this, CreateCompanyProfileActivity.class);
+                                intent.putExtra("userId", userId);
+                                intent.putExtra("name", name);
+                                intent.putExtra("email", email);
+                                intent.putExtra("password", password); // optional
+                                startActivity(intent);
+                            } else {
+                                // Optionally: Create and save basic user info for non-company roles
+                                DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+                                usersRef.child(userId).child("name").setValue(name);
+                                usersRef.child(userId).child("email").setValue(email);
+                                usersRef.child(userId).child("role").setValue(role);
+                                finish();
+                            }
 
-                                            slideDown.setAnimationListener(new Animation.AnimationListener() {
-                                                @Override
-                                                public void onAnimationStart(Animation animation) {}
-
-                                                @Override
-                                                public void onAnimationEnd(Animation animation) {
-                                                    signupDialog.dismiss();
-                                                }
-
-                                                @Override
-                                                public void onAnimationRepeat(Animation animation) {}
-                                            });
-
-                                            dialogView.startAnimation(slideDown);
-
-                                        } else {
-                                            Toast.makeText(this, "Failed to save user data", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                            signupDialog.dismiss();
                         } else {
                             Exception e = task.getException();
-                            Toast.makeText(this, "Signup failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            e.printStackTrace();
+                            Toast.makeText(this, "Signup failed: " + (e != null ? e.getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
                         }
                     });
         });
 
         lowerButton.setOnClickListener(v -> signupDialog.dismiss());
-
         signupDialog.show();
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
