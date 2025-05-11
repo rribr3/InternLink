@@ -6,9 +6,10 @@
     </string-array>
     <string-array name="announcement_filters">
         <item>All</item>
-        <item>Internship</item>
-        <item>Job</item>
-        <item>Event</item>
+        <item>Read</item>
+        <item>Unread</item>
+        <item>Latest</item>
+        <item>Earliest</item>
     </string-array>
     <string-array name="stipend_options">
         <item>Paid</item>

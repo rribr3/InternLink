@@ -2,7 +2,10 @@ package com.example.internlink;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -26,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -51,6 +55,32 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         Log.d("CompanyHomeActivity", "onCreate started");
         setContentView(R.layout.activity_company_home);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String userId = currentUser.getUid();
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String status = snapshot.child("status").getValue(String.class);
+                    Long timestamp = snapshot.child("deactivationTimestamp").getValue(Long.class);
+                    if ("deactivated".equals(status) && timestamp != null) {
+                        long now = System.currentTimeMillis();
+                        long monthMillis = 30L * 24 * 60 * 60 * 1000;
+                        if (now - timestamp > monthMillis) {
+                            snapshot.getRef().removeValue(); // deletes user data
+                            currentUser.delete(); // deletes Firebase Auth account
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Log error if needed
+                }
+            });
+        }
 
         /*findViewById(R.id.view_details_button).setOnClickListener(v -> {
             // For demonstration, we'll use the first project ID from Firebase
@@ -105,7 +135,23 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         setupClickListeners();
         setupNotificationBell();
         fetchCompanyStats();
+        createNotificationChannel();
     }
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "notif_channel_id",
+                    "App Notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription("Channel for user notifications");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
     private String getCurrentCompanyUid() {
         return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
@@ -147,7 +193,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         });
     }
 
-
     private void initializeViews() {
         drawerLayout = findViewById(R.id.drawer_layout);
         welcomeText = findViewById(R.id.welcome_text);
@@ -161,13 +206,35 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         View headerView = navigationView.getHeaderView(0);
         TextView companyName = headerView.findViewById(R.id.company_name);
+        TextView companyMail = headerView.findViewById(R.id.company_mail);
 
-        if (companyName != null) {
-            companyName.setText("TechCorp Inc.");
-        } else {
-            Toast.makeText(this, "Company name TextView not found in header", Toast.LENGTH_SHORT).show();
-        }
+        String companyUid = getCurrentCompanyUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(companyUid);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String name = snapshot.child("name").getValue(String.class);
+                    String email = snapshot.child("email").getValue(String.class);
+
+                    if (name != null) {
+                        companyName.setText(name);
+                    }
+
+                    if (email != null) {
+                        companyMail.setText(email);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(CompanyHomeActivity.this, "Failed to load company info", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
 
     private void setupDashboardContent() {
         setupProjectsRecyclerView();
@@ -545,22 +612,24 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-
+        Intent intent;
         if (id == R.id.nav_dashboard) {
             // Dashboard clicked
         } else if (id == R.id.nav_profile) {
             Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_projects) {
-            Intent intent = new Intent(this, MyProjectsActivity.class);
+            intent = new Intent(this, MyProjectsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_applicant) {
             Toast.makeText(this, "Applicants", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
-            Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, CompanyAnnounce.class);
+            startActivity(intent);
         } else if (id == R.id.nav_settings) {
-            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, CompanySettingsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_help) {
             Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_logout) {

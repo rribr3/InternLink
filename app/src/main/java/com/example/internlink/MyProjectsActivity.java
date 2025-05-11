@@ -1,26 +1,24 @@
 package com.example.internlink;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.PopupMenu;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -35,10 +33,12 @@ public class MyProjectsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private SearchView searchInput;
-    private Spinner filterButton;
+    private MaterialButton filterButton;
+    private FloatingActionButton fabAddProject;
     private MyProjectsAdapter adapter;
     private List<Project> allProjects = new ArrayList<>();
     private List<Project> filteredProjects = new ArrayList<>();
+    private ChipGroup selectedFiltersChipGroup;
 
     private String currentFilter = "all";
     private MaterialToolbar toolbar;
@@ -51,17 +51,23 @@ public class MyProjectsActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recycler_projects);
         searchInput = findViewById(R.id.search_view);
-        filterButton = findViewById(R.id.filter_spinner);
+        filterButton = findViewById(R.id.btn_filter);
+        fabAddProject = findViewById(R.id.fab_add_project);
+        selectedFiltersChipGroup = findViewById(R.id.selected_filters_chip_group);
         toolbar = findViewById(R.id.topAppBar);
 
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new MyProjectsAdapter(filteredProjects, project -> {
-            // Handle view details click here
             Toast.makeText(MyProjectsActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
         });
         recyclerView.setAdapter(adapter);
+
+        fabAddProject.setOnClickListener(v -> {
+            Intent intent = new Intent(MyProjectsActivity.this, CreateProject.class);
+            startActivity(intent);
+        });
 
         loadProjects();
 
@@ -79,36 +85,62 @@ public class MyProjectsActivity extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                new String[] {"All", "Approved", "Rejected", "Pending", "Completed"}
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        filterButton.setAdapter(adapter);
-        filterButton.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0: currentFilter = "all"; break;
-                    case 1: currentFilter = "approved"; break;
-                    case 2: currentFilter = "rejected"; break;
-                    case 3: currentFilter = "pending"; break;
-                    case 4: currentFilter = "completed"; break;
-                }
+        filterButton.setOnClickListener(v -> showFilterPopup());
+    }
 
-                String currentQuery = "";
-                if (searchInput != null && searchInput.getQuery() != null) {
-                    currentQuery = searchInput.getQuery().toString();
-                }
+    private void showFilterPopup() {
+        PopupMenu popupMenu = new PopupMenu(MyProjectsActivity.this, filterButton);
+        popupMenu.getMenu().add("All");
+        popupMenu.getMenu().add("Approved");
+        popupMenu.getMenu().add("Rejected");
+        popupMenu.getMenu().add("Pending");
+        popupMenu.getMenu().add("Completed");
 
-                filterAndSearchProjects(currentQuery);
+        popupMenu.setOnMenuItemClickListener(item -> {
+            String filterText = item.getTitle().toString();
+
+            selectedFiltersChipGroup.removeAllViews();
+            if (!filterText.equalsIgnoreCase("All")) {
+                addFilterChip(filterText);
             }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            switch (filterText.toLowerCase()) {
+                case "approved":
+                    currentFilter = "approved";
+                    break;
+                case "rejected":
+                    currentFilter = "rejected";
+                    break;
+                case "pending":
+                    currentFilter = "pending";
+                    break;
+                case "completed":
+                    currentFilter = "completed";
+                    break;
+                default:
+                    currentFilter = "all";
+                    break;
+            }
+
+            String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
+            filterAndSearchProjects(currentQuery);
+            return true;
         });
 
+        popupMenu.show();
+    }
+
+    private void addFilterChip(String filterText) {
+        Chip chip = new Chip(this);
+        chip.setText(filterText);
+        chip.setCloseIconVisible(true);
+        chip.setOnCloseIconClickListener(v -> {
+            selectedFiltersChipGroup.removeView(chip);
+            currentFilter = "all";
+            String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
+            filterAndSearchProjects(currentQuery);
+        });
+        selectedFiltersChipGroup.addView(chip);
     }
 
     private void loadProjects() {
@@ -128,12 +160,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                             }
                         }
 
-                        // Get the current query from the SearchView (if not null)
-                        String currentQuery = "";
-                        if (searchInput != null && searchInput.getQuery() != null) {
-                            currentQuery = searchInput.getQuery().toString();
-                        }
-
+                        String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
                         filterAndSearchProjects(currentQuery);
                     }
 
@@ -143,7 +170,6 @@ public class MyProjectsActivity extends AppCompatActivity {
                     }
                 });
     }
-
 
     private void filterAndSearchProjects(String query) {
         query = query.toLowerCase().trim();
@@ -159,35 +185,4 @@ public class MyProjectsActivity extends AppCompatActivity {
         }
         adapter.notifyDataSetChanged();
     }
-
-
-    private void showFilterMenu() {
-        PopupMenu menu = new PopupMenu(this, filterButton);
-        menu.getMenu().add(Menu.NONE, 0, 0, "All");
-        menu.getMenu().add(Menu.NONE, 1, 1, "Approved");
-        menu.getMenu().add(Menu.NONE, 2, 2, "Rejected");
-        menu.getMenu().add(Menu.NONE, 3, 3, "Pending");
-        menu.getMenu().add(Menu.NONE, 4, 4, "Completed");
-
-        menu.setOnMenuItemClickListener(item -> {
-            switch (item.getItemId()) {
-                case 0: currentFilter = "all"; break;
-                case 1: currentFilter = "approved"; break;
-                case 2: currentFilter = "rejected"; break;
-                case 3: currentFilter = "pending"; break;
-                case 4: currentFilter = "completed"; break;
-            }
-
-            String currentQuery = "";
-            if (searchInput != null && searchInput.getQuery() != null) {
-                currentQuery = searchInput.getQuery().toString();
-            }
-
-            filterAndSearchProjects(currentQuery);
-            return true;
-        });
-
-        menu.show();
-    }
-
 }

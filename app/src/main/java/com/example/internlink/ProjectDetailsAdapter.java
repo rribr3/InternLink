@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,8 +66,12 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
                     DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
                     ref.removeValue().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            projectList.remove(position);
-                            notifyItemRemoved(position);
+                            if (position >= 0 && position < projectList.size()) {
+                                projectList.remove(position);
+                                notifyItemRemoved(position);
+                            } else {
+                                Log.w("ProjectAdapter", "Invalid position on remove: " + position);
+                            }
                             Toast.makeText(holder.itemView.getContext(), "Project deleted", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(holder.itemView.getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
