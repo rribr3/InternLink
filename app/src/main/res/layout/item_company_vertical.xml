@@ -8,25 +8,42 @@
     app:cardCornerRadius="8dp"
     app:cardElevation="4dp">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Project Title -->
         <TextView
             android:id="@+id/project_title"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Project Title"
             android:textColor="@color/black"
             android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"/>
 
+        <!-- Menu Button -->
+        <ImageView
+            android:id="@+id/menu_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:src="@drawable/ic_more"
+            android:contentDescription="Menu"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Stats Row -->
         <LinearLayout
+            android:id="@+id/stats_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
+            android:layout_below="@id/project_title"
             android:orientation="horizontal">
 
             <TextView
@@ -57,13 +74,15 @@
                 android:textColor="@color/black"/>
         </LinearLayout>
 
+        <!-- View Details Button -->
         <Button
             android:id="@+id/view_details_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_below="@+id/stats_row"
+            android:layout_marginTop="12dp"
             android:text="View Details"
             android:backgroundTint="@color/blue_dark"
             android:textColor="@color/white"/>
-    </LinearLayout>
+    </RelativeLayout>
 </androidx.cardview.widget.CardView>

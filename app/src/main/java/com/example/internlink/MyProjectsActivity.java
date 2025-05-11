@@ -20,6 +20,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -40,6 +41,7 @@ public class MyProjectsActivity extends AppCompatActivity {
     private List<Project> filteredProjects = new ArrayList<>();
 
     private String currentFilter = "all";
+    private MaterialToolbar toolbar;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -50,9 +52,15 @@ public class MyProjectsActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_projects);
         searchInput = findViewById(R.id.search_view);
         filterButton = findViewById(R.id.filter_spinner);
+        toolbar = findViewById(R.id.topAppBar);
+
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MyProjectsAdapter(filteredProjects);
+        adapter = new MyProjectsAdapter(filteredProjects, project -> {
+            // Handle view details click here
+            Toast.makeText(MyProjectsActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
+        });
         recyclerView.setAdapter(adapter);
 
         loadProjects();
@@ -115,6 +123,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                         for (DataSnapshot snap : snapshot.getChildren()) {
                             Project project = snap.getValue(Project.class);
                             if (project != null) {
+                                project.setProjectId(snap.getKey());
                                 allProjects.add(project);
                             }
                         }

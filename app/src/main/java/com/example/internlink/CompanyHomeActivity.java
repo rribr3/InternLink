@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,6 +49,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("CompanyHomeActivity", "onCreate started");
         setContentView(R.layout.activity_company_home);
 
         /*findViewById(R.id.view_details_button).setOnClickListener(v -> {
@@ -262,6 +264,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 projects.clear();
                 for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                    String projectId = projectSnapshot.getKey();
                     String title = projectSnapshot.child("title").getValue(String.class);
                     Long positionsCount = projectSnapshot.child("studentsRequired").getValue(Long.class);
                     Long applicantsCount = projectSnapshot.child("applicants").getChildrenCount();
@@ -280,12 +283,15 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                         projectIcon = R.drawable.ic_project;
                     }
 
-                    projects.add(new EmployerProject(
+                    EmployerProject project = new EmployerProject(
                             title != null ? title : "Untitled Project",
                             applicantsCount != null ? applicantsCount.intValue() : 0,
                             positionsCount != null ? positionsCount.intValue() : 0,
                             projectIcon
-                    ));
+                    );
+
+                    project.setProjectId(projectId); // Set the project ID for deletion
+                    projects.add(project);
                 }
                 callback.onProjectsLoaded(projects);
             }
@@ -296,6 +302,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             }
         });
     }
+
     public interface ProjectsCallback {
         void onProjectsLoaded(List<EmployerProject> projects);
     }
@@ -542,8 +549,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         if (id == R.id.nav_dashboard) {
             // Dashboard clicked
         } else if (id == R.id.nav_profile) {
-            Intent intent = new Intent(this, CreateCompanyProfileActivity.class);
-            startActivity(intent);
+            Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_projects) {
             Intent intent = new Intent(this, MyProjectsActivity.class);
             startActivity(intent);

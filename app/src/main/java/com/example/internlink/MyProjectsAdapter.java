@@ -4,10 +4,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.List;
 
@@ -18,9 +24,9 @@ public class MyProjectsAdapter extends RecyclerView.Adapter<MyProjectsAdapter.Pr
     }
 
     private List<Project> projectList;
-    private OnViewDetailsClickListener listener = null;
+    private OnViewDetailsClickListener listener;
 
-    public MyProjectsAdapter(List<Project> projectList) {
+    public MyProjectsAdapter(List<Project> projectList, OnViewDetailsClickListener listener) {
         this.projectList = projectList;
         this.listener = listener;
     }
@@ -52,6 +58,7 @@ public class MyProjectsAdapter extends RecyclerView.Adapter<MyProjectsAdapter.Pr
 
         private final TextView titleText, positionsText, applicantsText;
         private final Button viewDetailsButton;
+        private final ImageView menuButton;
 
         public ProjectViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -59,13 +66,43 @@ public class MyProjectsAdapter extends RecyclerView.Adapter<MyProjectsAdapter.Pr
             positionsText = itemView.findViewById(R.id.positions_count);
             applicantsText = itemView.findViewById(R.id.applicants_count);
             viewDetailsButton = itemView.findViewById(R.id.view_details_button);
+            menuButton = itemView.findViewById(R.id.menu_button);
         }
 
         public void bind(Project project) {
             titleText.setText(project.getTitle());
             positionsText.setText(String.valueOf(project.getStudentsRequired()));
             applicantsText.setText(String.valueOf(project.getAmount()));
+
             viewDetailsButton.setOnClickListener(v -> listener.onViewDetailsClick(project));
+
+            menuButton.setOnClickListener(v -> {
+                PopupMenu popupMenu = new PopupMenu(itemView.getContext(), menuButton);
+                popupMenu.getMenu().add("Delete");
+
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getTitle().equals("Delete")) {
+                        deleteProjectFromFirebase(project.getProjectId(), getAdapterPosition());
+                    }
+                    return true;
+                });
+
+                popupMenu.show();
+            });
+        }
+
+        private void deleteProjectFromFirebase(String projectId, int position) {
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+
+            ref.removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    projectList.remove(position);
+                    notifyItemRemoved(position);
+                    Toast.makeText(itemView.getContext(), "Project deleted", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(itemView.getContext(), "Failed to delete project", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 }

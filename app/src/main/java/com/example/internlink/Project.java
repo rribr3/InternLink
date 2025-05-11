@@ -22,6 +22,7 @@ public class Project {
     private String contactPhone;
     private Quiz quiz;
     private String status;
+    private String projectId;
 
     // Empty constructor for Firebase
     public Project() {
@@ -33,6 +34,13 @@ public class Project {
     }
     public String getStatus() {
         return status;
+    }
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
     }
 
     public void setTitle(String title) {

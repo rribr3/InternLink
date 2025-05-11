@@ -4,10 +4,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.List;
 
@@ -50,7 +56,44 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
             // Call the listener's method when the button is clicked
             itemClickListener.onItemClick(project);
         });
+        holder.menuButton.setOnClickListener(v -> {
+            PopupMenu popupMenu = new PopupMenu(holder.itemView.getContext(), holder.menuButton);
+            popupMenu.getMenu().add("Delete");
+            popupMenu.setOnMenuItemClickListener(item -> {
+                if (item.getTitle().equals("Delete")) {
+                    String projectId = project.getProjectId();
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+                    ref.removeValue().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            projectList.remove(position);
+                            notifyItemRemoved(position);
+                            Toast.makeText(holder.itemView.getContext(), "Project deleted", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(holder.itemView.getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+                return true;
+            });
+            popupMenu.show();
+        });
+
     }
+
+    private void deleteProjectFromFirebase(String projectId, int position) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+
+        ref.removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                projectList.remove(position);
+                notifyItemRemoved(position);
+                // Toast.makeText(context, "Project deleted", Toast.LENGTH_SHORT).show();
+            } else {
+                // Toast.makeText(context, "Failed to delete project", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     @Override
     public int getItemCount() {
@@ -63,6 +106,7 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
 
         TextView projectTitle, positionsCount, applicantsCount;
         Button viewDetailsButton;
+        ImageView menuButton;
 
         // Constructor for ViewHolder
         public ViewHolder(View itemView) {
@@ -72,7 +116,8 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
             projectTitle = itemView.findViewById(R.id.project_title);
             positionsCount = itemView.findViewById(R.id.positions_count);
             applicantsCount = itemView.findViewById(R.id.applicants_count);
-            viewDetailsButton = itemView.findViewById(R.id.view_details_button); // The button to view details
+            viewDetailsButton = itemView.findViewById(R.id.view_details_button);
+            menuButton = itemView.findViewById(R.id.menu_button);
         }
     }
 }
