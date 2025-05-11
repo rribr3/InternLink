@@ -68,4 +68,21 @@
     <color name="secondaryContainer">#E8DEF8</color>
     <color name="onSecondaryContainer">#1D192B</color>
     <color name="outline">#79747E</color>
+
+    <color name="primaryDark">#3700B3</color>
+    <color name="secondary">#03DAC6</color>
+    <color name="background">#FAFAFA</color>
+    <color name="error">#B00020</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="onSecondary">#000000</color>
+    <color name="onBackground">#000000</color>
+    <color name="onError">#FFFFFF</color>
+    <color name="secondaryText">#757575</color>
+    <color name="chip_background">#E3F2FD</color>
+
+
+
+    <color name="accentColor">#03DAC5</color>
+    <color name="primaryTextColor">#212121</color>
+    <color name="secondaryTextColor">#424242</color>
 </resources>

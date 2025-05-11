@@ -109,9 +109,8 @@ public class CompanySettingsActivity extends AppCompatActivity {
             TextView forgotPassword = dialogView.findViewById(R.id.forgot_password);
 
             AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle("Change Password")
                     .setView(dialogView)
-                    .setPositiveButton("Submit", (dialogInterface, i) -> {
+                    .setPositiveButton("Change", (dialogInterface, i) -> {
                         String current = currentPass.getText().toString().trim();
                         String newP = newPass.getText().toString().trim();
                         // TODO: Validate and call update password logic

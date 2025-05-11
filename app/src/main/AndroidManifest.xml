@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -20,6 +19,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.InternLink"
         tools:targetApi="31">
+        <activity
+            android:name=".CompanyProfileActivity"
+            android:exported="false" />
         <activity
             android:name=".CompanySettingsActivity"
             android:exported="false" />

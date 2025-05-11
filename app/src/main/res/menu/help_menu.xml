@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Help action (question mark icon) -->
+    <item
+        android:id="@+id/action_help"
+        android:icon="@drawable/ic_help"
+        android:title="@string/menu_help"
+        app:showAsAction="ifRoom" />
+
+    <!-- Notification bell icon -->
+    <item
+        android:id="@+id/action_notifications"
+        android:icon="@drawable/notification"
+        android:title="@string/menu_notifications"
+        app:showAsAction="ifRoom" />
+
+    <!-- Overflow menu items -->
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/menu_settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_feedback"
+        android:title="@string/menu_feedback"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="@string/menu_about"
+        app:showAsAction="never" />
+</menu>
