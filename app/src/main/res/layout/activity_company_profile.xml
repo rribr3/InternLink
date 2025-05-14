@@ -13,35 +13,49 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            style="@style/Widget.Material3.Toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/secondaryContainer"
+            android:elevation="2dp"
+            app:titleTextColor="@color/black"
+            app:title="My Profile"
+            app:navigationIconTint="@android:color/background_dark"
+            app:navigationIcon="@drawable/left_arrow" />
         <!-- Header -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
-            app:cardElevation="4dp">
+            app:cardElevation="4dp"
+            android:layout_marginTop="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:layout_marginTop="15dp">
 
                 <ImageView
                     android:id="@+id/companyLogo"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    android:src="@drawable/ic_company"
-                    android:scaleType="centerCrop"
                     android:contentDescription="Company Logo"
-                    android:padding="4dp" />
+                    android:padding="4dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_company" />
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
+                    android:orientation="vertical">
 
                     <EditText
                         android:id="@+id/companyName"
@@ -55,16 +69,16 @@
                         android:id="@+id/industry"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/secondaryText"
                         android:layout_marginTop="4dp"
+                        android:textColor="@color/secondaryText"
                         tools:text="Technology" />
 
                     <EditText
                         android:id="@+id/location"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/secondaryText"
                         android:layout_marginTop="4dp"
+                        android:textColor="@color/secondaryText"
                         tools:text="Beirut, Lebanon" />
                 </LinearLayout>
             </LinearLayout>
@@ -149,37 +163,6 @@
                     android:layout_marginTop="8dp"
                     android:textColor="@color/secondaryText"
                     tools:text="To be the global leader..." />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Expertise -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Areas of Expertise"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/expertiseChipGroup"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:singleLine="false"
-                    app:singleSelection="false" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -271,7 +254,92 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/secondaryText"
                         tools:text="Beirut, Lebanon" />
+
+
                 </LinearLayout>
+                <!-- Website -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:src="@drawable/ic_website"
+                        android:contentDescription="Website Icon" />
+
+                    <EditText
+                        android:id="@+id/website"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:hint="Website URL"
+                        android:textColor="@color/secondaryText"
+                        tools:text="https://company.com" />
+                </LinearLayout>
+
+                <!-- LinkedIn -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:src="@drawable/ic_linkedin"
+                        android:contentDescription="LinkedIn Icon" />
+
+                    <EditText
+                        android:id="@+id/linkedin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:hint="LinkedIn URL"
+                        android:textColor="@color/secondaryText"
+                        tools:text="https://linkedin.com/in/techcompany" />
+                </LinearLayout>
+
+                <!-- Twitter -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10sp"
+                    android:layout_marginTop="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:src="@drawable/ic_twitter"
+                        android:contentDescription="Twitter Icon" />
+
+                    <EditText
+                        android:id="@+id/twitter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:hint="Twitter URL"
+                        android:textColor="@color/secondaryText"
+                        tools:text="https://twitter.com/techcompany" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnSave"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Save Changes"
+                    android:layout_marginBottom="24dp"
+                    android:backgroundTint="@color/primary"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

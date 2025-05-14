@@ -80,9 +80,14 @@
     <color name="secondaryText">#757575</color>
     <color name="chip_background">#E3F2FD</color>
 
-
-
     <color name="accentColor">#03DAC5</color>
     <color name="primaryTextColor">#212121</color>
     <color name="secondaryTextColor">#424242</color>
+
+    <color name="blue_500">#2196F3</color>
+    <color name="blue_50">#E3F2FD</color>
+    <color name="gray_500">#9E9E9E</color>
+    <color name="gray_800">#424242</color>
+    <color name="gray_200">#EEEEEE</color>
+    <color name="chip_state_color">@android:color/transparent</color>
 </resources>

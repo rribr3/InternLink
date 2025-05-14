@@ -38,7 +38,9 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CompanyHomeActivity extends AppCompatActivity implements
         NavigationView.OnNavigationItemSelectedListener,
@@ -49,12 +51,21 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private ImageView notificationBell;
     private TextView notificationBadge;
     private DatabaseReference databaseReference;
+    private LinearLayout dotIndicatorLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("CompanyHomeActivity", "onCreate started");
         setContentView(R.layout.activity_company_home);
+
+        // Initialize the dot indicator layout
+        dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
+
+        // For demonstration, let's assume you want 5 dots (e.g., for 5 pages in a view pager)
+        int numberOfDots = 5; // This can be dynamically set based on your content
+        addDots(numberOfDots);
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             String userId = currentUser.getUid();
@@ -82,37 +93,19 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             });
         }
 
-        /*findViewById(R.id.view_details_button).setOnClickListener(v -> {
-            // For demonstration, we'll use the first project ID from Firebase
-            DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
-            projectsRef.limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
-                            String projectId = projectSnapshot.getKey();
-                            Intent intent = new Intent(CompanyHomeActivity.this, ProjectDetailsActivity.class);
-                            intent.putExtra("PROJECT_ID", projectId);
-                            startActivity(intent);
-                        }
-                    } else {
-                        Toast.makeText(CompanyHomeActivity.this, "No projects found", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Toast.makeText(CompanyHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });*/
+        TextView viewNotification = findViewById(R.id.view_notification);
+        viewNotification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
+                startActivity(intent);
+            }
+        });
 
         welcomeText = findViewById(R.id.welcome_text);
-
         databaseReference = FirebaseDatabase.getInstance().getReference("users");
 
         String companyUid = getCurrentCompanyUid();
-
         databaseReference.child(companyUid).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -137,6 +130,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         fetchCompanyStats();
         createNotificationChannel();
     }
+
+
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -155,40 +151,173 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private String getCurrentCompanyUid() {
         return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
+
     private void setupNotificationBell() {
+        notificationBell = findViewById(R.id.notification_bell);
+        notificationBadge = findViewById(R.id.notification_badge);
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
         DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
 
-        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        ValueEventListener unreadListener = new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
-                final int[] totalCount = {0};
+            public void onDataChange(@NonNull DataSnapshot readsSnapshot) {
+                final List<String> unreadIds = new ArrayList<>();
 
-                totalCount[0] += (int) globalSnapshot.getChildrenCount();
-
-                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
-                        totalCount[0] += (int) roleSnapshot.getChildrenCount();
-
-                        if (totalCount[0] > 0) {
-                            notificationBadge.setVisibility(View.VISIBLE);
-                            notificationBadge.setText(String.valueOf(totalCount[0]));
-                        } else {
-                            notificationBadge.setVisibility(View.GONE);
+                    public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
+                        for (DataSnapshot snap : globalSnapshot.getChildren()) {
+                            if (!readsSnapshot.hasChild(snap.getKey())) {
+                                unreadIds.add(snap.getKey());
+                            }
                         }
+
+                        roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
+                                for (DataSnapshot snap : roleSnapshot.getChildren()) {
+                                    if (!readsSnapshot.hasChild(snap.getKey())) {
+                                        unreadIds.add(snap.getKey());
+                                    }
+                                }
+
+                                // Update the badge
+                                updateNotificationBadge(unreadIds.size());
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Log.e("NotificationBell", "Failed to read role announcements", error.toException());
+                                updateNotificationBadge(unreadIds.size());
+                            }
+                        });
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        notificationBadge.setVisibility(View.GONE);
+                        Log.e("NotificationBell", "Failed to read global announcements", error.toException());
+                        updateNotificationBadge(0);
                     }
                 });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                notificationBadge.setVisibility(View.GONE);
+                Log.e("NotificationBell", "Failed to read user reads", error.toException());
+                updateNotificationBadge(0);
+            }
+        };
+
+        userReadsRef.addValueEventListener(unreadListener);
+
+        notificationBell.setOnClickListener(v -> {
+            markAllAnnouncementsAsRead(userId);
+            Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
+            startActivity(intent);
+        });
+    }
+
+
+    private void checkUnreadAnnouncements(DataSnapshot readsSnapshot, DatabaseReference globalRef, DatabaseReference roleRef) {
+        final List<String> unreadIds = new ArrayList<>();
+
+        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
+                for (DataSnapshot snap : globalSnapshot.getChildren()) {
+                    if (!readsSnapshot.hasChild(snap.getKey())) {
+                        unreadIds.add(snap.getKey());
+                    }
+                }
+
+                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
+                        for (DataSnapshot snap : roleSnapshot.getChildren()) {
+                            if (!readsSnapshot.hasChild(snap.getKey())) {
+                                unreadIds.add(snap.getKey());
+                            }
+                        }
+
+                        // Update the badge
+                        updateNotificationBadge(unreadIds.size());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("NotificationBell", "Failed to read role announcements", error.toException());
+                        updateNotificationBadge(unreadIds.size());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("NotificationBell", "Failed to read global announcements", error.toException());
+                updateNotificationBadge(0);
+            }
+        });
+    }
+
+    private void updateNotificationBadge(int unreadCount) {
+        if (unreadCount > 0) {
+            notificationBadge.setVisibility(View.VISIBLE);
+            notificationBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+        } else {
+            notificationBadge.setVisibility(View.GONE);
+        }
+    }
+
+    private void markAllAnnouncementsAsRead(String userId) {
+        DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
+        DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
+        DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
+
+        // First get all announcements
+        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
+                Map<String, Object> updates = new HashMap<>();
+
+                // Mark global announcements as read
+                for (DataSnapshot snap : globalSnapshot.getChildren()) {
+                    updates.put(snap.getKey(), true);
+                }
+
+                // Then get role-specific announcements
+                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
+                        // Mark role announcements as read
+                        for (DataSnapshot snap : roleSnapshot.getChildren()) {
+                            updates.put(snap.getKey(), true);
+                        }
+
+                        // Update user_reads with all announcements
+                        if (!updates.isEmpty()) {
+                            userReadsRef.updateChildren(updates)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Badge will update automatically through the listener
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("NotificationBell", "Failed to mark announcements as read", e);
+                                    });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("NotificationBell", "Failed to read role announcements", error.toException());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("NotificationBell", "Failed to read global announcements", error.toException());
             }
         });
     }
@@ -235,13 +364,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         });
     }
 
-
     private void setupDashboardContent() {
         setupProjectsRecyclerView();
         setupApplicantsRecyclerView();
         updateNotificationBadge(5);
         fetchProjectStats();
     }
+
     private void fetchProjectStats() {
         String companyId = getCurrentCompanyUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
@@ -281,7 +410,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void updateProjectStats(int active, int pending, int completed) {
-        // Update the StatItem views with the fetched counts
         StatItem activeProjects = findViewById(R.id.activeProjects);
         StatItem pendingProjects = findViewById(R.id.pendingProjects);
         StatItem completedProjects = findViewById(R.id.completedProjects);
@@ -300,8 +428,65 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             public void onProjectsLoaded(List<EmployerProject> projects) {
                 CompanyProjectsAdapter adapter = new CompanyProjectsAdapter(projects);
                 projectsRecycler.setAdapter(adapter);
+
+                // Add dots based on number of projects
+                addDots(projects.size());
+
+                // Setup RecyclerView scroll listener to update active dot
+                projectsRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                        super.onScrolled(recyclerView, dx, dy);
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                        if (layoutManager != null) {
+                            int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+                            updateActiveDot(firstVisibleItemPosition);
+                        }
+                    }
+                });
             }
         });
+    }
+
+    private void addDots(int count) {
+        if (dotIndicatorLayout == null || count <= 0) return;
+
+        dotIndicatorLayout.removeAllViews(); // Clear any previous dots
+
+        // Convert dp to pixels
+        int sizeInPx = (int) (10 * getResources().getDisplayMetrics().density);
+        int marginInPx = (int) (4 * getResources().getDisplayMetrics().density);
+
+        // Loop to create 'count' dots
+        for (int i = 0; i < count; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizeInPx, sizeInPx);
+            params.setMargins(marginInPx, 0, marginInPx, 0);
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.circle_dot);
+            dotIndicatorLayout.addView(dot);
+        }
+
+        // Set first dot as active initially
+        if (dotIndicatorLayout.getChildCount() > 0) {
+            dotIndicatorLayout.getChildAt(0).setBackgroundResource(R.drawable.circle_dot_active);
+        }
+    }
+
+    private void updateActiveDot(int position) {
+        if (dotIndicatorLayout == null || position < 0 || position >= dotIndicatorLayout.getChildCount()) {
+            return;
+        }
+
+        // Reset all dots
+        for (int i = 0; i < dotIndicatorLayout.getChildCount(); i++) {
+            View dot = dotIndicatorLayout.getChildAt(i);
+            dot.setBackgroundResource(R.drawable.circle_dot);
+        }
+
+        // Highlight the active dot
+        View activeDot = dotIndicatorLayout.getChildAt(position);
+        activeDot.setBackgroundResource(R.drawable.circle_dot_active);
     }
 
     private void setupApplicantsRecyclerView() {
@@ -312,14 +497,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         applicantsRecycler.setAdapter(adapter);
     }
 
-    private void updateNotificationBadge(int count) {
-        if (count > 0) {
-            notificationBadge.setVisibility(View.VISIBLE);
-            notificationBadge.setText(String.valueOf(count));
-        } else {
-            notificationBadge.setVisibility(View.GONE);
-        }
-    }
+
 
     private void getSampleProjectsFromFirebase(ProjectsCallback callback) {
         String companyId = getCurrentCompanyUid();
@@ -373,7 +551,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     public interface ProjectsCallback {
         void onProjectsLoaded(List<EmployerProject> projects);
     }
-
 
     private List<Applicant> getSampleApplicants() {
         List<Applicant> applicants = new ArrayList<>();
@@ -441,6 +618,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         globalRef.addListenerForSingleValueEvent(collector.getListener());
         roleRef.addListenerForSingleValueEvent(collector.getListener());
     }
+
     private static class ValueEventListenerCollector {
         private final int expected;
         private int count = 0;
@@ -477,8 +655,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
-
-
     private void processAndDisplayRecentAnnouncements(List<DataSnapshot> allAnnouncements) {
         List<AnnouncementItem> announcementList = new ArrayList<>();
 
@@ -497,7 +673,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         // Limit to 3
         List<AnnouncementItem> topThree = announcementList.subList(0, Math.min(3, announcementList.size()));
 
-        LinearLayout feedLayout = findViewById(R.id.notification_feed_container); // Add this ID in XML
+        LinearLayout feedLayout = findViewById(R.id.notification_feed_container);
         feedLayout.removeAllViews();
 
         for (AnnouncementItem item : topThree) {
@@ -522,8 +698,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             }
 
             ((TextView) view.findViewById(R.id.notification_time)).setText(timeAgo);
-
-
             feedLayout.addView(view);
         }
     }
@@ -538,7 +712,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             this.timestamp = timestamp;
         }
     }
-
 
     private void showAllApplicantsDialog() {
         Dialog dialog = new Dialog(this);
@@ -613,10 +786,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         Intent intent;
+        String companyId = getCurrentCompanyUid();
         if (id == R.id.nav_dashboard) {
             // Dashboard clicked
         } else if (id == R.id.nav_profile) {
-            Toast.makeText(this, "Profile", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, CompanyProfileActivity.class);
+            intent.putExtra("companyId", companyId);
+            startActivity(intent);
         } else if (id == R.id.nav_projects) {
             intent = new Intent(this, MyProjectsActivity.class);
             startActivity(intent);
@@ -631,7 +807,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             intent = new Intent(this, CompanySettingsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_help) {
-            Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, CompanyHelpCenterActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_logout) {
             finish();
         }
@@ -639,6 +816,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
     private void fetchCompanyStats() {
         String companyId = getCurrentCompanyUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
@@ -650,17 +828,14 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 int totalApplicants = 0;
                 int totalHired = 0;
 
-                // Count all projects and applicants for this company
                 for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
                     totalProjects++;
 
-                    // Get number of applicants for this project
                     Long applicants = projectSnapshot.child("applicants").getValue(Long.class);
                     if (applicants != null) {
                         totalApplicants += applicants;
                     }
 
-                    // If you have a "hired" field in your project, count hired applicants
                     if (projectSnapshot.hasChild("hired")) {
                         Long hired = projectSnapshot.child("hired").getValue(Long.class);
                         if (hired != null) {
@@ -669,7 +844,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     }
                 }
 
-                // Update the UI
                 updateCompanyStats(totalProjects, totalApplicants, totalHired);
             }
 
@@ -687,9 +861,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         tvTotalProjects.setText(String.valueOf(totalProjects));
         tvTotalApplicants.setText(String.valueOf(totalApplicants));
+        tvTotalApplicants.setText(String.valueOf(totalApplicants));
         tvTotalHired.setText(String.valueOf(totalHired));
     }
-
 
     @Override
     public void onBackPressed() {

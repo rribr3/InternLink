@@ -36,7 +36,7 @@ import android.Manifest;
 public class CompanySettingsActivity extends AppCompatActivity {
 
     private TextView tvCompanyName, tvCompanyEmail, tvNotifications;
-    private LinearLayout layoutChangePassword, layoutNotifications, layoutTerms, layoutLogout, layoutDeactivateAccount;
+    private LinearLayout layoutChangePassword, layoutNotifications, layoutTerms, layoutDeactivateAccount;
     private DatabaseReference databaseReference;
     private SwitchCompat switchNotifications;
     private ImageButton backButton;
@@ -53,7 +53,6 @@ public class CompanySettingsActivity extends AppCompatActivity {
         layoutChangePassword = findViewById(R.id.layout_change_password);
         layoutNotifications = findViewById(R.id.layout_notifications);
         layoutTerms = findViewById(R.id.layout_terms);
-        layoutLogout = findViewById(R.id.layout_logout);
         layoutDeactivateAccount = findViewById(R.id.layout_deactivate_account);
         tvNotifications = findViewById(R.id.tv_notifications);
         switchNotifications = findViewById(R.id.switch_notifications);
@@ -142,12 +141,6 @@ public class CompanySettingsActivity extends AppCompatActivity {
 
         layoutTerms.setOnClickListener(v -> {
             Toast.makeText(this, "Terms and Privacy", Toast.LENGTH_SHORT).show();
-        });
-
-        layoutLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
         });
         layoutDeactivateAccount.setOnClickListener(v -> {
             new AlertDialog.Builder(CompanySettingsActivity.this)
@@ -243,6 +236,6 @@ public class CompanySettingsActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(CompanySettingsActivity.this, "Failed to load info", Toast.LENGTH_SHORT).show();
             }
-        });
-    }
+   });
+}
 }

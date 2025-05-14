@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,8 +41,11 @@ public class MyProjectsActivity extends AppCompatActivity {
     private List<Project> filteredProjects = new ArrayList<>();
     private ChipGroup selectedFiltersChipGroup;
 
-    private String currentFilter = "all";
+    private final List<String> selectedFilters = new ArrayList<>();
+
     private MaterialToolbar toolbar;
+    private TextView txtProjectsCount;
+
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -55,6 +59,7 @@ public class MyProjectsActivity extends AppCompatActivity {
         fabAddProject = findViewById(R.id.fab_add_project);
         selectedFiltersChipGroup = findViewById(R.id.selected_filters_chip_group);
         toolbar = findViewById(R.id.topAppBar);
+        txtProjectsCount = findViewById(R.id.txt_projects_count);
 
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
@@ -89,59 +94,52 @@ public class MyProjectsActivity extends AppCompatActivity {
     }
 
     private void showFilterPopup() {
-        PopupMenu popupMenu = new PopupMenu(MyProjectsActivity.this, filterButton);
-        popupMenu.getMenu().add("All");
-        popupMenu.getMenu().add("Approved");
-        popupMenu.getMenu().add("Rejected");
-        popupMenu.getMenu().add("Pending");
-        popupMenu.getMenu().add("Completed");
+        String[] filterOptions = {"Approved", "Rejected", "Pending", "Completed"};
+        boolean[] checkedItems = new boolean[filterOptions.length];
 
-        popupMenu.setOnMenuItemClickListener(item -> {
-            String filterText = item.getTitle().toString();
+        // Pre-check previously selected items
+        for (int i = 0; i < filterOptions.length; i++) {
+            checkedItems[i] = selectedFilters.contains(filterOptions[i]);
+        }
 
-            selectedFiltersChipGroup.removeAllViews();
-            if (!filterText.equalsIgnoreCase("All")) {
-                addFilterChip(filterText);
-            }
-
-            switch (filterText.toLowerCase()) {
-                case "approved":
-                    currentFilter = "approved";
-                    break;
-                case "rejected":
-                    currentFilter = "rejected";
-                    break;
-                case "pending":
-                    currentFilter = "pending";
-                    break;
-                case "completed":
-                    currentFilter = "completed";
-                    break;
-                default:
-                    currentFilter = "all";
-                    break;
-            }
-
-            String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
-            filterAndSearchProjects(currentQuery);
-            return true;
-        });
-
-        popupMenu.show();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Select Filters")
+                .setMultiChoiceItems(filterOptions, checkedItems, (dialog, which, isChecked) -> {
+                    String selected = filterOptions[which];
+                    if (isChecked) {
+                        if (!selectedFilters.contains(selected)) selectedFilters.add(selected);
+                    } else {
+                        selectedFilters.remove(selected);
+                    }
+                })
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    selectedFiltersChipGroup.removeAllViews();
+                    for (String filter : selectedFilters) {
+                        addFilterChip(filter);
+                    }
+                    filterAndSearchProjects(searchInput.getQuery().toString());
+                })
+                .setNegativeButton("Clear All", (dialog, which) -> {
+                    selectedFilters.clear();
+                    selectedFiltersChipGroup.removeAllViews();
+                    filterAndSearchProjects(searchInput.getQuery().toString());
+                })
+                .show();
     }
+
 
     private void addFilterChip(String filterText) {
         Chip chip = new Chip(this);
         chip.setText(filterText);
         chip.setCloseIconVisible(true);
         chip.setOnCloseIconClickListener(v -> {
+            selectedFilters.remove(filterText);
             selectedFiltersChipGroup.removeView(chip);
-            currentFilter = "all";
-            String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
-            filterAndSearchProjects(currentQuery);
+            filterAndSearchProjects(searchInput.getQuery().toString());
         });
         selectedFiltersChipGroup.addView(chip);
     }
+
 
     private void loadProjects() {
         String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -160,6 +158,11 @@ public class MyProjectsActivity extends AppCompatActivity {
                             }
                         }
 
+                        // Set project count text
+                        int projectCount = allProjects.size();
+                        txtProjectsCount.setText(projectCount + " projects found");
+
+                        // Apply filters & search
                         String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
                         filterAndSearchProjects(currentQuery);
                     }
@@ -171,18 +174,21 @@ public class MyProjectsActivity extends AppCompatActivity {
                 });
     }
 
+
     private void filterAndSearchProjects(String query) {
         query = query.toLowerCase().trim();
         filteredProjects.clear();
 
         for (Project p : allProjects) {
             boolean matchesSearch = p.getTitle().toLowerCase().contains(query);
-            boolean matchesFilter = currentFilter.equals("all") || p.getStatus().equalsIgnoreCase(currentFilter);
+            boolean matchesFilter = selectedFilters.isEmpty() || selectedFilters.contains(p.getStatus());
 
             if (matchesSearch && matchesFilter) {
                 filteredProjects.add(p);
             }
         }
+
         adapter.notifyDataSetChanged();
     }
+
 }

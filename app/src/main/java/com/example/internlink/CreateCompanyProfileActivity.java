@@ -32,7 +32,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
             editWebsite, editDescription, editMission, editVision,
             editEmail, editPhone, editAddress;
     private ImageView uploadLogo;
-    private ChipGroup chipGroupExpertise;
     private MaterialButton btnSubmit;
 
     private Uri logoUri = null;
@@ -83,7 +82,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
         editEmail = findViewById(R.id.editEmail);
         editPhone = findViewById(R.id.editPhone);
         editAddress = findViewById(R.id.editAddress);
-        chipGroupExpertise = findViewById(R.id.chipGroupExpertise);
         uploadLogo = findViewById(R.id.uploadLogo);
         btnSubmit = findViewById(R.id.btnSubmit);
     }
@@ -124,19 +122,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
         companyData.put("role", "company");
         if (logoUrl != null) companyData.put("logoUrl", logoUrl);
 
-        StringBuilder expertiseBuilder = new StringBuilder();
-        for (int i = 0; i < chipGroupExpertise.getChildCount(); i++) {
-            Chip chip = (Chip) chipGroupExpertise.getChildAt(i);
-            if (chip.isChecked()) {
-                expertiseBuilder.append(chip.getText()).append(", ");
-            }
-        }
-        String expertise = expertiseBuilder.toString().trim();
-        if (expertise.endsWith(",")) {
-            expertise = expertise.substring(0, expertise.length() - 1);
-        }
-        companyData.put("expertise", expertise);
-
         ref.updateChildren(companyData).addOnCompleteListener(task -> {
             dialog.dismiss();
             if (task.isSuccessful()) {
@@ -147,6 +132,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Failed to save profile", Toast.LENGTH_SHORT).show();
             }
-        });
-    }
+   });
+}
 }

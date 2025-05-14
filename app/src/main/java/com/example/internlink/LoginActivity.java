@@ -299,7 +299,15 @@ public class LoginActivity extends AppCompatActivity {
                                 intent.putExtra("email", email);
                                 intent.putExtra("password", password); // optional
                                 startActivity(intent);
-                            } else {
+                            } else if ("student".equals(role)) {
+                                Intent intent = new Intent(LoginActivity.this, CreateStudentProfileActivity.class);
+                                intent.putExtra("userId", userId);
+                                intent.putExtra("name", name);
+                                intent.putExtra("email", email);
+                                intent.putExtra("password", password); // optional
+                                startActivity(intent);
+                            }
+                            else {
                                 // Optionally: Create and save basic user info for non-company roles
                                 DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
                                 usersRef.child(userId).child("name").setValue(name);
@@ -346,6 +354,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
             return false;
-        }
-    }
+ }
+}
 }

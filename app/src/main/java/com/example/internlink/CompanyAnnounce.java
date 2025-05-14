@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -11,6 +13,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -19,7 +25,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
@@ -27,10 +35,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class CompanyAnnounce extends AppCompatActivity {
 
     private LinearLayout announcementContainer;
+    private RecyclerView recyclerView;
+    private TextInputEditText searchEditText;
+    private ChipGroup chipGroup;
+    private AnnouncementAdapter adapter;
+    private MaterialToolbar toolbar;
+    private List<Announcement> announcementList = new ArrayList<>();
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -45,53 +61,63 @@ public class CompanyAnnounce extends AppCompatActivity {
             return insets;
         });
 
+        recyclerView = findViewById(R.id.announcement_recycler_view);
+        searchEditText = findViewById(R.id.search_edit_text);
+        chipGroup = findViewById(R.id.filter_chip_group);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        adapter = new AnnouncementAdapter(this, announcementList);
+        recyclerView.setAdapter(adapter);
+
+        toolbar = findViewById(R.id.topAppBar);
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+
         announcementContainer = findViewById(R.id.announcement_container);
 
+        // Load announcements from Firebase
         loadAllAnnouncements();
-    }
 
-    private void addAnnouncement(String announcementId, String title, String body, String date, boolean isRead) {
-        // Inflate announcement layout from XML
-        View announcementView = LayoutInflater.from(this).inflate(R.layout.announcement_item, announcementContainer, false);
-
-        // Set text fields
-        ((TextView) announcementView.findViewById(R.id.announcement_title)).setText(title);
-        ((TextView) announcementView.findViewById(R.id.announcement_body)).setText(body);
-        ((TextView) announcementView.findViewById(R.id.announcement_date)).setText("Posted: " + date);
-
-        if (!isRead) {
-            announcementView.setBackgroundColor(Color.parseColor("#E6E6FA"));
-        } else {
-            announcementView.setBackgroundColor(getResources().getColor(android.R.color.white)); // White for read
-        }
-
-
-        announcementView.setOnClickListener(v -> {
-            // Show popup
-            showAnnouncementPopup(title, body, date);
-
-            // Mark as read
-            announcementView.setBackgroundColor(getResources().getColor(android.R.color.white)); // Turn white
-            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            FirebaseDatabase.getInstance().getReference("user_reads")
-                    .child(userId)
-                    .child(announcementId)
-                    .setValue(true);
+        // Search listener
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filterBy(s.toString());
+            }
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Add at the top (index 0)
-        announcementContainer.addView(announcementView, 0);
-    }
-    private void showAnnouncementPopup(String title, String body, String date) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            Chip chip = findViewById(checkedId);
+            if (chip != null) {
+                String chipText = chip.getText().toString();
+                if (chipText.equalsIgnoreCase("Earliest")) {
+                    sortAnnouncementsByDate(true);  // Sorting in ascending order (earliest first)
+                } else if (chipText.equalsIgnoreCase("Latest")) {
+                    sortAnnouncementsByDate(false);  // Sorting in descending order (latest first)
+                } else {
+                    adapter.filterChip(chipText);  // Handle other filters like Read/Unread
+                }
+            }
+        });
 
+    }
+
+    private void addAnnouncement(String announcementId, String title, String body, String date, boolean isRead, long timestamp) {
+        Announcement announcement = new Announcement(announcementId, title, body, date, isRead);
+        announcement.setTimestamp(timestamp);
+        announcementList.add(announcement);
+        adapter.notifyItemInserted(announcementList.size() - 1);
+    }
+
+    void showAnnouncementPopup(String title, String body, String date) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
         popupView.setBackgroundColor(getResources().getColor(android.R.color.white));
 
         TextView titleView = popupView.findViewById(R.id.announcement_title);
         TextView bodyView = popupView.findViewById(R.id.announcement_body);
         TextView dateView = popupView.findViewById(R.id.announcement_date);
-        ImageView closeIcon = popupView.findViewById(R.id.delete_icon); // Use this as close button
+        ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
         titleView.setText(title);
         bodyView.setText(body);
@@ -99,12 +125,16 @@ public class CompanyAnnounce extends AppCompatActivity {
 
         builder.setView(popupView);
         AlertDialog dialog = builder.create();
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent); // Optional: transparent background
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         dialog.show();
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
     }
+
     private void loadAllAnnouncements() {
+        announcementList.clear();
+        adapter.notifyDataSetChanged();
+
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
 
@@ -121,6 +151,7 @@ public class CompanyAnnounce extends AppCompatActivity {
             }
         });
     }
+
     private void loadAnnouncementsFromRef(DatabaseReference ref, DataSnapshot readsSnapshot) {
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -132,8 +163,11 @@ public class CompanyAnnounce extends AppCompatActivity {
                     Long timestamp = snap.child("timestamp").getValue(Long.class);
                     String date = formatTimestamp(timestamp);
                     boolean isRead = readsSnapshot.hasChild(id);
-                    addAnnouncement(id, title, body, date, isRead);
+
+                    addAnnouncement(id, title, body, date, isRead, timestamp != null ? timestamp : 0);
                 }
+                // Default sort: latest
+                sortAnnouncementsByDate(false);
             }
 
             @Override
@@ -149,5 +183,20 @@ public class CompanyAnnounce extends AppCompatActivity {
         return sdf.format(new Date(timestamp));
     }
 
+    private void sortAnnouncementsByDate(boolean ascending) {
+        if (announcementList == null || announcementList.isEmpty()) return;
+
+        // Sort the announcements based on the timestamp
+        announcementList.sort((a1, a2) -> {
+            long t1 = a1.getTimestamp();
+            long t2 = a2.getTimestamp();
+            return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
+        });
+
+        // Update the filtered list after sorting
+        adapter.filterChip("All");  // To refresh the filtered list after sorting (you can also call `adapter.notifyDataSetChanged()` here directly if no filtering is needed)
+
+        adapter.notifyDataSetChanged();  // Notify the adapter that the data has changed
+    }
 
 }

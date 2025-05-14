@@ -1,8 +1,11 @@
 package com.example.internlink;
 
 import android.app.AlertDialog;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -10,48 +13,71 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.search.SearchBar;
 
+/**
+ * CompanyHelpCenterActivity
+ * Displays help resources for companies including tutorials, support, and FAQs.
+ */
 public class CompanyHelpCenterActivity extends AppCompatActivity {
 
+    // UI Components
     private Toolbar toolbar;
     private SearchBar searchBar;
     private TextView quickHelpTitle, helpCategoriesTitle, supportTitle, supportDescription;
     private Button contactSupportButton;
-    private MaterialCardView videoTutorialsCard, knowledgeBaseCard, postProjectCard, manageApplicantsCard, supportCard;
+    private MaterialCardView postProjectCard, manageApplicantsCard, videoTutorialsCard, knowledgeBaseCard, supportCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.help_center_company);
 
-        // Toolbar setup
+        initializeToolbar();
+        initializeViews();
+        setupClickListeners();
+    }
+
+    /**
+     * Initializes the toolbar with back navigation.
+     */
+    private void initializeToolbar() {
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
+    }
 
-        // SearchBar setup
+    /**
+     * Initializes all views from the layout.
+     */
+    private void initializeViews() {
         searchBar = findViewById(R.id.searchBar);
-        searchBar.setOnClickListener(v -> Toast.makeText(this, "Search our knowledge base for instant answers", Toast.LENGTH_SHORT).show());
-
-        // Initialize Help Sections
         quickHelpTitle = findViewById(R.id.quickHelpTitle);
         helpCategoriesTitle = findViewById(R.id.helpCategoriesTitle);
         supportTitle = findViewById(R.id.supportTitle);
         supportDescription = findViewById(R.id.supportDescription);
 
-        // Cards
         postProjectCard = findViewById(R.id.postProjectCard);
         manageApplicantsCard = findViewById(R.id.manageApplicantsCard);
         videoTutorialsCard = findViewById(R.id.videoTutorialsCard);
         knowledgeBaseCard = findViewById(R.id.knowledgeBaseCard);
         supportCard = findViewById(R.id.supportCard);
         contactSupportButton = findViewById(R.id.contactSupportButton);
+    }
 
-        // Set up click listeners with professional help dialogs
+    /**
+     * Sets up click listeners for the UI components.
+     */
+    private void setupClickListeners() {
+        searchBar.setOnClickListener(v ->
+                Toast.makeText(this, "Search our knowledge base for instant answers", Toast.LENGTH_SHORT).show());
+
         postProjectCard.setOnClickListener(v -> showProfessionalPopup(
                 "Streamline Your Hiring Process",
                 "Posting projects on InternLink is designed to save you time while attracting top talent:\n\n" +
@@ -104,6 +130,9 @@ public class CompanyHelpCenterActivity extends AppCompatActivity {
                 "CONTACT NOW"));
     }
 
+    /**
+     * Shows a custom-styled popup with title, message, and button.
+     */
     private void showProfessionalPopup(String title, String message, String buttonText) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.ProfessionalDialogTheme);
         View view = LayoutInflater.from(this).inflate(R.layout.popup_help_info, null);
@@ -119,20 +148,35 @@ public class CompanyHelpCenterActivity extends AppCompatActivity {
         builder.setView(view);
         AlertDialog dialog = builder.create();
 
-        // Customize dialog appearance
-        dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
+        }
 
         closeButton.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
+    /**
+     * Placeholder function to handle help article search.
+     */
     private void searchHelpArticles(String query) {
         if (query.isEmpty()) {
             Toast.makeText(this, "Please enter what you're looking for", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Searching our resources for: " + query, Toast.LENGTH_SHORT).show();
-            // Implement actual search functionality here
+            // TODO: Implement actual search functionality
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.help_menu, menu);
+        MenuItem item = menu.findItem(R.id.action_notifications);
+        Drawable icon = item.getIcon();
+        if (icon != null) {
+            icon.setTint(ContextCompat.getColor(this, android.R.color.black));
+        }
+        return true;
     }
 
     @Override

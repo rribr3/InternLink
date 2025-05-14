@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="16dp"
-    android:elevation="4dp">
+    android:elevation="8dp"
+    android:radius="8dp">  <!-- Rounded corners for a smoother look -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,14 +20,17 @@
             android:layout_height="wrap_content"
             android:text="My Posted Projects"
             android:textColor="@android:color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"
+            android:layout_marginBottom="8dp"/>  <!-- Added margin for spacing -->
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="3">  <!-- Ensuring the layout is evenly distributed -->
 
             <com.example.internlink.StatItem
                 android:id="@+id/activeProjects"
@@ -57,12 +61,37 @@
                 app:label="Completed" />
         </LinearLayout>
 
+        <!-- RecyclerView with updated margin for spacing -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/projects_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:paddingBottom="16dp" /> <!-- Added bottom padding for spacing -->
 
+        <!-- Dots Indicator (below RecyclerView) -->
+        <LinearLayout
+            android:id="@+id/dotIndicatorLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp">
+
+            <!-- Example of one dot -->
+            <View
+                android:id="@+id/dot1"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/circle_dot" />
+
+            <!-- Add more dots dynamically in your code -->
+            <!-- <View android:id="@+id/dot2" ... /> -->
+
+        </LinearLayout>
+
+        <!-- Updated Button with more prominent design -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/view_all_projects_button"
             android:layout_width="match_parent"
@@ -70,8 +99,10 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/rounded_background"
             android:backgroundTint="@android:color/holo_blue_dark"
-            android:text="View All Project"
+            android:text="View All Projects"
             android:textColor="@android:color/white"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:textAllCaps="false"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
