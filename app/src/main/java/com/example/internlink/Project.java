@@ -14,7 +14,7 @@ public class Project {
     private int studentsRequired;
     private String educationLevel;
     private String compensationType;
-    private String amount;
+    private int amount;
     private String companyId;
     private String companyName;
     private String contactPerson;
@@ -119,11 +119,11 @@ public class Project {
         this.compensationType = compensationType;
     }
 
-    public String getAmount() {
+    public int getAmount() {
         return amount;
     }
 
-    public void setAmount(String amount) {
+    public void setAmount(int amount) {
         this.amount = amount;
     }
 

@@ -65,7 +65,9 @@ public class MyProjectsActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new MyProjectsAdapter(filteredProjects, project -> {
-            Toast.makeText(MyProjectsActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MyProjectsActivity.this, ProjectDetailsActivity.class);
+            intent.putExtra("PROJECT_ID", project.getProjectId());
+            startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
 
@@ -94,7 +96,7 @@ public class MyProjectsActivity extends AppCompatActivity {
     }
 
     private void showFilterPopup() {
-        String[] filterOptions = {"Approved", "Rejected", "Pending", "Completed"};
+        String[] filterOptions = {"approved", "rejected", "pending", "completed"};
         boolean[] checkedItems = new boolean[filterOptions.length];
 
         // Pre-check previously selected items
@@ -130,7 +132,7 @@ public class MyProjectsActivity extends AppCompatActivity {
 
     private void addFilterChip(String filterText) {
         Chip chip = new Chip(this);
-        chip.setText(filterText);
+        chip.setText(capitalize(filterText));
         chip.setCloseIconVisible(true);
         chip.setOnCloseIconClickListener(v -> {
             selectedFilters.remove(filterText);
@@ -138,6 +140,10 @@ public class MyProjectsActivity extends AppCompatActivity {
             filterAndSearchProjects(searchInput.getQuery().toString());
         });
         selectedFiltersChipGroup.addView(chip);
+    }
+    private String capitalize(String input) {
+        if (input == null || input.length() == 0) return input;
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
 
@@ -154,6 +160,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                             Project project = snap.getValue(Project.class);
                             if (project != null) {
                                 project.setProjectId(snap.getKey());
+                                project.setAmount((int) snap.child("applicants").getChildrenCount());
                                 allProjects.add(project);
                             }
                         }
@@ -176,19 +183,100 @@ public class MyProjectsActivity extends AppCompatActivity {
 
 
     private void filterAndSearchProjects(String query) {
+        txtProjectsCount.setText("Loading...");
         query = query.toLowerCase().trim();
         filteredProjects.clear();
 
-        for (Project p : allProjects) {
-            boolean matchesSearch = p.getTitle().toLowerCase().contains(query);
-            boolean matchesFilter = selectedFilters.isEmpty() || selectedFilters.contains(p.getStatus());
+        String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects");
 
-            if (matchesSearch && matchesFilter) {
-                filteredProjects.add(p);
+        if (selectedFilters.isEmpty()) {
+            // No filter selected, load all company projects
+            String finalQuery = query;
+            ref.orderByChild("companyId").equalTo(companyId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            for (DataSnapshot snap : snapshot.getChildren()) {
+                                Project project = snap.getValue(Project.class);
+                                if (project != null && project.getTitle().toLowerCase().contains(finalQuery)) {
+                                    project.setProjectId(snap.getKey());
+                                    project.setAmount((int) snap.child("applicants").getChildrenCount());
+                                    filteredProjects.add(project);
+                                }
+                            }
+                            updateUIAfterFilter();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(MyProjectsActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+        } else {
+            // Filter selected: we need to query each status separately
+            List<Project> tempList = new ArrayList<>();
+            List<String> filters = new ArrayList<>(selectedFilters);
+            final int[] completedQueries = {0};
+
+            for (String status : filters) {
+                String finalQuery1 = query;
+                ref.orderByChild("status").equalTo(status)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                for (DataSnapshot snap : snapshot.getChildren()) {
+                                    Project project = snap.getValue(Project.class);
+                                    if (project != null &&
+                                            companyId.equals(project.getCompanyId()) &&
+                                            project.getTitle().toLowerCase().contains(finalQuery1)) {
+                                        project.setProjectId(snap.getKey());
+                                        project.setAmount((int) snap.child("applicants").getChildrenCount());
+
+                                        // Prevent duplicates
+                                        boolean alreadyExists = false;
+                                        for (Project p : tempList) {
+                                            if (p.getProjectId().equals(project.getProjectId())) {
+                                                alreadyExists = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!alreadyExists) {
+                                            tempList.add(project);
+                                        }
+                                    }
+                                }
+
+                                // When all queries are done
+                                completedQueries[0]++;
+                                if (completedQueries[0] == filters.size()) {
+                                    filteredProjects.clear();
+                                    filteredProjects.addAll(tempList);
+                                    updateUIAfterFilter();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Toast.makeText(MyProjectsActivity.this, "Failed to filter by " + status, Toast.LENGTH_SHORT).show();
+                                completedQueries[0]++;
+                                if (completedQueries[0] == filters.size()) {
+                                    filteredProjects.clear();
+                                    filteredProjects.addAll(tempList);
+                                    updateUIAfterFilter();
+                                }
+                            }
+                        });
             }
         }
-
-        adapter.notifyDataSetChanged();
     }
+
+    private void updateUIAfterFilter() {
+        adapter.notifyDataSetChanged();
+        txtProjectsCount.setText(filteredProjects.size() + " projects found");
+    }
+
+
 
 }
