@@ -592,9 +592,11 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         getSampleProjectsFromFirebase(new ProjectsCallback() {
             @Override
             public void onProjectsLoaded(List<EmployerProject> projects) {
-                ProjectDetailsAdapter adapter = new ProjectDetailsAdapter(projects, project ->
-                        Toast.makeText(CompanyHomeActivity.this, "Selected: " + project.getTitle(), Toast.LENGTH_SHORT).show()
-                );
+                ProjectDetailsAdapter adapter = new ProjectDetailsAdapter(projects, project -> {
+                    Intent intent = new Intent(CompanyHomeActivity.this, ProjectDetailsActivity.class);
+                    intent.putExtra("PROJECT_ID", project.getProjectId());
+                    startActivity(intent);
+                });
                 recyclerView.setAdapter(adapter);
             }
         });

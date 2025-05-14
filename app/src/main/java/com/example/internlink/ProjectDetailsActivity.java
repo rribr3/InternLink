@@ -30,10 +30,8 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_details);
 
-        // Initialize all views
         initializeViews();
 
-        // Get project ID from intent
         String projectId = getIntent().getStringExtra("PROJECT_ID");
         if (projectId == null || projectId.isEmpty()) {
             Toast.makeText(this, "Project not found", Toast.LENGTH_SHORT).show();
@@ -41,7 +39,6 @@ public class ProjectDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        // Load project details from Firebase
         loadProjectDetails(projectId);
     }
 
@@ -64,10 +61,9 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         quizPassingScore = findViewById(R.id.quiz_passing_score);
         viewQuizButton = findViewById(R.id.view_quiz_button);
 
-        viewQuizButton.setOnClickListener(v -> {
-            // Handle view quiz button click
-            Toast.makeText(this, "View quiz questions", Toast.LENGTH_SHORT).show();
-        });
+        viewQuizButton.setOnClickListener(v ->
+                Toast.makeText(this, "View quiz questions", Toast.LENGTH_SHORT).show()
+        );
     }
 
     private void loadProjectDetails(String projectId) {
@@ -75,80 +71,87 @@ public class ProjectDetailsActivity extends AppCompatActivity {
 
         projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    // Set basic project info
-                    projectTitle.setText(dataSnapshot.child("title").getValue(String.class));
-                    projectDescription.setText(dataSnapshot.child("description").getValue(String.class));
-
-                    // Set status with appropriate color
-                    String status = dataSnapshot.child("status").getValue(String.class);
-                    projectStatus.setText(status);
-                    setStatusBackground(status);
-
-                    // Set basic information
-                    projectCategory.setText(dataSnapshot.child("category").getValue(String.class));
-                    projectCompensation.setText(dataSnapshot.child("compensationType").getValue(String.class));
-                    projectEducation.setText(dataSnapshot.child("educationLevel").getValue(String.class));
-                    projectStudentsRequired.setText(String.valueOf(dataSnapshot.child("studentsRequired").getValue(Integer.class)));
-                    projectApplicants.setText(String.valueOf(dataSnapshot.child("applicants").getValue(Integer.class)));
-
-                    // Set timeline information
-                    projectStartDate.setText(dataSnapshot.child("startDate").getValue(String.class));
-                    projectDuration.setText(dataSnapshot.child("duration").getValue(String.class));
-                    projectDeadline.setText(dataSnapshot.child("deadline").getValue(String.class));
-
-                    // Set skills
-                    List<String> skills = (List<String>) dataSnapshot.child("skills").getValue();
-                    if (skills != null && !skills.isEmpty()) {
-                        projectSkills.setText(String.join(", ", skills));
-                    } else {
-                        projectSkills.setText("No specific skills required");
-                    }
-
-                    // Set quiz details if exists
-                    if (dataSnapshot.hasChild("quiz")) {
-                        findViewById(R.id.section_quiz).setVisibility(View.VISIBLE);
-                        quizTitle.setText(dataSnapshot.child("quiz").child("title").getValue(String.class));
-                        quizInstructions.setText(dataSnapshot.child("quiz").child("instructions").getValue(String.class));
-                        quizTimeLimit.setText(dataSnapshot.child("quiz").child("timeLimit").getValue(Integer.class) + " minutes");
-                        quizPassingScore.setText(dataSnapshot.child("quiz").child("passingScore").getValue(Integer.class) + "%");
-                        viewQuizButton.setVisibility(View.VISIBLE);
-                    } else {
-                        findViewById(R.id.section_quiz).setVisibility(View.GONE);
-                        viewQuizButton.setVisibility(View.GONE);
-                    }
-                } else {
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
                     Toast.makeText(ProjectDetailsActivity.this, "Project not found", Toast.LENGTH_SHORT).show();
                     finish();
+                    return;
+                }
+
+                Project project = snapshot.getValue(Project.class);
+                if (project == null) {
+                    Toast.makeText(ProjectDetailsActivity.this, "Project data is corrupted", Toast.LENGTH_SHORT).show();
+                    finish();
+                    return;
+                }
+
+                // Populate UI
+                projectTitle.setText(getSafeString(project.getTitle()));
+                projectDescription.setText(getSafeString(project.getDescription()));
+                projectCategory.setText(getSafeString(project.getCategory()));
+                projectCompensation.setText(getSafeString(project.getCompensationType()));
+                projectEducation.setText(getSafeString(project.getEducationLevel()));
+                projectStudentsRequired.setText(String.valueOf(project.getStudentsRequired()));
+                projectApplicants.setText(String.valueOf(project.getAmount()));
+                projectStartDate.setText(getSafeString(project.getStartDate()));
+                projectDuration.setText(getSafeString(project.getDuration()));
+                projectDeadline.setText(getSafeString(project.getDeadline()));
+                projectStatus.setText(getSafeString(project.getStatus()));
+                setStatusBackground(project.getStatus());
+
+                List<String> skills = project.getSkills();
+                if (skills != null && !skills.isEmpty()) {
+                    projectSkills.setText(String.join(", ", skills));
+                } else {
+                    projectSkills.setText("No specific skills required");
+                }
+
+                if (project.getQuiz() != null) {
+                    findViewById(R.id.section_quiz).setVisibility(View.VISIBLE);
+                    quizTitle.setText(getSafeString(project.getQuiz().getTitle()));
+                    quizInstructions.setText(getSafeString(project.getQuiz().getInstructions()));
+                    quizTimeLimit.setText(project.getQuiz().getTimeLimit() + " minutes");
+                    quizPassingScore.setText(project.getQuiz().getPassingScore() + "%");
+                    viewQuizButton.setVisibility(View.VISIBLE);
+                } else {
+                    findViewById(R.id.section_quiz).setVisibility(View.GONE);
+                    viewQuizButton.setVisibility(View.GONE);
                 }
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(DatabaseError error) {
                 Toast.makeText(ProjectDetailsActivity.this, "Failed to load project details", Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
     }
 
+    private String getSafeString(String value) {
+        return value != null ? value : "N/A";
+    }
+
     private void setStatusBackground(String status) {
         int color;
-        switch (status.toLowerCase()) {
-            case "approved":
-                color = Color.GREEN;
-                break;
-            case "pending":
-                color = Color.YELLOW;
-                break;
-            case "rejected":
-                color = Color.RED;
-                break;
-            case "completed":
-                color = Color.BLUE;
-                break;
-            default:
-                color = Color.GRAY;
+        if (status == null) {
+            color = Color.GRAY;
+        } else {
+            switch (status.toLowerCase()) {
+                case "approved":
+                    color = Color.GREEN;
+                    break;
+                case "pending":
+                    color = Color.YELLOW;
+                    break;
+                case "rejected":
+                    color = Color.RED;
+                    break;
+                case "completed":
+                    color = Color.BLUE;
+                    break;
+                default:
+                    color = Color.GRAY;
+            }
         }
         projectStatus.setBackgroundColor(color);
     }
