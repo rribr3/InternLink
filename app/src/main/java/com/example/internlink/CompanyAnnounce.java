@@ -72,8 +72,6 @@ public class CompanyAnnounce extends AppCompatActivity {
         toolbar = findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
-        announcementContainer = findViewById(R.id.announcement_container);
-
         // Load announcements from Firebase
         loadAllAnnouncements();
 

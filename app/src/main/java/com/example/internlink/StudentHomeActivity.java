@@ -10,7 +10,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,11 +45,21 @@ public class StudentHomeActivity extends AppCompatActivity
     private RecyclerView projectsRecyclerView;
     private ProjectAdapterHome projectAdapterHome;
     private List<Project> allProjects;
+    private ProgressBar loadingIndicator;
+    private View mainContent;
+    private LinearLayout dotIndicatorLayout;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_home);
+        loadingIndicator = findViewById(R.id.home_loading_indicator);
+        mainContent = findViewById(R.id.home_main_content);
+        dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
+
+        loadingIndicator.setVisibility(View.VISIBLE);
+        mainContent.setVisibility(View.GONE);
 
         // Initialize
         allProjects = getSampleProjects();
@@ -59,6 +71,28 @@ public class StudentHomeActivity extends AppCompatActivity
         setupProjectsRecyclerView();
         setupClickListeners();
     }
+    private void addDots(int count) {
+        if (dotIndicatorLayout == null || count <= 0) return;
+
+        dotIndicatorLayout.removeAllViews();
+
+        int sizeInPx = (int) (10 * getResources().getDisplayMetrics().density);
+        int marginInPx = (int) (4 * getResources().getDisplayMetrics().density);
+
+        for (int i = 0; i < count; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizeInPx, sizeInPx);
+            params.setMargins(marginInPx, 0, marginInPx, 0);
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.circle_dot);
+            dotIndicatorLayout.addView(dot);
+        }
+
+        if (dotIndicatorLayout.getChildCount() > 0) {
+            dotIndicatorLayout.getChildAt(0).setBackgroundResource(R.drawable.circle_dot_active);
+        }
+    }
+
 
     private void initializeViews() {
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -160,11 +194,51 @@ public class StudentHomeActivity extends AppCompatActivity
         projectsRecyclerView.setLayoutManager(new LinearLayoutManager(
                 this, LinearLayoutManager.HORIZONTAL, false));
 
-        projectAdapterHome = new ProjectAdapterHome(allProjects, project -> {
-            Toast.makeText(this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
-        }, true); // true for horizontal layout
-        projectsRecyclerView.setAdapter(projectAdapterHome);
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+
+        projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Project> loadedProjects = new ArrayList<>();
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    Project project = snap.getValue(Project.class);
+                    loadedProjects.add(project);
+                }
+
+                projectAdapterHome = new ProjectAdapterHome(loadedProjects, project -> {
+                    Toast.makeText(StudentHomeActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
+                }, true);
+
+                projectsRecyclerView.setAdapter(projectAdapterHome);
+
+                // ✅ Add this right here:
+                addDots(loadedProjects.size());
+
+                projectsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                        if (layoutManager != null) {
+                            int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
+                            updateActiveDot(firstVisibleItem);
+                        }
+                    }
+                });
+
+                // ✅ Hide loader, show main content
+                loadingIndicator.setVisibility(View.GONE);
+                mainContent.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+            }
+        });
+
     }
+
 
     private List<Project> getSampleProjects() {
         return java.util.Collections.emptyList();
@@ -289,6 +363,18 @@ public class StudentHomeActivity extends AppCompatActivity
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+    private void updateActiveDot(int position) {
+        if (dotIndicatorLayout == null) return;
+
+        for (int i = 0; i < dotIndicatorLayout.getChildCount(); i++) {
+            dotIndicatorLayout.getChildAt(i).setBackgroundResource(R.drawable.circle_dot);
+        }
+
+        if (position >= 0 && position < dotIndicatorLayout.getChildCount()) {
+            dotIndicatorLayout.getChildAt(position).setBackgroundResource(R.drawable.circle_dot_active);
+        }
+    }
+
 
 
     @Override

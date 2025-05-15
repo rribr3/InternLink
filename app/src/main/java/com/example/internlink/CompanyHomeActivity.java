@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,12 +53,21 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private TextView notificationBadge;
     private DatabaseReference databaseReference;
     private LinearLayout dotIndicatorLayout;
+    private ProgressBar loadingIndicator;
+    private View mainContent;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("CompanyHomeActivity", "onCreate started");
         setContentView(R.layout.activity_company_home);
+        loadingIndicator = findViewById(R.id.home_loading_indicator);
+        mainContent = findViewById(R.id.home_main_content);
+
+        loadingIndicator.setVisibility(View.VISIBLE);
+        mainContent.setVisibility(View.GONE);
+
 
         // Initialize the dot indicator layout
         dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
@@ -129,6 +139,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         setupNotificationBell();
         fetchCompanyStats();
         createNotificationChannel();
+
+
     }
 
 
@@ -444,9 +456,14 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                         }
                     }
                 });
+
+                // ✅ Show the content and hide the loader
+                loadingIndicator.setVisibility(View.GONE);
+                mainContent.setVisibility(View.VISIBLE);
             }
         });
     }
+
 
     private void addDots(int count) {
         if (dotIndicatorLayout == null || count <= 0) return;
@@ -539,6 +556,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     projects.add(project);
                 }
                 callback.onProjectsLoaded(projects);
+                loadingIndicator.setVisibility(View.GONE);
+                mainContent.setVisibility(View.VISIBLE);
             }
 
             @Override

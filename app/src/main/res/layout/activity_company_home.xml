@@ -13,10 +13,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!-- ProgressBar for loading -->
+        <ProgressBar
+            android:id="@+id/home_loading_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="visible" />
+
+        <!-- Main Content, hidden until data is loaded -->
         <LinearLayout
+            android:id="@+id/home_main_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <!-- App Bar -->
             <com.google.android.material.appbar.MaterialToolbar
@@ -52,8 +63,6 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <!-- Profile Avatar -->
-
                     <TextView
                         android:id="@+id/notification_badge"
                         android:layout_width="24dp"
@@ -65,7 +74,6 @@
                         android:textSize="14sp"
                         android:visibility="gone" />
 
-
                     <ImageView
                         android:id="@+id/notification_bell"
                         android:layout_width="30dp"
@@ -76,11 +84,10 @@
                         android:src="@drawable/notification"
                         android:contentDescription="Notifications"
                         app:tint="@color/black" />
-
                 </RelativeLayout>
             </com.google.android.material.appbar.MaterialToolbar>
 
-            <!-- Main Content -->
+            <!-- Main Scrollable Content -->
             <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -92,31 +99,26 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- My Posted Projects Card -->
+                    <!-- Cards -->
                     <include layout="@layout/card_my_projects" />
-
-                    <!-- Recent Applicants Card -->
                     <include layout="@layout/card_recent_applicants" />
-
-                    <!-- Company Stats Card -->
                     <include layout="@layout/card_company_stats" />
-
-                    <!-- Notification Feed Card -->
                     <include layout="@layout/card_notification_feed" />
+
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
-        </LinearLayout>
 
-        <!-- Create Project FAB -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_create_project"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="24dp"
-            android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_add"
-            android:contentDescription="Create project"
-            app:tint="@color/blueDark"/>
+            <!-- Floating Button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fab_create_project"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="24dp"
+                android:layout_gravity="bottom|end"
+                android:src="@drawable/ic_add"
+                android:contentDescription="Create project"
+                app:tint="@color/blueDark"/>
+        </LinearLayout>
     </FrameLayout>
 
     <!-- Navigation Drawer -->
@@ -128,4 +130,5 @@
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_company"
         app:menu="@menu/menu_employer_nav" />
+
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -12,119 +12,136 @@
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#BB7EA0E7"
-        android:fitsSystemWindows="true">
+        android:background="@color/light_gray_bg">
 
-        <!-- AppBar with Toolbar -->
+        <!-- Enhanced App Bar -->
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
-            android:fitsSystemWindows="true">
+            android:background="@color/white"
+            android:elevation="4dp">
 
             <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/toolbar_announce"
+                android:id="@+id/topAppBar"
+                style="@style/Widget.Material3.Toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
+                android:background="@color/blue_500"
+                app:title="Announcements"
+                app:titleTextColor="@color/white"
+                app:navigationIcon="@drawable/left_arrow"
+                app:navigationIconTint="@color/white"/>
+
+            <!-- Search and Filter Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:background="@color/white"
-                android:elevation="8dp"
-                app:titleTextColor="@color/black">
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp">
 
-                <RelativeLayout
+                <!-- Fixed the search bar height to wrap_content -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/search_layout"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    android:layout_height="wrap_content"
+                    android:hint="Search announcements"
+                    app:boxBackgroundColor="@color/white"
+                    app:boxStrokeColor="@color/blue_500">
 
-                    <ImageView
-                        android:id="@+id/logo"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="16dp"
-                        android:src="@drawable/left_arrow"
-                        app:tint="@color/blue"
-                        android:contentDescription="Back" />
-
-                    <TextView
-                        android:id="@+id/page_title"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/search_edit_text"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_toEndOf="@id/logo"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="12dp"
-                        android:text="Announcements"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
                         android:textColor="@color/black"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </RelativeLayout>
-            </com.google.android.material.appbar.MaterialToolbar>
+                        android:textColorHint="@color/gray_500" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fillViewport="true"
+                    android:scrollbars="none">
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/filter_chip_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:singleLine="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_all"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="All"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_unread"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Unread"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_read"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Read"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_new"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Earliest"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_old"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Latest"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp"/>
+                    </com.google.android.material.chip.ChipGroup>
+                </HorizontalScrollView>
+            </LinearLayout>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <!-- Search & Filter Bar -->
-        <LinearLayout
-            android:id="@+id/search_filter_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="?attr/actionBarSize"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:gravity="center_vertical">
-
-            <!-- SearchView with rounded background -->
-            <androidx.appcompat.widget.SearchView
-                android:id="@+id/search_view"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:queryHint="Search announcements"
-                android:background="@drawable/search_background"
-                android:iconifiedByDefault="false" />
-
-            <!-- Filter with icon -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:orientation="horizontal"
-                android:background="@drawable/spinner_background"
-                android:padding="8dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_filter_list"
-                    app:tint="@color/black"
-                    android:contentDescription="Filter Icon"
-                    android:layout_marginEnd="4dp" />
-
-                <Spinner
-                    android:id="@+id/filter_spinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:entries="@array/announcement_filters"
-                    android:spinnerMode="dropdown" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Content ScrollView -->
-        <androidx.core.widget.NestedScrollView
+        <!-- Content Area with RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/announcement_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="80dp"
-            android:background="@color/light_gray_bg"
-            android:padding="16dp"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+            android:layout_marginTop="?attr/actionBarSize"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            tools:listitem="@layout/announcement_item"/>
 
-        <LinearLayout
-            android:id="@+id/announcement_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:divider="?android:attr/dividerHorizontal"
-            android:showDividers="middle"
-            android:dividerPadding="8dp" />
-    </androidx.core.widget.NestedScrollView>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
-    </androidx.drawerlayout.widget.DrawerLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
