@@ -21,18 +21,19 @@
             android:background="@color/white"
             android:elevation="4dp">
 
+            <!-- Search and Filter Section -->
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/topAppBar"
                 style="@style/Widget.Material3.Toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/blue_500"
+                app:navigationIcon="@drawable/left_arrow"
+                app:navigationIconTint="@color/white"
                 app:title="Announcements"
                 app:titleTextColor="@color/white"
-                app:navigationIcon="@drawable/left_arrow"
-                app:navigationIconTint="@color/white"/>
+                android:layout_marginTop="22dp"/>
 
-            <!-- Search and Filter Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -40,7 +41,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="16dp"
                 android:paddingTop="8dp"
-                android:paddingBottom="16dp">
+                android:paddingBottom="17dp">
 
                 <!-- Fixed the search bar height to wrap_content -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -68,65 +69,66 @@
                     android:layout_marginTop="12dp"
                     android:fillViewport="true"
                     android:scrollbars="none">
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/filter_chip_group"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:singleLine="true"
-                    app:singleSelection="true">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_all"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/filter_chip_group"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="All"
-                        app:chipBackgroundColor="@color/chip_state_color"
-                        app:chipStrokeColor="@color/blue_500"
-                        app:chipStrokeWidth="1dp"/>
+                        android:layout_marginTop="12dp"
+                        app:singleLine="true"
+                        app:singleSelection="true">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_unread"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Unread"
-                        app:chipBackgroundColor="@color/chip_state_color"
-                        app:chipStrokeColor="@color/blue_500"
-                        app:chipStrokeWidth="1dp"/>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_all"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="All"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_read"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Read"
-                        app:chipBackgroundColor="@color/chip_state_color"
-                        app:chipStrokeColor="@color/blue_500"
-                        app:chipStrokeWidth="1dp"/>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_unread"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Unread"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_new"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Earliest"
-                        app:chipBackgroundColor="@color/chip_state_color"
-                        app:chipStrokeColor="@color/blue_500"
-                        app:chipStrokeWidth="1dp"/>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_read"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Read"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_old"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Latest"
-                        app:chipBackgroundColor="@color/chip_state_color"
-                        app:chipStrokeColor="@color/blue_500"
-                        app:chipStrokeWidth="1dp"/>
-                </com.google.android.material.chip.ChipGroup>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_new"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Earliest"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_old"
+                            style="@style/Widget.Material3.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Latest"
+                            app:chipBackgroundColor="@color/chip_state_color"
+                            app:chipStrokeColor="@color/blue_500"
+                            app:chipStrokeWidth="1dp" />
+                    </com.google.android.material.chip.ChipGroup>
                 </HorizontalScrollView>
             </LinearLayout>
         </com.google.android.material.appbar.AppBarLayout>

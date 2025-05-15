@@ -15,7 +15,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ProjectDetailsActivity extends AppCompatActivity {
 
@@ -93,9 +96,9 @@ public class ProjectDetailsActivity extends AppCompatActivity {
                 projectEducation.setText(getSafeString(project.getEducationLevel()));
                 projectStudentsRequired.setText(String.valueOf(project.getStudentsRequired()));
                 projectApplicants.setText(String.valueOf(project.getAmount()));
-                projectStartDate.setText(getSafeString(project.getStartDate()));
+                projectStartDate.setText(formatDate(project.getStartDate()));
                 projectDuration.setText(getSafeString(project.getDuration()));
-                projectDeadline.setText(getSafeString(project.getDeadline()));
+                projectDeadline.setText(formatDate(project.getDeadline()));
                 projectStatus.setText(getSafeString(project.getStatus()));
                 setStatusBackground(project.getStatus());
 
@@ -155,4 +158,10 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         }
         projectStatus.setBackgroundColor(color);
     }
+    private String formatDate(long timestamp) {
+        if (timestamp == 0) return "N/A";
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        return sdf.format(new Date(timestamp));
+    }
+
 }

@@ -11,6 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
@@ -53,6 +58,7 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
         private final ImageView companyLogo;
         private final ChipGroup skillsChipGroup;
         private final TextView timeLeftText;
+        private final TextView companyName;
 
         public ProjectViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -60,20 +66,64 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
             companyLogo = itemView.findViewById(R.id.company_logo);
             skillsChipGroup = itemView.findViewById(R.id.skills_chip_group);
             timeLeftText = itemView.findViewById(R.id.time_left);
+            companyName = itemView.findViewById(R.id.company_name);
         }
 
         public void bind(Project project) {
             titleText.setText(project.getTitle());
-            //companyLogo.setImageResource(project.getCompanyLogo());
-            //timeLeftText.setText(project.getTimeLeft());
 
+            // Clear before setting
+            companyName.setText("Loading...");
+            timeLeftText.setText("");
+
+            // Load company name from Firebase
+            if (project.getCompanyId() != null && !project.getCompanyId().isEmpty()) {
+                DatabaseReference companyRef = FirebaseDatabase.getInstance()
+                        .getReference("users")
+                        .child(project.getCompanyId());
+
+                companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String company = snapshot.child("name").getValue(String.class);
+                        companyName.setText(company != null ? company : "Unknown Company");
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        companyName.setText("Company info not available");
+                    }
+                });
+            } else {
+                companyName.setText("Company info not available");
+            }
+
+            // Calculate time left for application based on startDate
+            long now = System.currentTimeMillis();
+            long startDate = project.getStartDate();
+            long diff = startDate - now;
+
+            if (diff > 0) {
+                long daysLeft = diff / (1000 * 60 * 60 * 24);
+                if (daysLeft > 1) {
+                    timeLeftText.setText(daysLeft + " days left");
+                } else if (daysLeft == 1) {
+                    timeLeftText.setText("1 day left");
+                } else {
+                    timeLeftText.setText("Less than a day left");
+                }
+            } else {
+                timeLeftText.setText("Application closed");
+            }
+
+            // Set skills chips
             skillsChipGroup.removeAllViews();
             for (String skill : project.getSkills()) {
                 Chip chip = new Chip(itemView.getContext());
                 chip.setText(skill);
-
                 skillsChipGroup.addView(chip);
             }
         }
+
     }
 }

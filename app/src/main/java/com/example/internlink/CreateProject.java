@@ -531,8 +531,8 @@ public class CreateProject extends AppCompatActivity {
         project.put("skills", getSkillsList());
         project.put("category", categoryAutoComplete.getText().toString());
         project.put("duration", durationAutoComplete.getText().toString());
-        project.put("startDate", startDateEditText.getText().toString());
-        project.put("deadline", deadlineEditText.getText().toString());
+        project.put("startDate", parseDateToTimestamp(startDateEditText.getText().toString()));
+        project.put("deadline", parseDateToTimestamp(deadlineEditText.getText().toString()));
         project.put("studentsRequired", Integer.parseInt(studentsEditText.getText().toString()));
         project.put("educationLevel", educationAutoComplete.getText().toString());
         project.put("compensationType", compensationType);
@@ -648,4 +648,14 @@ public class CreateProject extends AppCompatActivity {
         }
         return skills;
     }
+    private long parseDateToTimestamp(String dateString) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.US);
+            return sdf.parse(dateString).getTime();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0L;  // fallback if parsing fails
+        }
+    }
+
 }

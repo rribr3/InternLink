@@ -9,8 +9,8 @@ public class Project {
     private List<String> skills;
     private String category;
     private String duration;
-    private String startDate;
-    private String deadline;
+    private long startDate;
+    private long deadline;
     private int studentsRequired;
     private String educationLevel;
     private String compensationType;
@@ -79,19 +79,19 @@ public class Project {
         this.duration = duration;
     }
 
-    public String getStartDate() {
+    public long getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(String startDate) {
+    public void setStartDate(long startDate) {
         this.startDate = startDate;
     }
 
-    public String getDeadline() {
+    public long getDeadline() {
         return deadline;
     }
 
-    public void setDeadline(String deadline) {
+    public void setDeadline(long deadline) {
         this.deadline = deadline;
     }
 

@@ -203,7 +203,9 @@ public class StudentHomeActivity extends AppCompatActivity
                 List<Project> loadedProjects = new ArrayList<>();
                 for (DataSnapshot snap : snapshot.getChildren()) {
                     Project project = snap.getValue(Project.class);
-                    loadedProjects.add(project);
+                    if (project != null && "active".equals(project.getStatus())) {
+                        loadedProjects.add(project);
+                    }
                 }
 
                 projectAdapterHome = new ProjectAdapterHome(loadedProjects, project -> {
@@ -211,8 +213,6 @@ public class StudentHomeActivity extends AppCompatActivity
                 }, true);
 
                 projectsRecyclerView.setAdapter(projectAdapterHome);
-
-                // ✅ Add this right here:
                 addDots(loadedProjects.size());
 
                 projectsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -226,7 +226,6 @@ public class StudentHomeActivity extends AppCompatActivity
                     }
                 });
 
-                // ✅ Hide loader, show main content
                 loadingIndicator.setVisibility(View.GONE);
                 mainContent.setVisibility(View.VISIBLE);
             }
@@ -236,6 +235,7 @@ public class StudentHomeActivity extends AppCompatActivity
                 Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
             }
         });
+
 
     }
 
