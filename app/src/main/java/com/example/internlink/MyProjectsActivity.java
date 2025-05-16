@@ -160,7 +160,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                             Project project = snap.getValue(Project.class);
                             if (project != null) {
                                 project.setProjectId(snap.getKey());
-                                project.setAmount((int) snap.child("applicants").getChildrenCount());
+                                project.setApplicants((int) snap.child("applicants").getChildrenCount());
                                 allProjects.add(project);
                             }
                         }
@@ -201,7 +201,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                                 Project project = snap.getValue(Project.class);
                                 if (project != null && project.getTitle().toLowerCase().contains(finalQuery)) {
                                     project.setProjectId(snap.getKey());
-                                    project.setAmount((int) snap.child("applicants").getChildrenCount());
+                                    project.setApplicants((int) snap.child("applicants").getChildrenCount());
                                     filteredProjects.add(project);
                                 }
                             }
@@ -232,7 +232,7 @@ public class MyProjectsActivity extends AppCompatActivity {
                                             companyId.equals(project.getCompanyId()) &&
                                             project.getTitle().toLowerCase().contains(finalQuery1)) {
                                         project.setProjectId(snap.getKey());
-                                        project.setAmount((int) snap.child("applicants").getChildrenCount());
+                                        project.setApplicants((int) snap.child("applicants").getChildrenCount());
 
                                         // Prevent duplicates
                                         boolean alreadyExists = false;

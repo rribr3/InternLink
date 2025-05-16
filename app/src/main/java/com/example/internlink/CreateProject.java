@@ -543,7 +543,7 @@ public class CreateProject extends AppCompatActivity {
         project.put("applicants", 0);
 
         if (compensationType.equals("Paid")) {
-            project.put("amount", amountEditText.getText().toString());
+            project.put("amount", Integer.parseInt(amountEditText.getText().toString()));
         }
 
         project.put("companyId", companyId);

@@ -196,48 +196,85 @@ public class StudentHomeActivity extends AppCompatActivity
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+        DatabaseReference appliedRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("appliedProjects");
 
-        projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        appliedRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<Project> loadedProjects = new ArrayList<>();
-                for (DataSnapshot snap : snapshot.getChildren()) {
-                    Project project = snap.getValue(Project.class);
-                    if (project != null && "active".equals(project.getStatus())) {
-                        loadedProjects.add(project);
-                    }
+            public void onDataChange(@NonNull DataSnapshot appliedSnapshot) {
+                List<String> appliedProjectIds = new ArrayList<>();
+                for (DataSnapshot snap : appliedSnapshot.getChildren()) {
+                    appliedProjectIds.add(snap.getKey());
                 }
 
-                projectAdapterHome = new ProjectAdapterHome(loadedProjects, project -> {
-                    Toast.makeText(StudentHomeActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
-                }, true);
-
-                projectsRecyclerView.setAdapter(projectAdapterHome);
-                addDots(loadedProjects.size());
-
-                projectsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                        if (layoutManager != null) {
-                            int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
-                            updateActiveDot(firstVisibleItem);
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<Project> filteredProjects = new ArrayList<>();
+                        long currentTime = System.currentTimeMillis();
+
+                        for (DataSnapshot snap : snapshot.getChildren()) {
+                            Project project = snap.getValue(Project.class);
+                            String projectId = snap.getKey();
+
+                            if (project == null || projectId == null) continue;
+                            if (!"approved".equals(project.getStatus())) continue;
+
+                            // Filter logic
+                            int applicants = project.getApplicants(); // actual field in DB
+                            int needed = project.getStudentsRequired();
+                            long startDate = project.getStartDate();
+
+                            boolean hasStarted = startDate <= currentTime;
+                            boolean isFull = applicants >= needed;
+                            boolean alreadyApplied = appliedProjectIds.contains(projectId);
+
+                            // Skip if: full & started, full even if not started, or already applied
+                            if ((isFull && hasStarted) || isFull || alreadyApplied) continue;
+
+                            filteredProjects.add(project);
                         }
+
+                        // Limit to max 3 projects
+                        if (filteredProjects.size() > 3) {
+                            filteredProjects = filteredProjects.subList(0, 3);
+                        }
+
+                        projectAdapterHome = new ProjectAdapterHome(filteredProjects, project -> {
+                            Toast.makeText(StudentHomeActivity.this, "Clicked: " + project.getTitle(), Toast.LENGTH_SHORT).show();
+                        }, true);
+
+                        projectsRecyclerView.setAdapter(projectAdapterHome);
+                        addDots(filteredProjects.size());
+
+                        projectsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                            @Override
+                            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                                if (layoutManager != null) {
+                                    int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
+                                    updateActiveDot(firstVisibleItem);
+                                }
+                            }
+                        });
+
+                        loadingIndicator.setVisibility(View.GONE);
+                        mainContent.setVisibility(View.VISIBLE);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-                loadingIndicator.setVisibility(View.GONE);
-                mainContent.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+                Toast.makeText(StudentHomeActivity.this, "Failed to load applied projects", Toast.LENGTH_SHORT).show();
             }
         });
-
-
     }
+
 
 
     private List<Project> getSampleProjects() {

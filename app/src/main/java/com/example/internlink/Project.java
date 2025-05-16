@@ -12,6 +12,7 @@ public class Project {
     private long startDate;
     private long deadline;
     private int studentsRequired;
+    private int applicants;
     private String educationLevel;
     private String compensationType;
     private int amount;
@@ -31,6 +32,12 @@ public class Project {
     // Getters and setters for all fields
     public String getTitle() {
         return title;
+    }
+    public int getApplicants() {
+        return applicants;
+    }
+    public void setApplicants(int applicants) {
+        this.applicants = applicants;
     }
     public String getStatus() {
         return status;

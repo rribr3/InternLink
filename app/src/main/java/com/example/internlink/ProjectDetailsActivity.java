@@ -95,7 +95,7 @@ public class ProjectDetailsActivity extends AppCompatActivity {
                 projectCompensation.setText(getSafeString(project.getCompensationType()));
                 projectEducation.setText(getSafeString(project.getEducationLevel()));
                 projectStudentsRequired.setText(String.valueOf(project.getStudentsRequired()));
-                projectApplicants.setText(String.valueOf(project.getAmount()));
+                projectApplicants.setText(String.valueOf(project.getApplicants()));
                 projectStartDate.setText(formatDate(project.getStartDate()));
                 projectDuration.setText(getSafeString(project.getDuration()));
                 projectDeadline.setText(formatDate(project.getDeadline()));

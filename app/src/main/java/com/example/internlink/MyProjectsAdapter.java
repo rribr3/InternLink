@@ -72,7 +72,7 @@ public class MyProjectsAdapter extends RecyclerView.Adapter<MyProjectsAdapter.Pr
         public void bind(Project project) {
             titleText.setText(project.getTitle());
             positionsText.setText(String.valueOf(project.getStudentsRequired()));
-            applicantsText.setText(String.valueOf(project.getAmount()));
+            applicantsText.setText(String.valueOf(project.getApplicants()));
 
             viewDetailsButton.setOnClickListener(v -> listener.onViewDetailsClick(project));
 
