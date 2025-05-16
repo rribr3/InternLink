@@ -1,8 +1,10 @@
 package com.example.internlink;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -44,8 +46,8 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
     @Override
     public void onBindViewHolder(@NonNull ProjectViewHolder holder, int position) {
         Project project = projects.get(position);
-        holder.bind(project);
-        holder.itemView.setOnClickListener(v -> listener.onProjectClick(project));
+        String projectId = project.getProjectId();
+        holder.bind(project, projectId);
     }
 
     @Override
@@ -60,6 +62,8 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
         private final TextView timeLeftText;
         private final TextView companyName;
 
+        private final Button applyNowButton; // Add this in ViewHolder class
+
         public ProjectViewHolder(@NonNull View itemView) {
             super(itemView);
             titleText = itemView.findViewById(R.id.project_title);
@@ -67,14 +71,17 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
             skillsChipGroup = itemView.findViewById(R.id.skills_chip_group);
             timeLeftText = itemView.findViewById(R.id.time_left);
             companyName = itemView.findViewById(R.id.company_name);
+            applyNowButton = itemView.findViewById(R.id.apply_button); // make sure this is in your XML
         }
 
-        public void bind(Project project) {
+
+        public void bind(Project project, String projectId) {
             titleText.setText(project.getTitle());
 
             // Clear before setting
             companyName.setText("Loading...");
             timeLeftText.setText("");
+
 
             // Load company name from Firebase
             if (project.getCompanyId() != null && !project.getCompanyId().isEmpty()) {
@@ -123,6 +130,17 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
                 chip.setText(skill);
                 skillsChipGroup.addView(chip);
             }
+            itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(itemView.getContext(), ApplyNowActivity.class);
+                intent.putExtra("PROJECT_ID", projectId);
+                itemView.getContext().startActivity(intent);
+            });
+            applyNowButton.setOnClickListener(v -> {
+                Intent intent = new Intent(itemView.getContext(), ApplyNowActivity.class);
+                intent.putExtra("PROJECT_ID", projectId);
+                itemView.getContext().startActivity(intent);
+            });
+
         }
 
     }

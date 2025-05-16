@@ -4,6 +4,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,10 +25,12 @@ import java.util.Locale;
 public class ProjectDetailsActivity extends AppCompatActivity {
 
     private TextView projectTitle, projectStatus, projectDescription, projectCategory;
-    private TextView projectCompensation, projectEducation, projectStudentsRequired, projectApplicants;
+    private TextView projectCompensation, projectAmount, projectEducation, projectStudentsRequired, projectApplicants;
     private TextView projectStartDate, projectDuration, projectDeadline, projectSkills;
     private TextView quizTitle, quizInstructions, quizTimeLimit, quizPassingScore;
     private Button viewQuizButton;
+    private LinearLayout amountPaidSection;
+    private ImageButton backButton;  // <-- Back button added here
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +38,9 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_project_details);
 
         initializeViews();
+
+        // Back button click listener: close activity and go back
+        backButton.setOnClickListener(v -> finish());
 
         String projectId = getIntent().getStringExtra("PROJECT_ID");
         if (projectId == null || projectId.isEmpty()) {
@@ -51,6 +58,8 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         projectDescription = findViewById(R.id.project_description);
         projectCategory = findViewById(R.id.project_category);
         projectCompensation = findViewById(R.id.project_compensation);
+        amountPaidSection = findViewById(R.id.amount_paid_section);
+        projectAmount = findViewById(R.id.project_amount);
         projectEducation = findViewById(R.id.project_education);
         projectStudentsRequired = findViewById(R.id.project_students_required);
         projectApplicants = findViewById(R.id.project_applicants);
@@ -63,10 +72,69 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         quizTimeLimit = findViewById(R.id.quiz_time_limit);
         quizPassingScore = findViewById(R.id.quiz_passing_score);
         viewQuizButton = findViewById(R.id.view_quiz_button);
+        backButton = findViewById(R.id.back_button); // <-- find the back button here
 
-        viewQuizButton.setOnClickListener(v ->
-                Toast.makeText(this, "View quiz questions", Toast.LENGTH_SHORT).show()
-        );
+        viewQuizButton.setOnClickListener(v -> {
+            DatabaseReference projectRef = FirebaseDatabase.getInstance()
+                    .getReference("projects")
+                    .child(getIntent().getStringExtra("PROJECT_ID"));
+
+            projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        Toast.makeText(ProjectDetailsActivity.this, "Quiz data not found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DataSnapshot quizSnapshot = snapshot.child("quiz");
+                    if (!quizSnapshot.exists()) {
+                        Toast.makeText(ProjectDetailsActivity.this, "No quiz available", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    StringBuilder quizContent = new StringBuilder();
+                    String quizTitleText = quizSnapshot.child("title").getValue(String.class);
+
+                    int i = 1;
+                    for (DataSnapshot questionSnap : quizSnapshot.child("questions").getChildren()) {
+                        String questionText = questionSnap.child("text").getValue(String.class);
+                        String questionType = questionSnap.child("type").getValue(String.class);
+
+                        quizContent.append("Q").append(i).append(": ").append(questionText).append("\n");
+                        quizContent.append("Type: ").append(questionType).append("\n");
+
+                        if ("Multiple Choice".equalsIgnoreCase(questionType)) {
+                            for (DataSnapshot optionSnap : questionSnap.child("options").getChildren()) {
+                                String optionText = optionSnap.child("text").getValue(String.class);
+                                Boolean isCorrect = optionSnap.child("correct").getValue(Boolean.class);
+                                quizContent.append("  - ").append(optionText);
+                                if (Boolean.TRUE.equals(isCorrect)) {
+                                    quizContent.append(" (Correct)");
+                                }
+                                quizContent.append("\n");
+                            }
+                        }
+
+                        quizContent.append("\n");
+                        i++;
+                    }
+
+                    new androidx.appcompat.app.AlertDialog.Builder(ProjectDetailsActivity.this)
+                            .setTitle(quizTitleText != null ? quizTitleText : "Quiz")
+                            .setMessage(quizContent.toString())
+                            .setPositiveButton("Close", null)
+                            .show();
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Toast.makeText(ProjectDetailsActivity.this, "Failed to load quiz", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+
     }
 
     private void loadProjectDetails(String projectId) {
@@ -93,6 +161,12 @@ public class ProjectDetailsActivity extends AppCompatActivity {
                 projectDescription.setText(getSafeString(project.getDescription()));
                 projectCategory.setText(getSafeString(project.getCategory()));
                 projectCompensation.setText(getSafeString(project.getCompensationType()));
+                if ("Unpaid".equalsIgnoreCase(project.getCompensationType())) {
+                    amountPaidSection.setVisibility(View.GONE);
+                } else {
+                    amountPaidSection.setVisibility(View.VISIBLE);
+                    projectAmount.setText(String.valueOf(project.getAmount()));
+                }
                 projectEducation.setText(getSafeString(project.getEducationLevel()));
                 projectStudentsRequired.setText(String.valueOf(project.getStudentsRequired()));
                 projectApplicants.setText(String.valueOf(project.getApplicants()));
@@ -137,27 +211,35 @@ public class ProjectDetailsActivity extends AppCompatActivity {
     private void setStatusBackground(String status) {
         int color;
         if (status == null) {
-            color = Color.GRAY;
+            color = Color.parseColor("#B0BEC5"); // Soft blue-grey
         } else {
             switch (status.toLowerCase()) {
                 case "approved":
-                    color = Color.GREEN;
+                    color = Color.parseColor("#4CAF50"); // Medium green
                     break;
                 case "pending":
-                    color = Color.YELLOW;
+                    color = Color.parseColor("#FFB300"); // Amber
                     break;
                 case "rejected":
-                    color = Color.RED;
+                    color = Color.parseColor("#E53935"); // Soft red
                     break;
                 case "completed":
-                    color = Color.BLUE;
+                    color = Color.parseColor("#1E88E5"); // Blue
                     break;
                 default:
-                    color = Color.GRAY;
+                    color = Color.parseColor("#90A4AE"); // Blue Grey
             }
         }
-        projectStatus.setBackgroundColor(color);
+
+        // Set the rounded background drawable and update its color
+        projectStatus.setBackgroundResource(R.drawable.rounded_button);
+        if (projectStatus.getBackground() instanceof android.graphics.drawable.GradientDrawable) {
+            android.graphics.drawable.GradientDrawable bgDrawable =
+                    (android.graphics.drawable.GradientDrawable) projectStatus.getBackground();
+            bgDrawable.setColor(color);
+        }
     }
+
     private String formatDate(long timestamp) {
         if (timestamp == 0) return "N/A";
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());

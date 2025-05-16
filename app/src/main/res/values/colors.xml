@@ -90,4 +90,12 @@
     <color name="gray_800">#424242</color>
     <color name="gray_200">#EEEEEE</color>
     <color name="chip_state_color">@android:color/transparent</color>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="primary_text">#212121</color>
+    <color name="secondary_text">#757575</color>
+    <color name="divider_color">#E0E0E0</color>
+    <color name="light_gray_background">#F5F5F5</color>
 </resources>

@@ -219,8 +219,7 @@ public class StudentHomeActivity extends AppCompatActivity
                             if (project == null || projectId == null) continue;
                             if (!"approved".equals(project.getStatus())) continue;
 
-                            // Filter logic
-                            int applicants = project.getApplicants(); // actual field in DB
+                            int applicants = project.getApplicants();
                             int needed = project.getStudentsRequired();
                             long startDate = project.getStartDate();
 
@@ -228,11 +227,12 @@ public class StudentHomeActivity extends AppCompatActivity
                             boolean isFull = applicants >= needed;
                             boolean alreadyApplied = appliedProjectIds.contains(projectId);
 
-                            // Skip if: full & started, full even if not started, or already applied
                             if ((isFull && hasStarted) || isFull || alreadyApplied) continue;
 
+                            project.setProjectId(projectId);
                             filteredProjects.add(project);
                         }
+
 
                         // Limit to max 3 projects
                         if (filteredProjects.size() > 3) {
