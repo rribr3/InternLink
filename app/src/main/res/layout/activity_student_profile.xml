@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/light_gray_background"
+    android:id="@+id/main"
     android:fillViewport="true">
 
     <LinearLayout
@@ -241,6 +242,26 @@
                         android:textSize="16sp"
                         tools:text="2023" />
                 </com.google.android.material.textfield.TextInputLayout>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="@color/divider_color" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/InputLayoutStyle">
+
+                    <EditText
+                        android:id="@+id/editGPA"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="GPA"
+                        android:inputType="number"
+                        android:textSize="16sp"
+                        tools:text="2023" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -351,7 +372,7 @@
                         android:id="@+id/editWebsite"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Personal Website URL"
+                        android:hint="Github"
                         android:inputType="textUri"
                         android:textSize="16sp"
                         tools:text="https://janedoe.com" />
@@ -399,11 +420,11 @@
                     android:layout_marginBottom="16dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnGenerateCV"
+                    android:id="@+id/uploadBtn"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="View / Generate CV"
+                    android:text="Upload CV"
                     android:textColor="@color/blue_500"
                     android:textStyle="bold"
                     app:strokeColor="@color/blue_500"
