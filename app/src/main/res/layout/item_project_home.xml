@@ -69,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:backgroundTint="#03A9F4"
-            android:text="Apply Now"
+            android:text="View Details"
             android:textColor="@color/white" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

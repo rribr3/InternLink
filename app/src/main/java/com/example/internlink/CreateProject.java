@@ -54,7 +54,6 @@ public class CreateProject extends AppCompatActivity {
     private TextInputEditText studentsEditText, amountEditText;
     private TextInputEditText startDateEditText, deadlineEditText;
     private ChipGroup skillsChipGroup;
-    private TextView contactPersonText, contactEmailText, contactPhoneText;
     private LinearLayout  amountInputLayout;
 
     // Quiz Fields
@@ -113,11 +112,6 @@ public class CreateProject extends AppCompatActivity {
         // Setup skills input
         setupSkillsInput();
 
-
-
-        // Load company contact info
-        loadContactInfo();
-
         // Setup quiz toggle
         setupQuizToggle();
 
@@ -136,10 +130,6 @@ public class CreateProject extends AppCompatActivity {
         skillsChipGroup = findViewById(R.id.skills_chip_group);
         amountInputLayout = findViewById(R.id.amount_input_layout);
 
-        // Contact info
-        contactPersonText = findViewById(R.id.contact_person_text);
-        contactEmailText = findViewById(R.id.contact_email_text);
-        contactPhoneText = findViewById(R.id.contact_phone_text);
 
         // Quiz fields
         quizTitleEditText = findViewById(R.id.quiz_title_edit_text);
@@ -288,40 +278,6 @@ public class CreateProject extends AppCompatActivity {
         skillsChipGroup.addView(chip);
     }
 
-
-    private void loadContactInfo() {
-        DatabaseReference companyRef = FirebaseDatabase.getInstance()
-                .getReference("companies")
-                .child(companyId);
-
-        companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    String contactPerson = dataSnapshot.child("contactPerson").getValue(String.class);
-                    String contactEmail = dataSnapshot.child("contactEmail").getValue(String.class);
-                    String contactPhone = dataSnapshot.child("contactPhone").getValue(String.class);
-
-                    contactPersonText.setText(contactPerson);
-                    contactEmailText.setText(contactEmail);
-                    contactPhoneText.setText(contactPhone);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                contactPersonText.setText("Not available");
-                contactEmailText.setText("Not available");
-                contactPhoneText.setText("Not available");
-            }
-        });
-
-        // Edit contact button
-        findViewById(R.id.edit_contact_button).setOnClickListener(v -> {
-            // Implement edit contact info functionality
-            Toast.makeText(this, "Edit contact info feature coming soon", Toast.LENGTH_SHORT).show();
-        });
-    }
 
     private void setupQuizToggle() {
         SwitchMaterial quizToggle = findViewById(R.id.quiz_toggle);

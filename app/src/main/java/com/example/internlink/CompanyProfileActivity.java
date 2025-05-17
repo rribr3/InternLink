@@ -25,7 +25,7 @@ import java.util.Map;
 public class CompanyProfileActivity extends AppCompatActivity {
 
     private EditText companyName, industry, location, description, mission, vision, email, phone, address, linkedin, twitter, website;
-    private LinearLayout socialLinksContainer;
+
     private Button btnSave;
     private String COMPANY_ID;
     private DatabaseReference companyRef;
@@ -66,7 +66,6 @@ public class CompanyProfileActivity extends AppCompatActivity {
         linkedin = findViewById(R.id.linkedin);
         twitter = findViewById(R.id.twitter);
         website = findViewById(R.id.website);
-        socialLinksContainer = findViewById(R.id.socialLinksContainer);
         btnSave = findViewById(R.id.btnSave);
         topAppBar = findViewById(R.id.topAppBar); // Toolbar reference
 
@@ -95,7 +94,6 @@ public class CompanyProfileActivity extends AppCompatActivity {
                 setSafeText(twitter, snapshot.child("twitter"));
                 setSafeText(website, snapshot.child("website"));
 
-                socialLinksContainer.removeAllViews();
             }
 
             @Override

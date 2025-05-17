@@ -1,54 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/background"
+    android:background="@color/light_gray_background"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="40dp"
         android:orientation="vertical"
-        android:padding="16dp">
+        >
 
-
+        <!-- Header Card with Rounded Corners -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
             style="@style/Widget.Material3.Toolbar"
-            android:layout_width="match_parent"
+            android:layout_width="426dp"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/secondaryContainer"
-            android:elevation="2dp"
-            app:titleTextColor="@color/black"
+            android:background="@color/blue_500"
+            android:elevation="4dp"
+            app:navigationIcon="@drawable/left_arrow"
+            app:navigationIconTint="@android:color/white"
             app:title="My Profile"
-            app:navigationIconTint="@android:color/background_dark"
-            app:navigationIcon="@drawable/left_arrow" />
-        <!-- Header -->
+            app:titleTextColor="@android:color/white" />
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginTop="16dp">
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/white"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:layout_marginTop="15dp">
+                android:padding="24dp"
+                android:background="@color/white">
 
-                <ImageView
-                    android:id="@+id/companyLogo"
+                <FrameLayout
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    android:contentDescription="Company Logo"
-                    android:padding="4dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_company" />
+                    android:background="@drawable/rounded_background">
+
+                    <ImageView
+                        android:id="@+id/companyLogo"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="Company Logo"
+                        android:src="@drawable/ic_company"
+                        app:tint="@color/black" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -59,133 +67,145 @@
 
                     <EditText
                         android:id="@+id/companyName"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="20sp"
                         android:textStyle="bold"
+                        android:textColor="@color/primary_text"
                         tools:text="Tech Company" />
 
                     <EditText
                         android:id="@+id/industry"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="@color/secondaryText"
+                        android:minHeight="48dp"
+                        android:textColor="@color/secondary_text"
                         tools:text="Technology" />
 
                     <EditText
                         android:id="@+id/location"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:textColor="@color/secondaryText"
+                        android:minHeight="48dp"
+                        android:textColor="@color/secondary_text"
                         tools:text="Beirut, Lebanon" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Social Links Placeholder -->
-        <LinearLayout
-            android:id="@+id/socialLinksContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
+        <!-- Social Links with Colored Icons -->
 
-        <!-- About Company -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            android:layout_marginBottom="16dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="About"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/description"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/secondaryText"
-                    tools:text="We are a leading tech company..." />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="?android:attr/listDivider" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Our Mission"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/mission"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/secondaryText"
-                    tools:text="To empower businesses..." />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="?android:attr/listDivider" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Our Vision"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/vision"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/secondaryText"
-                    tools:text="To be the global leader..." />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Contact Information -->
+        <!-- About Company Card with Gradient Dividers -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/blue_500"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="24dp"
+                android:background="@color/white">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="About"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"/>
+
+                <EditText
+                    android:id="@+id/description"
+                    android:layout_width="match_parent"
+                    android:layout_height="74dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="top"
+                    android:hint="Company description"
+                    android:inputType="textMultiLine"
+                    android:textColor="@color/primary_text" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="@drawable/header_gradient"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Our Mission"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"/>
+
+                <EditText
+                    android:id="@+id/mission"
+                    android:layout_width="match_parent"
+                    android:layout_height="74dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="top"
+                    android:hint="Mission statement"
+                    android:inputType="textMultiLine"
+                    android:textColor="@color/primary_text" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="@drawable/gradient"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Our Vision"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"/>
+
+                <EditText
+                    android:id="@+id/vision"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/primary_text"
+                    android:hint="Vision statement"
+                    android:inputType="textMultiLine"
+                    android:gravity="top"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Contact Information Card with Interactive Elements -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:strokeColor="@color/blue"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:background="@color/white">
+
+                <TextView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Contact Information"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"/>
 
                 <!-- Email -->
                 <LinearLayout
@@ -193,22 +213,32 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:background="?attr/selectableItemBackground">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_email"
-                        android:contentDescription="Email Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/email"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/secondaryText"
-                        tools:text="contact@company.com" />
+                        android:textColor="@color/primary_text"
+                        android:hint="Email address"
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="contact@company.com"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@drawable/rounded_background"/>
 
                 <!-- Phone -->
                 <LinearLayout
@@ -216,22 +246,31 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:background="?attr/selectableItemBackground">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_phone"
-                        android:contentDescription="Phone Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/phone"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/secondaryText"
-                        tools:text="+961 1 123456" />
+                        android:textColor="@color/primary_text"
+                        android:hint="Phone number"
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="+961 1 123456"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@drawable/rounded_background"/>
 
                 <!-- Address -->
                 <LinearLayout
@@ -239,47 +278,63 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:background="?attr/selectableItemBackground">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_location"
-                        android:contentDescription="Location Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/address"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/secondaryText"
-                        tools:text="Beirut, Lebanon" />
-
-
+                        android:textColor="@color/primary_text"
+                        android:hint="Physical address"
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="Beirut, Lebanon"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@drawable/rounded_background"/>
+
                 <!-- Website -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:background="?attr/selectableItemBackground">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_website"
-                        android:contentDescription="Website Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/website"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/primary_text"
                         android:hint="Website URL"
-                        android:textColor="@color/secondaryText"
-                        tools:text="https://company.com" />
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="https://company.com"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@drawable/rounded_background"/>
 
                 <!-- LinkedIn -->
                 <LinearLayout
@@ -287,23 +342,31 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginTop="12dp">
+                    android:background="?attr/selectableItemBackground">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_linkedin"
-                        android:contentDescription="LinkedIn Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/linkedin"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/primary_text"
                         android:hint="LinkedIn URL"
-                        android:textColor="@color/secondaryText"
-                        tools:text="https://linkedin.com/in/techcompany" />
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="https://linkedin.com/in/techcompany"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="@drawable/rounded_background"/>
 
                 <!-- Twitter -->
                 <LinearLayout
@@ -311,38 +374,43 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="10sp"
-                    android:layout_marginTop="12dp">
+                    android:background="?attr/selectableItemBackground"
+                    android:layout_marginBottom="16dp">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="12dp"
                         android:src="@drawable/ic_twitter"
-                        android:contentDescription="Twitter Icon" />
+                        app:tint="@color/colorPrimaryDark" />
 
                     <EditText
                         android:id="@+id/twitter"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/primary_text"
                         android:hint="Twitter URL"
-                        android:textColor="@color/secondaryText"
-                        tools:text="https://twitter.com/techcompany" />
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/colorPrimary"
+                        tools:text="https://twitter.com/techcompany"/>
                 </LinearLayout>
 
-                <Button
+                <!-- Save Button with Icon -->
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSave"
+                    style="@style/Widget.MaterialComponents.Button"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:text="Save Changes"
-                    android:layout_marginBottom="24dp"
-                    android:backgroundTint="@color/primary"
                     android:textColor="@android:color/white"
-                    android:textStyle="bold" />
-
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02"
+                    android:elevation="4dp"
+                    app:iconTint="@android:color/white"
+                    app:iconPadding="8dp"
+                    app:cornerRadius="12dp"
+                    android:backgroundTint="@color/blue_500"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-
     </LinearLayout>
 </ScrollView>

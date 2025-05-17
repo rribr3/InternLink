@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -19,7 +20,8 @@ public class ApplyNowActivity extends AppCompatActivity {
 
     private TextView titleText, descText, categoryText, educationText, compensationText, amountText;
     private TextView deadlineText, startDateText, durationText, applicantsText, studentsRequiredText, skillsText;
-    private LinearLayout amountSection, quizSection;
+    private LinearLayout amountSection;
+    private CardView quizSection;  // Changed to CardView
     private TextView quizTitle, quizInstructions, quizTime, quizScore;
 
     @Override
@@ -54,13 +56,14 @@ public class ApplyNowActivity extends AppCompatActivity {
         studentsRequiredText = findViewById(R.id.project_students_required);
         skillsText = findViewById(R.id.project_skills);
 
-        quizSection = findViewById(R.id.quiz_section);
+        quizSection = findViewById(R.id.quiz_section);  // Now correctly matches XML CardView
         quizTitle = findViewById(R.id.quiz_title);
         quizInstructions = findViewById(R.id.quiz_instructions);
         quizTime = findViewById(R.id.quiz_time_limit);
         quizScore = findViewById(R.id.quiz_passing_score);
     }
 
+    // Rest of your code remains the same...
     private void loadProjectData(String projectId) {
         DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
 
@@ -91,7 +94,6 @@ public class ApplyNowActivity extends AppCompatActivity {
                     skillsText.setText("No specific skills listed");
                 }
 
-
                 // Show amount if Paid
                 if ("Paid".equalsIgnoreCase(project.getCompensationType())) {
                     amountSection.setVisibility(View.VISIBLE);
@@ -115,11 +117,10 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
         });
     }
+
     private String formatDate(long timestamp) {
         if (timestamp == 0) return "N/A";
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault());
         return sdf.format(new java.util.Date(timestamp));
     }
-
 }
-
