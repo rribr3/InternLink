@@ -1,32 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:fillViewport="true"
-    android:background="@color/light_gray_background">
+    android:background="@color/light_gray_background"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- Profile Header -->
-        <androidx.cardview.widget.CardView
+        <!-- Top App Bar -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            style="@style/Widget.Material3.Toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/blue_500"
+            android:elevation="4dp"
+            app:navigationIcon="@drawable/left_arrow"
+            app:navigationIconTint="@android:color/white"
+            app:title="My Profile"
+            app:titleTextColor="@android:color/white" />
+
+        <!-- Profile Header Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true"
-            android:layout_marginBottom="16dp">
+            app:cardElevation="6dp"
+            app:strokeColor="@color/white"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="20dp"
+                android:padding="24dp"
+                android:background="@color/white"
                 android:gravity="center_vertical">
 
                 <FrameLayout
@@ -36,8 +50,8 @@
 
                     <ImageView
                         android:id="@+id/profilePhoto"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_download"
                         android:contentDescription="Upload Profile Photo" />
@@ -46,9 +60,9 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
+                    android:orientation="vertical">
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -60,8 +74,10 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="Full Name"
+                            android:textSize="18sp"
+                            android:textColor="@color/primary_text"
                             android:inputType="textCapWords"
-                            android:textSize="16sp" />
+                            tools:text="Jane Doe" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -76,8 +92,10 @@
                             android:layout_height="wrap_content"
                             android:hint="Email (auto-filled)"
                             android:enabled="false"
+                            android:textSize="16sp"
                             android:inputType="textEmailAddress"
-                            android:textSize="16sp" />
+                            android:textColor="@color/secondary_text"
+                            tools:text="jane.doe@example.com" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -92,26 +110,28 @@
                             android:layout_height="wrap_content"
                             android:hint="Phone Number (optional)"
                             android:inputType="phone"
-                            android:textSize="16sp" />
+                            android:textSize="16sp"
+                            tools:text="+1234567890" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Short Bio -->
-        <androidx.cardview.widget.CardView
+        <!-- Personal Information Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true">
+            app:cardElevation="6dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -120,9 +140,7 @@
                     android:textColor="@color/primary_text"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp"
-                    android:drawablePadding="8dp"
-                    android:drawableTint="@color/colorPrimaryDark" />
+                    android:layout_marginBottom="16dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -138,25 +156,27 @@
                         android:minLines="3"
                         android:inputType="textMultiLine"
                         android:gravity="top"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp"
+                        tools:text="Experienced software developer passionate about mobile apps." />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Education -->
-        <androidx.cardview.widget.CardView
+        <!-- Education Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true">
+            app:cardElevation="6dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -165,9 +185,7 @@
                     android:textColor="@color/primary_text"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp"
-                    android:drawablePadding="8dp"
-                    android:drawableTint="@color/colorPrimaryDark" />
+                    android:layout_marginBottom="16dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -179,7 +197,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="University / Institution"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp"
+                        tools:text="Example University" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <View
@@ -198,7 +217,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Degree (e.g. BSc in CS)"
-                        android:textSize="16sp"/>
+                        android:textSize="16sp"
+                        tools:text="BSc in Computer Science" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <View
@@ -213,35 +233,17 @@
                     style="@style/InputLayoutStyle">
 
                     <EditText
-                        android:id="@+id/editGradYear"
+                        android:id="@+id/editGraduationYear"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Graduation Year"
-                        android:textSize="16sp"/>
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="@color/divider_color" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    style="@style/InputLayoutStyle">
-
-                    <EditText
-                        android:id="@+id/editGPA"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="GPA (Optional)"
-                        android:inputType="numberDecimal"
-                        android:textSize="16sp"/>
+                        android:inputType="number"
+                        android:textSize="16sp"
+                        tools:text="2023" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        </androidx.cardview.widget.CardView>
         <!-- Skills Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -249,187 +251,165 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="6dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:background="@color/white">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Skills"
-                android:textColor="@color/primary_text"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/InputLayoutStyle">
-
-                <EditText
-                    android:id="@+id/editSkills"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Add skills separated by commas"
-                    android:textSize="16sp"
-                    tools:text="Java, Android, Firebase, UI Design" />
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-
-        <!-- CV & Links -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardUseCompatPadding="true">
+            app:cardElevation="6dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="24dp"
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Documents &amp; Links"
+                    android:text="Skills"
                     android:textColor="@color/primary_text"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:layout_marginBottom="16dp"
-                    android:drawablePadding="8dp"
-                    android:drawableTint="@color/colorPrimaryDark" />
-                <LinearLayout
-                    android:id="@+id/cvDisplayLayout"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="8dp"
-                    android:visibility="gone"
-                    android:layout_marginBottom="8dp">
+                    style="@style/InputLayoutStyle">
 
-                    <TextView
-                        android:id="@+id/cvFileName"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="cv.pdf"
-                        android:layout_weight="1"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <ImageView
-                        android:id="@+id/deleteCVIcon"
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_close"
-                        android:contentDescription="Delete CV" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/btnUploadCV"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginBottom="16dp"
-                    android:text="Upload CV / Resume (Optional)"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:backgroundTint="#2196F3"
-                    android:textAllCaps="false"
-                    android:letterSpacing="0.02"
-                    android:stateListAnimator="@null"
-                    android:elevation="0dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_linkedin"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <com.google.android.material.textfield.TextInputLayout
+                    <EditText
+                        android:id="@+id/editSkills"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        style="@style/InputLayoutStyle">
-
-                        <EditText
-                            android:id="@+id/editLinkedIn"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="LinkedIn (Optional)"
-                            android:inputType="textUri"
-                            android:textSize="16sp"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_website"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        style="@style/InputLayoutStyle">
-
-                        <EditText
-                            android:id="@+id/editGitHub"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:hint="GitHub (Optional)"
-                            android:inputType="textUri"
-                            android:textSize="16sp"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </LinearLayout>
+                        android:hint="Add skills separated by commas"
+                        android:textSize="16sp"
+                        tools:text="Java, Android, Firebase, UI Design" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
+        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Agreement -->
-        <CheckBox
-            android:id="@+id/checkAgree"
+        <!-- Social Links Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="I agree to the Terms of Use and Privacy Policy"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- Submit -->
-        <Button
-            android:id="@+id/btnSubmit"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
             android:layout_marginHorizontal="16dp"
-            android:text="Create Profile"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textAllCaps="false"
-            android:letterSpacing="0.02"
-            android:stateListAnimator="@null"
-            android:elevation="0dp"
-            android:drawableStart="@drawable/ic_check"
-            android:drawablePadding="8dp"
-            android:drawableTint="@android:color/white"
-            android:backgroundTint="#2196F3"/>
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:background="@color/white">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Social Links"
+                    android:textColor="@color/primary_text"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/InputLayoutStyle">
+
+                    <EditText
+                        android:id="@+id/editLinkedIn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="LinkedIn Profile URL"
+                        android:inputType="textUri"
+                        android:textSize="16sp"
+                        tools:text="https://linkedin.com/in/janedoe" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    style="@style/InputLayoutStyle">
+
+                    <EditText
+                        android:id="@+id/editTwitter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Twitter Profile URL"
+                        android:inputType="textUri"
+                        android:textSize="16sp"
+                        tools:text="https://twitter.com/janedoe" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    style="@style/InputLayoutStyle">
+
+                    <EditText
+                        android:id="@+id/editWebsite"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Personal Website URL"
+                        android:inputType="textUri"
+                        android:textSize="16sp"
+                        tools:text="https://janedoe.com" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Save Changes Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSaveChanges"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Save Changes"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/blue_500"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- CV Section Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:background="@color/white"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Curriculum Vitae"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"
+                    android:layout_marginBottom="16dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGenerateCV"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="View / Generate CV"
+                    android:textColor="@color/blue_500"
+                    android:textStyle="bold"
+                    app:strokeColor="@color/blue_500"
+                    app:strokeWidth="2dp"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </ScrollView>

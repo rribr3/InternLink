@@ -49,7 +49,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
     private DrawerLayout drawerLayout;
     private TextView welcomeText;
-    private ImageView notificationBell;
+    private ImageView notificationBell, companyLogo;
     private TextView notificationBadge;
     private DatabaseReference databaseReference;
     private LinearLayout dotIndicatorLayout;
@@ -130,6 +130,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 // Handle error
             }
         });
+
+        companyLogo = findViewById(R.id.companyLogo);
 
         initializeViews();
         setupNavigationDrawer();

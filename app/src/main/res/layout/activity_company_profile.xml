@@ -54,8 +54,7 @@
                         android:layout_height="48dp"
                         android:layout_gravity="center"
                         android:contentDescription="Company Logo"
-                        android:src="@drawable/ic_company"
-                        app:tint="@color/black" />
+                        android:src="@drawable/ic_company" />
                 </FrameLayout>
 
                 <LinearLayout

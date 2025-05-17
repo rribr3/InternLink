@@ -56,4 +56,9 @@ dependencies {
     implementation("com.google.firebase:firebase-storage:20.3.0")
     implementation("com.google.android.gms:play-services-base:18.2.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.dropbox.core:dropbox-core-sdk:5.4.6")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+
 }

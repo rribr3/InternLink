@@ -18,7 +18,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.InternLink"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".StudentSettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StudentProfileActivity"
+            android:exported="false" />
         <activity
             android:name=".ApplyNowActivity"
             android:exported="false" />

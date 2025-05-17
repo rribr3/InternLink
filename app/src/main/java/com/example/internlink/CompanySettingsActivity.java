@@ -3,6 +3,7 @@ package com.example.internlink;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -41,6 +42,9 @@ public class CompanySettingsActivity extends AppCompatActivity {
     private SwitchCompat switchNotifications;
     private ImageButton backButton;
     private CompoundButton.OnCheckedChangeListener notificationSwitchListener;
+    private ImageView companyLogo;
+    private Uri selectedLogoUri = null;
+    private String COMPANY_ID;
 
 
     @Override
