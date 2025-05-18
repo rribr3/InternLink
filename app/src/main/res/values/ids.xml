@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="generateCvBtn" type="id" />
+    <item name="btnSaveChanges" type="id" />
+    <item name="uploadBtn" type="id" />
+    <item name="editGraduationYear" type="id" />
+    <item name="viewBtn" type="id" />
+    <item name="generationProgress" type="id" />
+    <item name="generationStatus" type="id" />
+</resources>

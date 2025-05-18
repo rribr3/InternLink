@@ -98,4 +98,48 @@
     <color name="secondary_text">#757575</color>
     <color name="divider_color">#E0E0E0</color>
     <color name="light_gray_background">#F5F5F5</color>
+
+    <!-- Primary Brand Colors -->
+
+    <color name="primaryLight">#3B82F6</color>
+
+    <!-- Category Accent Colors -->
+    <color name="colorPostProject">#10B981</color>  <!-- Emerald green for project posting -->
+    <color name="colorManageCandidates">#3B82F6</color>  <!-- Trustworthy blue for CRM -->
+    <color name="colorVideoTutorials">#8B5CF6</color>  <!-- Creative purple for learning -->
+    <color name="colorKnowledgeBase">#F59E0B</color>  <!-- Energetic amber for knowledge -->
+    <color name="colorSupport">#EF4444</color>  <!-- Alert red for support -->
+
+    <!-- Text Colors -->
+
+    <color name="textSecondary">#6B7280</color>  <!-- Gray for secondary text -->
+
+    <!-- Background Colors -->
+    <color name="backgroundLight">#FFFFFF</color>
+    <color name="backgroundDark">#F9FAFB</color>  <!-- Very light gray for contrast -->
+
+    <!-- UI Elements -->
+    <color name="divider">#E5E7EB</color>
+    <color name="borderLight">#F3F4F6</color>
+
+    <!-- Button States -->
+    <color name="buttonPressed">#1E40AF</color>
+    <color name="buttonDisabled">#9CA3AF</color>
+
+    <!-- Special Effects -->
+    <color name="overlayDark">#66000000</color>  <!-- 40% black overlay -->
+    <color name="highlight">#EFF6FF</color>  <!-- Selection highlight -->
+
+    <!-- Premium Features -->
+    <color name="premiumGold">#D4AF37</color>  <!-- Metallic gold -->
+    <color name="premiumDark">#B7950B</color>
+
+    <!-- Notification Badges -->
+    <color name="badgeSuccess">#10B981</color>
+    <color name="badgeWarning">#F59E0B</color>
+    <color name="badgeError">#EF4444</color>
+
+    <!-- Chart Colors -->
+    <color name="chartPrimary">#2563EB</color>
+    <color name="chartSecondary">#10B981</color>
 </resources>

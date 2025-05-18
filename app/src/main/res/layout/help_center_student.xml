@@ -34,7 +34,7 @@
             android:background="@drawable/rounded_background" />
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Main Content -->
+    <!-- Scrollable Content -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
@@ -42,8 +42,7 @@
         android:layout_marginTop="?attr/actionBarSize"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        tools:ignore="SpeakableTextPresentCheck">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     </androidx.core.widget.NestedScrollView>
 
@@ -51,15 +50,13 @@
         android:id="@+id/mainContent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_anchor="@+id/scrollView"
         app:layout_anchorGravity="center">
 
-        <!-- Quick Help Cards -->
+        <!-- Quick Help Section -->
         <TextView
-            android:id="@+id/quickHelpTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -69,14 +66,13 @@
             android:textStyle="bold" />
 
         <LinearLayout
-            android:id="@+id/quickHelpCards"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/videoTutorialsCard"
+                android:id="@+id/studentVideoTutorialsCard"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_marginEnd="8dp"
@@ -85,7 +81,6 @@
                 app:cardCornerRadius="12dp">
 
                 <LinearLayout
-                    android:id="@+id/videoTutorialsContent"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -93,15 +88,12 @@
                     android:padding="16dp">
 
                     <ImageView
-                        android:id="@+id/videoTutorialsIcon"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_video_tutorial"
-                        android:tint="@color/primary_dark"
-                        tools:ignore="UseAppTint" />
+                        app:tint="@color/primary_dark" />
 
                     <TextView
-                        android:id="@+id/videoTutorialsText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -112,7 +104,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/knowledgeBaseCard"
+                android:id="@+id/studentKnowledgeBaseCard"
                 android:layout_width="0dp"
                 android:layout_height="120dp"
                 android:layout_weight="1"
@@ -120,7 +112,6 @@
                 app:cardCornerRadius="12dp">
 
                 <LinearLayout
-                    android:id="@+id/knowledgeBaseContent"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -128,26 +119,24 @@
                     android:padding="16dp">
 
                     <ImageView
-                        android:id="@+id/knowledgeBaseIcon"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_knowledge_base"
-                        android:tint="@color/black"
-                        tools:ignore="UseAppTint" />
+                        app:tint="@color/black" />
 
                     <TextView
-                        android:id="@+id/knowledgeBaseText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Knowledge Base" />
+                        android:text="Knowledge Base"
+                        android:textColor="@color/black"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <!-- Help Categories -->
         <TextView
-            android:id="@+id/helpCategoriesTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
@@ -157,37 +146,34 @@
             android:textStyle="bold" />
 
         <LinearLayout
-            android:id="@+id/helpCategoriesList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/postProjectCard"
+                android:id="@+id/viewProjectsCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 app:cardCornerRadius="8dp">
 
                 <LinearLayout
-                    android:id="@+id/postProjectContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="16dp">
 
                     <ImageView
-                        android:id="@+id/postProjectIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="16dp"
-                        android:src="@drawable/ic_post_project" />
+                        android:src="@drawable/ic_empty_project"
+                        app:tint="@color/blue_500" />
 
                     <TextView
-                        android:id="@+id/postProjectText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Posting Projects"
+                        android:text="Viewing Projects"
                         android:textSize="16sp" />
 
                     <Space
@@ -196,39 +182,37 @@
                         android:layout_weight="1" />
 
                     <ImageView
-                        android:id="@+id/postProjectArrow"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/right_arrow" />
+                        android:src="@drawable/right_arrow"
+                        app:tint="@color/blue_500" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/manageApplicantsCard"
+                android:id="@+id/applyProjectsCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 app:cardCornerRadius="8dp">
 
                 <LinearLayout
-                    android:id="@+id/manageApplicantsContent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="16dp">
 
                     <ImageView
-                        android:id="@+id/manageApplicantsIcon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_marginEnd="16dp"
-                        android:src="@drawable/ic_applicant_management" />
+                        android:src="@drawable/ic_report"
+                        app:tint="@color/blue_500" />
 
                     <TextView
-                        android:id="@+id/manageApplicantsText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Managing Applicants"
+                        android:text="Applying for Projects"
                         android:textSize="16sp" />
 
                     <Space
@@ -237,17 +221,16 @@
                         android:layout_weight="1" />
 
                     <ImageView
-                        android:id="@+id/manageApplicantsArrow"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/right_arrow" />
+                        android:src="@drawable/right_arrow"
+                        app:tint="@color/blue_500" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <!-- Support Section -->
         <TextView
-            android:id="@+id/supportTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -258,28 +241,26 @@
             android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/supportCard"
+            android:id="@+id/studentSupportCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="8dp">
 
             <LinearLayout
-
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="16dp">
 
                 <TextView
-                    android:id="@+id/supportDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Contact our support team for personalized assistance."
+                    android:text="Reach out to our student support team anytime."
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <Button
-                    android:id="@+id/contactSupportButton"
+                    android:id="@+id/studentContactSupportButton"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

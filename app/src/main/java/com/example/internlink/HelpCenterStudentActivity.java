@@ -24,18 +24,17 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.search.SearchBar;
 
-public class CompanyHelpCenterActivity extends AppCompatActivity {
+public class HelpCenterStudentActivity extends AppCompatActivity {
 
     private Toolbar toolbar;
     private SearchBar searchBar;
-    private MaterialCardView postProjectCard, manageApplicantsCard,
-            videoTutorialsCard, knowledgeBaseCard;
+    private MaterialCardView postProjectCard, manageApplicantsCard, videoTutorialsCard, knowledgeBaseCard;
     private Button supportCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.help_center_company);
+        setContentView(R.layout.help_center_student);
 
         initializeToolbar();
         initializeViews();
@@ -45,22 +44,24 @@ public class CompanyHelpCenterActivity extends AppCompatActivity {
     private void initializeToolbar() {
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Enterprise Support Hub");
-            getSupportActionBar().setSubtitle("Premium Assistance Center");
+            getSupportActionBar().setTitle("Student Help Center");
+            getSupportActionBar().setSubtitle("Get support for using InternLink");
         }
+
         toolbar.setNavigationOnClickListener(v -> supportFinishAfterTransition());
     }
 
     @SuppressLint("WrongViewCast")
     private void initializeViews() {
         searchBar = findViewById(R.id.searchBar);
-        postProjectCard = findViewById(R.id.postProjectCard);
-        manageApplicantsCard = findViewById(R.id.manageApplicantsCard);
-        videoTutorialsCard = findViewById(R.id.videoTutorialsCard);
-        knowledgeBaseCard = findViewById(R.id.knowledgeBaseCard);
-        supportCard = findViewById(R.id.contactSupportButton);
+        postProjectCard = findViewById(R.id.viewProjectsCard);
+        manageApplicantsCard = findViewById(R.id.applyProjectsCard);
+        videoTutorialsCard = findViewById(R.id.studentVideoTutorialsCard);
+        knowledgeBaseCard = findViewById(R.id.studentKnowledgeBaseCard);
+        supportCard = findViewById(R.id.studentContactSupportButton);
     }
 
     private void setupClickListeners() {
@@ -69,85 +70,82 @@ public class CompanyHelpCenterActivity extends AppCompatActivity {
 
         postProjectCard.setOnClickListener(v -> showTutorialPopup(
                 R.drawable.ic_post_project,
-                "\uD83D\uDCE4 Post a Project",
-                "Learn how to post a new project and set quiz options.",
+                "🔍 Explore Projects",
+                "Learn how to find internship opportunities and view project details.",
                 new String[]{
-                        "1. Tap 'Create Project' from dashboard",
-                        "2. Fill out details and attach files",
-                        "3. Enable optional quiz for applicant screening",
-                        "4. Set deadlines and milestones",
-                        "5. Click 'Post' to publish your project"
+                        "1. Tap 'Explore Projects' on the home screen",
+                        "2. Filter projects by category or location",
+                        "3. Read full details and required skills",
+                        "4. Save projects for later or apply directly"
                 },
-                new String[]{"Quiz Option Available", "Top Projects Get 2x More Applications"},
-                "PRO TIP: Use clear project titles to attract talent!",
-                "POST A PROJECT",
+                new String[]{"Real-time Updates", "Diverse Categories"},
+                "PRO TIP: Use filters to quickly find what matches your profile!",
+                "EXPLORE PROJECTS",
                 R.color.colorPostProject
         ));
 
         manageApplicantsCard.setOnClickListener(v -> showTutorialPopup(
                 R.drawable.ic_applicant_management,
-                "Manage Applicants",
-                "Tips for reviewing applications and interacting with applicants.",
+                "📤 Apply for Projects",
+                "Guide for applying to projects using InternLink.",
                 new String[]{
-                        "• View all applicants under 'Applications' tab",
-                        "• Filter by quiz score or tags",
-                        "• Shortlist or reject with one tap",
-                        "• Use chat or email for communication",
-                        "• Schedule interviews via calendar integration"
+                        "• Select a project and click 'Apply'",
+                        "• Upload your resume or portfolio",
+                        "• Complete any quizzes if required",
+                        "• Submit your application and track status"
                 },
-                new String[]{"Smart Filters Included", "Chat-Enabled Profiles"},
-                "PRO TIP: Use feedback notes to collaborate with your team.",
-                "REVIEW APPLICANTS",
+                new String[]{"One-Tap Apply", "Quiz Support"},
+                "PRO TIP: Tailor your resume to match the project's needs.",
+                "APPLY NOW",
                 R.color.colorManageCandidates
         ));
 
         videoTutorialsCard.setOnClickListener(v -> showTutorialPopup(
                 R.drawable.ic_video_tutorial,
-                "\uD83C\uDFA5 Video Tutorials",
-                "Watch quick videos explaining key features.",
+                "🎥 Video Tutorials",
+                "Watch short videos to understand how to use the app effectively.",
                 new String[]{
-                        "▶ How to Post a Project (3:20)",
-                        "▶ Screening Applicants with Quizzes (4:05)",
-                        "▶ Reviewing Applications (2:50)",
-                        "▶ Editing and Archiving Projects (3:15)"
+                        "▶ Navigating InternLink (2:30)",
+                        "▶ Applying for Projects (3:00)",
+                        "▶ Using the Student Dashboard (2:45)",
+                        "▶ Tips to Improve Your Profile (3:10)"
                 },
-                new String[]{"Firebase Hosted", "Optimized for Mobile"},
-                "PRO TIP: Save favorites to your dashboard for quick access.",
-                "WATCH VIDEOS",
+                new String[]{"Visual Guides", "Quick & Easy"},
+                "PRO TIP: Watch on Wi-Fi to save data.",
+                "WATCH NOW",
                 R.color.colorVideoTutorials
         ));
 
         knowledgeBaseCard.setOnClickListener(v -> showTutorialPopup(
                 R.drawable.ic_knowledge_base,
-                "\uD83D\uDCDA Knowledge Base",
-                "Browse frequently asked questions and guides.",
+                "📘 Knowledge Base",
+                "Browse frequently asked questions and troubleshooting articles.",
                 new String[]{
                         "• Account Setup",
-                        "• Posting & Editing Projects",
-                        "• Reviewing Applicants",
-                        "• Troubleshooting & Support",
-                        "• Legal and Compliance Tips"
+                        "• Applying to Projects",
+                        "• Managing Applications",
+                        "• Using Filters & Notifications",
+                        "• App Settings & Preferences"
                 },
-                new String[]{"200+ Articles", "Smart Search Available"},
-                "PRO TIP: Use keywords like 'quiz' or 'edit' for faster results.",
-                "BROWSE FAQS",
+                new String[]{"200+ Topics", "Search Enabled"},
+                "PRO TIP: Use keywords like 'apply', 'reset', or 'update' for best results.",
+                "READ MORE",
                 R.color.colorKnowledgeBase
         ));
 
         supportCard.setOnClickListener(v -> showTutorialPopup(
                 R.drawable.ic_help,
-                "\u2709\uFE0F Contact Support",
-                "Get in touch with our support team.",
+                "✉ Contact Support",
+                "Need help? Our support team is ready to assist.",
                 new String[]{
-                        "• Submit a ticket: Enter name, email, issue, message",
+                        "• Submit a support ticket with your details",
                         "• Email: support@InternLink.com",
-                        "• Call: +961 1 555 000 (9am–6pm)",
-                        "• Chat: Click on chat bubble in corner",
-                        "• Response time: Under 24 hours"
+                        "• Chat: Use the support bubble in the corner",
+                        "• Response Time: Within 24 hours"
                 },
-                new String[]{"Live Chat Enabled", "Dedicated Support Team"},
-                "PRO TIP: Include screenshots to help us assist you faster.",
-                "GET SUPPORT",
+                new String[]{"Live Chat Available", "Priority Support for Students"},
+                "PRO TIP: Share screenshots to resolve issues faster.",
+                "CONTACT NOW",
                 R.color.colorSupport
         ));
     }
@@ -214,27 +212,27 @@ public class CompanyHelpCenterActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_notifications) {
-            startActivity(new Intent(this, CompanyAnnounce.class));
+            startActivity(new Intent(this, StudentAnnounce.class));
             return true;
         } else if (id == R.id.action_help) {
             showTutorialPopup(
                     R.drawable.ic_help,
                     "ℹ Help Menu",
-                    "Use this panel to access guidance and support.",
+                    "Quick access to all student support resources.",
                     new String[]{
-                            "• Post projects with quizzes",
-                            "• Manage your applicants efficiently",
-                            "• Watch tutorials and read FAQs",
-                            "• Contact support anytime"
+                            "• Explore project listings",
+                            "• Apply easily using our streamlined process",
+                            "• Learn with videos and FAQs",
+                            "• Contact our support team"
                     },
-                    new String[]{"Guided UI", "24/7 Access"},
-                    "TIP: Visit each section from the cards below.",
-                    "GOT IT",
+                    new String[]{"Guided Interface", "Student-Focused Help"},
+                    "TIP: Use the search bar above to find answers instantly.",
+                    "OKAY",
                     R.color.blue_500
             );
             return true;
         } else if (id == R.id.action_settings) {
-            startActivity(new Intent(this, CompanySettingsActivity.class));
+            startActivity(new Intent(this, StudentSettingsActivity.class));
             return true;
         } else if (id == R.id.action_feedback) {
             Toast.makeText(this, "We appreciate your feedback!", Toast.LENGTH_SHORT).show();

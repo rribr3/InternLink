@@ -48,12 +48,23 @@ public class StudentHomeActivity extends AppCompatActivity
     private ProgressBar loadingIndicator;
     private View mainContent;
     private LinearLayout dotIndicatorLayout;
+    private Intent intent;
+    private String studentId;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_home);
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         loadingIndicator = findViewById(R.id.home_loading_indicator);
         mainContent = findViewById(R.id.home_main_content);
         dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
@@ -121,7 +132,7 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void setupNotificationBell() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId = studentId;
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
         DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("student");
@@ -194,7 +205,7 @@ public class StudentHomeActivity extends AppCompatActivity
         projectsRecyclerView.setLayoutManager(new LinearLayoutManager(
                 this, LinearLayoutManager.HORIZONTAL, false));
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId = studentId;
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
         DatabaseReference appliedRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("appliedProjects");
 
@@ -325,9 +336,6 @@ public class StudentHomeActivity extends AppCompatActivity
         );
     }
 
-    private void showProfile() {
-        Toast.makeText(this, "Opening profile", Toast.LENGTH_SHORT).show();
-    }
 
     private void showAllApplications() {
         // Inflate the popup layout
@@ -380,19 +388,21 @@ public class StudentHomeActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_profile) {
-            showProfile();
-        } else if (id == R.id.nav_projects) {
-            Toast.makeText(this, "My Projects", Toast.LENGTH_SHORT).show();
-        } else if (id == R.id.nav_applications) {
+            intent = new Intent(this, StudentProfileActivity.class);
+            startActivity(intent);
+        }
+        else if (id == R.id.nav_applications) {
             showAllApplications();
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
             Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
-            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, StudentSettingsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_help) {
-            Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, HelpCenterStudentActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_logout) {
             finish();
         }

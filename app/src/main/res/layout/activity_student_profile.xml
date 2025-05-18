@@ -392,8 +392,6 @@
                     app:cornerRadius="12dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- CV Section Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -407,8 +405,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="24dp"
-                android:background="@color/white"
-                android:gravity="center_horizontal">
+                android:background="@color/white">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -419,17 +416,121 @@
                     android:textColor="@color/primary_text"
                     android:layout_marginBottom="16dp" />
 
+                <!-- CV Display Section (if available) -->
+                <LinearLayout
+                    android:id="@+id/cvDisplayLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_gray_rounded">
+
+                    <TextView
+                        android:id="@+id/cvFileName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="MyCV.pdf"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:id="@+id/btnDeleteCv"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_close"
+                        android:contentDescription="Delete CV"
+                        android:padding="4dp" />
+                </LinearLayout>
+
+                <!-- Upload Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/uploadBtn"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Upload CV"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold"
+                        app:strokeColor="@color/blue_500"
+                        app:strokeWidth="2dp"
+                        app:cornerRadius="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/viewBtn"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="View CV"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold"
+                        app:strokeColor="@color/blue_500"
+                        app:strokeWidth="2dp"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
+
+                <!-- AI Generation Section -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="AI CV Generation"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_text"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Generate a professional CV based on your profile information"
+                    android:textSize="14sp"
+                    android:textColor="@color/secondary_text"
+                    android:layout_marginBottom="16dp" />
+
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/uploadBtn"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/generateCvBtn"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="Upload CV"
-                    android:textColor="@color/blue_500"
+                    android:text="Generate CV with AI"
+                    android:textAllCaps="false"
                     android:textStyle="bold"
-                    app:strokeColor="@color/blue_500"
-                    app:strokeWidth="2dp"
-                    app:cornerRadius="12dp" />
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/black"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_ai"
+                    app:iconGravity="start"
+                    app:iconTint="@android:color/white" />
+
+                <ProgressBar
+                    android:id="@+id/generationProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone"
+                    android:indeterminate="true" />
+
+                <TextView
+                    android:id="@+id/generationStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/secondary_text"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
