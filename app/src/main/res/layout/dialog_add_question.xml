@@ -42,8 +42,46 @@
                 android:layout_height="wrap_content"/>
         </LinearLayout>
 
+        <!-- True/False Options (shown when type is True/False) -->
         <LinearLayout
-            android:id="@+id/options_container"
+            android:id="@+id/true_false_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select correct answer:"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <RadioGroup
+                android:id="@+id/true_false_radio_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/true_radio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="True"
+                    android:layout_marginEnd="16dp"/>
+
+                <RadioButton
+                    android:id="@+id/false_radio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="False"/>
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Multiple Choice Options (shown when type is Multiple Choice) -->
+        <LinearLayout
+            android:id="@+id/multiple_choice_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -57,13 +95,22 @@
                 android:textSize="14sp"
                 android:layout_marginBottom="8dp"/>
 
+            <LinearLayout
+                android:id="@+id/options_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <!-- Options will be added dynamically here -->
+            </LinearLayout>
+
             <Button
                 android:id="@+id/add_option_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Add Option"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
-                app:icon="@drawable/ic_add"/>
+                app:icon="@drawable/ic_add"
+                android:layout_marginTop="8dp"/>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

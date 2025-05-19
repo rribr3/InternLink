@@ -1,6 +1,13 @@
 package com.example.internlink;
 
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -16,7 +24,11 @@ import androidx.core.view.WindowInsetsCompat;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -25,6 +37,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.pdf.PdfDocument;
+
 
 public class CvGenerated extends AppCompatActivity {
 
@@ -120,7 +138,7 @@ public class CvGenerated extends AppCompatActivity {
         );
 
         Request request = new Request.Builder()
-                .url("http://10.10.94.69:3000/generate-cv")
+                .url("http://192.168.1.109:3000/generate-cv")
                 .post(requestBody)
                 .build();
 
@@ -158,8 +176,115 @@ public class CvGenerated extends AppCompatActivity {
     }
 
     private void generatePdfFromText(String cvText) {
-        // 👇 Here you’ll implement Android PDF generation
-        Toast.makeText(this, "PDF generation logic coming next", Toast.LENGTH_SHORT).show();
-        // You can use PdfDocument or any third-party library like iText or PDFBox if needed.
+        PdfDocument document = new PdfDocument();
+        Paint paint = new Paint();
+        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+        PdfDocument.Page page = document.startPage(pageInfo);
+        Canvas canvas = page.getCanvas();
+
+        int x = 40;
+        int y = 60;
+
+        paint.setAntiAlias(true);
+        paint.setColor(android.graphics.Color.BLACK);
+        paint.setTextSize(14f);
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+
+        // Break long text into lines that fit the width
+        int maxWidth = pageInfo.getPageWidth() - 80;
+        String[] lines = cvText.split("\n");
+
+        for (String line : lines) {
+            if (line.trim().isEmpty()) {
+                y += 20; // Add space between sections
+                continue;
+            }
+
+            // Bold headings
+            if (line.trim().toUpperCase().equals(line.trim()) && line.length() < 40) {
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT_BOLD, Typeface.BOLD));
+                paint.setTextSize(16f);
+            } else {
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+                paint.setTextSize(14f);
+            }
+
+            // Wrap text
+            List<String> wrappedLines = breakTextIntoLines(line, paint, maxWidth);
+            for (String wrappedLine : wrappedLines) {
+                canvas.drawText(wrappedLine, x, y, paint);
+                y += 20;
+
+                if (y > pageInfo.getPageHeight() - 60) {
+                    document.finishPage(page);
+                    pageInfo = new PdfDocument.PageInfo.Builder(595, 842, document.getPages().size() + 1).create();
+                    page = document.startPage(pageInfo);
+                    canvas = page.getCanvas();
+                    y = 60;
+                }
+            }
+        }
+
+        document.finishPage(page);
+
+        // Save to file
+        try {
+            File pdfDir = new File(getExternalFilesDir(null), "pdfs");
+            if (!pdfDir.exists()) pdfDir.mkdirs();
+
+            File file = new File(pdfDir, "GeneratedCV.pdf");
+            FileOutputStream out = new FileOutputStream(file);
+            document.writeTo(out);
+            document.close();
+            out.close();
+
+            Toast.makeText(this, "CV PDF saved at " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
+
+            // Optionally open the PDF
+            Uri pdfUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(pdfUri, "application/pdf");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Error generating PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
+    private List<String> breakTextIntoLines(String text, Paint paint, int maxWidth) {
+        List<String> lines = new ArrayList<>();
+        String[] words = text.split(" ");
+        StringBuilder lineBuilder = new StringBuilder();
+
+        for (String word : words) {
+            if (paint.measureText(lineBuilder + word + " ") < maxWidth) {
+                lineBuilder.append(word).append(" ");
+            } else {
+                lines.add(lineBuilder.toString().trim());
+                lineBuilder = new StringBuilder(word).append(" ");
+            }
+        }
+        if (!lineBuilder.toString().isEmpty()) {
+            lines.add(lineBuilder.toString().trim());
+        }
+        return lines;
+    }
+
+
+    private void openPdf(File file) {
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(uri, "application/pdf");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "No PDF viewer found", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 }

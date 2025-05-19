@@ -10,27 +10,38 @@ app.post('/generate-cv', async (req, res) => {
   const profile = req.body.profile;
 
   const prompt = `
-You are a professional resume generator.
-Use the following profile to generate a clean, structured CV in JSON format:
+You are a professional resume writer.
+Using the following profile, write a full, professional, well-formatted CV in natural English text. Include:
+
+- Full name and contact info at the top
+- A short professional summary
+- Education history
+- Work experience (as bullet points)
+- Projects (with descriptions)
+- Skills (bulleted list)
+- Certifications
+
+Make it sound polished and suitable for job applications in tech:
 
 ${JSON.stringify(profile, null, 2)}
-
-Return only the JSON CV.
 `;
 
-  try {
-    const response = await axios.post('https://api.cohere.ai/v1/chat', {
-      model: "command-r-plus",
-      message: prompt,
-      temperature: 0.3
-    }, {
-      headers: {
-        'Authorization': `Bearer ${process.env.COHERE_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
 
-    const generatedText = response.data.text;
+  try {
+    const response = await axios.post('https://api.cohere.ai/v1/generate', {
+  model: "command",
+  prompt: prompt,  // 
+  max_tokens: 800,
+  temperature: 0.5,
+}, {
+  headers: {
+    'Authorization': `Bearer ${process.env.COHERE_API_KEY}`,
+    'Content-Type': 'application/json'
+  }
+});
+
+
+    const generatedText = response.data.generations[0].text;
     res.json({ cv: generatedText });
   } catch (err) {
     console.error("Cohere Error:", err.response ? err.response.data : err.message);

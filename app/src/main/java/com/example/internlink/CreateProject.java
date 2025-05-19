@@ -18,6 +18,7 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +55,7 @@ public class CreateProject extends AppCompatActivity {
     private TextInputEditText studentsEditText, amountEditText;
     private TextInputEditText startDateEditText, deadlineEditText;
     private ChipGroup skillsChipGroup;
+    private TextView contactPersonText, contactEmailText, contactPhoneText;
     private LinearLayout  amountInputLayout;
 
     // Quiz Fields
@@ -112,6 +114,11 @@ public class CreateProject extends AppCompatActivity {
         // Setup skills input
         setupSkillsInput();
 
+
+
+        // Load company contact info
+        loadContactInfo();
+
         // Setup quiz toggle
         setupQuizToggle();
 
@@ -129,6 +136,7 @@ public class CreateProject extends AppCompatActivity {
         deadlineEditText = findViewById(R.id.deadline_edit_text);
         skillsChipGroup = findViewById(R.id.skills_chip_group);
         amountInputLayout = findViewById(R.id.amount_input_layout);
+
 
 
         // Quiz fields
@@ -279,6 +287,35 @@ public class CreateProject extends AppCompatActivity {
     }
 
 
+    private void loadContactInfo() {
+        DatabaseReference companyRef = FirebaseDatabase.getInstance()
+                .getReference("companies")
+                .child(companyId);
+
+        companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String contactPerson = dataSnapshot.child("contactPerson").getValue(String.class);
+                    String contactEmail = dataSnapshot.child("contactEmail").getValue(String.class);
+                    String contactPhone = dataSnapshot.child("contactPhone").getValue(String.class);
+
+                    contactPersonText.setText(contactPerson);
+                    contactEmailText.setText(contactEmail);
+                    contactPhoneText.setText(contactPhone);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                contactPersonText.setText("Not available");
+                contactEmailText.setText("Not available");
+                contactPhoneText.setText("Not available");
+            }
+        });
+
+    }
+
     private void setupQuizToggle() {
         SwitchMaterial quizToggle = findViewById(R.id.quiz_toggle);
         quizToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -292,25 +329,19 @@ public class CreateProject extends AppCompatActivity {
     }
 
     private void showAddQuestionDialog() {
-        // Create a dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add New Question");
 
-        // Inflate the dialog layout
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_question, null);
         builder.setView(dialogView);
 
-        // Get references to dialog views
         TextInputEditText questionText = dialogView.findViewById(R.id.question_text);
         Spinner questionTypeSpinner = dialogView.findViewById(R.id.question_type_spinner);
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout trueFalseContainer = dialogView.findViewById(R.id.true_false_container);
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) RadioGroup trueFalseRadioGroup = dialogView.findViewById(R.id.true_false_radio_group);
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout multipleChoiceContainer = dialogView.findViewById(R.id.multiple_choice_container);
         LinearLayout optionsContainer = dialogView.findViewById(R.id.options_container);
         Button addOptionButton = dialogView.findViewById(R.id.add_option_button);
-
-        // Verify all views were found
-        if (questionText == null || questionTypeSpinner == null || optionsContainer == null || addOptionButton == null) {
-            Toast.makeText(this, "Error loading question dialog", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         // Setup question type spinner
         ArrayAdapter<CharSequence> typeAdapter = ArrayAdapter.createFromResource(
@@ -321,14 +352,15 @@ public class CreateProject extends AppCompatActivity {
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         questionTypeSpinner.setAdapter(typeAdapter);
 
-        // Show/hide options based on question type
+        // Handle question type selection
         questionTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedType = parent.getItemAtPosition(position).toString();
-                optionsContainer.setVisibility(
-                        selectedType.equals("Multiple Choice") ? View.VISIBLE : View.GONE
-                );
+
+                // Show/hide appropriate containers
+                trueFalseContainer.setVisibility(selectedType.equals("True/False") ? View.VISIBLE : View.GONE);
+                multipleChoiceContainer.setVisibility(selectedType.equals("Multiple Choice") ? View.VISIBLE : View.GONE);
             }
 
             @Override
@@ -336,19 +368,14 @@ public class CreateProject extends AppCompatActivity {
             }
         });
 
-        // Add option button click handler
+        // Handle adding options for multiple choice
         addOptionButton.setOnClickListener(v -> {
-            View optionView = LayoutInflater.from(CreateProject.this)
+            View optionView = LayoutInflater.from(this)
                     .inflate(R.layout.item_option, optionsContainer, false);
 
             TextInputEditText optionText = optionView.findViewById(R.id.option_text);
             CheckBox correctCheckbox = optionView.findViewById(R.id.correct_checkbox);
             ImageView removeOption = optionView.findViewById(R.id.remove_option);
-
-            if (optionText == null || correctCheckbox == null || removeOption == null) {
-                Toast.makeText(CreateProject.this, "Error loading option fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
 
             removeOption.setOnClickListener(removeView -> {
                 optionsContainer.removeView(optionView);
@@ -357,7 +384,6 @@ public class CreateProject extends AppCompatActivity {
             optionsContainer.addView(optionView);
         });
 
-        // Set up dialog buttons
         builder.setPositiveButton("Add Question", (dialog, which) -> {
             String question = questionText.getText().toString().trim();
             String type = questionTypeSpinner.getSelectedItem().toString();
@@ -380,17 +406,15 @@ public class CreateProject extends AppCompatActivity {
                     TextInputEditText optionText = optionView.findViewById(R.id.option_text);
                     CheckBox correctCheckbox = optionView.findViewById(R.id.correct_checkbox);
 
-                    if (optionText != null && correctCheckbox != null) {
-                        String option = optionText.getText().toString().trim();
-                        if (!option.isEmpty()) {
-                            Map<String, Object> optionData = new HashMap<>();
-                            optionData.put("text", option);
-                            optionData.put("correct", correctCheckbox.isChecked());
-                            options.add(optionData);
+                    String option = optionText.getText().toString().trim();
+                    if (!option.isEmpty()) {
+                        Map<String, Object> optionData = new HashMap<>();
+                        optionData.put("text", option);
+                        optionData.put("correct", correctCheckbox.isChecked());
+                        options.add(optionData);
 
-                            if (correctCheckbox.isChecked()) {
-                                hasCorrectAnswer = true;
-                            }
+                        if (correctCheckbox.isChecked()) {
+                            hasCorrectAnswer = true;
                         }
                     }
                 }
@@ -407,16 +431,37 @@ public class CreateProject extends AppCompatActivity {
 
                 questionData.put("options", options);
             }
+            else if (type.equals("True/False")) {
+                int selectedId = trueFalseRadioGroup.getCheckedRadioButtonId();
+                if (selectedId == -1) {
+                    Toast.makeText(this, "Please select True or False", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                boolean isTrue = selectedId == R.id.true_radio;
+
+                // Create both options but mark only the selected one as correct
+                List<Map<String, Object>> options = new ArrayList<>();
+
+                Map<String, Object> trueOption = new HashMap<>();
+                trueOption.put("text", "True");
+                trueOption.put("correct", isTrue);
+                options.add(trueOption);
+
+                Map<String, Object> falseOption = new HashMap<>();
+                falseOption.put("text", "False");
+                falseOption.put("correct", !isTrue);
+                options.add(falseOption);
+
+                questionData.put("options", options);
+            }
 
             questions.add(questionData);
             addQuestionToView(questionData);
         });
 
         builder.setNegativeButton("Cancel", null);
-
-        // Show the dialog
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        builder.create().show();
     }
 
     private void addQuestionToView(Map<String, Object> questionData) {
