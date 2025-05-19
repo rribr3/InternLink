@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -50,6 +53,7 @@ import okhttp3.Response;
 public class StudentProfileActivity extends AppCompatActivity {
 
     private EditText studentName, university, degree, bio, gradyear, skills, email, phone, linkedin, twitter, github, gpa;
+    Button generateCvBtn;
     private LinearLayout cvDisplayLayout;
     private TextView cvFileName;
     private ImageView btnDeleteCv;
@@ -63,8 +67,7 @@ public class StudentProfileActivity extends AppCompatActivity {
     private ImageView studentPfp;
     private Uri selectedLogoUri = null;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFuJmkxv7Ly7RgEOJw1_vCjOkAMvgv32vXu6W_n3LBzsNhzJdGrJNqappNkVvSGxT6wD6kG5nT29PYOAuknN6FJVFVliW6Yx2JfyTDP3zru8xRUNPUNRj-jVSUAvilJG17JWbXjKjVqc2-bXrUaQayYlww2GFAXWFYeQMR2URtUahzzmuBokdXzkhcPvPbbC-REd_VxAdci0Bvi_sR1iSUnCzCEuH2RiMY6YWbUbMkqZ-9Jzl7yogRWyPP_YNsgFm28tPLLyrpbjl3ByXeWwhdhJhodHj4in1uoJfe7z1tSdxaKOJE-timK2L9yHbv-ITw53ZW-uectkq7zF7Db4f6SZRE16yl0Zbjwfat4IuhAfL7KmJ8ZEqblXXHgNV-4n9GQYjRk7b-d0XlXCx-jHpelOB-BqlBEqAXL4gEKvNV9pba9AoGIGX4gM5WW_BkasdFM6bp1YXo_sE8ZgHW9mCVvMSf5oZOVwjEjbpLQO8PFlh1NYkCzKiNsmaHzXQorncYghzAdCIxfhZO7vRWLsKL_c2uHuIN-FYiGVeTUNPH7Ow3tVyV3l7x1togK6fF930_wWMcmP_PVMMEED0yz8b3Jbtexv_KcLBQhIc5SzyPdii2RaNSPhVYk-XcrKX3K9Vmflz1k-mIL7k62aebkuypKgP3ufXSML04S2dTwMd1-BwmZqXwxrefb6AVoJO6jgJXRf6QepT7l0J7rfAWxkGapzao6rkQzIMTNh_jN7Tme107W35cWFPUvuOZF76GgeuvphyRxHbhoeFOuYLvx-slX0kMs6Lv8A9DS5ZGrHFkhcAt6256bc3Ra26rbaHjSmMxO4KjaAWpJRYYvQeukMlRibthSV4FfsNErJXVSbBOj2nR8dghfOi8p7PpjqDSoqJ7edjoreB9KPEp6Y1iJNjkJbL5L7HUmMWmTtgT9TFJ5kiCNCRX7koVo-y64io5pUMY2Zx05S88IeQtycn9gKlF7vdZ19Ad8g9IpZXo6Z2gaxYBQ-woIlxqEw6Fp5IuYcqi5tk7jZBK2RqTHGRWx6DjgrVd4r6SiD0uKyyK5grfDdTi2jAeB0htbCpAQSAtGL8g6Tmmw-MMO0u7RlfWzQou9jopMbfYYKAa8u0SFWkTt426ckoKGCHiYNNJvMgtSJfnG7oJkowx8cXSBpm1LmMbAutIVFRDoW28Co4f6ycrozfGw2cTSa5u96VXI3zcubQw1FNVmYZ3-LVf1d_uUQFotimhAjKPC9aX7dm-nieT8063bvB6SSAoIYBga37somX4JSnArg1o34RhfspCA2ZfkP2O0KSvs_akICpAb-Vxm794JzRQcqDC0CQsKYiQhu8B-HkU3bc2gGvTohCWU4G3Z3kb4rrveOnEa_LURWhEIxig1v5QpXE3WWA5xFLMlOoVacpun0ChT75FXqw3eq_mbLLPonOtZrgpQFL6TZiVtjEnrCtbtH2VRzluS6TVK0dpE";
-
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFtRqxwJ5W4zlY2rH1YInIDJ1FDVtdMMZrhBUZTJK71WrkPNqIja4r9jVUsXrIizLZQgPqNV3kh6_1YWSLeMhhUD5Xc8DWFpQE-TEAo3FJAPc52U6fWExzUVPRqP0fV7EPtL8ywK1PS747S0JrHYrWWwAHRO3SzjpIslgtmkXrJ6E0lFsyxlK6LOtKcINn-KdMa5gIlyjih4Bn3SaHfn3usKrIu0HIXCiEhiFy3TyqShuHCCCWEfUV5f2t5NshRML_zIOJq2KRe1NEmc8r6McjxbHiiGbcFvi0Rij9EJWbvHcN3HyV22Bg5vYANuRrDlk6OCIXqyoKFblXgIoiGIgF24Ky0m0x87mR-BYVNQZXTH8TzhFoUtmw-EMnhIBP2Ua3ldPFKCn7LG2JS7w0X6Lrsojp6s1NfyE720c1joFLeXzg9INAP-dv3k5soLVuGwIY8a3XifRBzNy5DyqF97bQW6NeP0vnRhcJgdVuY7nDwPTZu1sgasZtkiBFaAeDXMsbPs8ds0mp6tIUVSR4yhzFF5_b4kMMmq59KN5pc1Yde3gkowX7WthP7QT2JWAn32mM2taqhGMeylskXhscOH5EIAYRpoEPKyWmeeicWdQ9d1cNbtkJNF3jIQGFyVsKOwMz3fqyux4pfLe2Yw7nuNntfA2qIypHupga9DJwe9jc5FakyrUGzCTsY-bgRygrAH2eOqgviq078KGt6CRp4ugnHYzJb-PtWYHwO3iCfGsx-vjzL-pwZJeGAHUyWnLoSDPScGCFvVicx0HkEhE93sgLepMtoT6NAHy58sgS-UT5BnQDCFe0p8Xpo7IswxldDNIlyD6hGMKPj4Qe0pRaregamKtwGTHFBmv0nPqdlv8H3Qs6JAkv3_0jGxhVjCVEqxJIj0ovC36ShjSa-KQJz6MDK5ZeL6eDSvvgiDjVV2ee4SVbtgQl-A6PukHOo4PhwH3XDYoj3iWSUhtVQD9bEcPvi2qVosB8ybv1Ixs3voAuWdnxCFJcCoeasArwETVAQuY97vd2xXCKNyfW-BbkKfl657xC0q1qQQPeTIk1cSlPkunjFiUzCs83wKzNUnGg33DgmrsYN64Q9O2sDjjeRCYlutg7V7fGm5GH10v7kyAKbjsf89RoGqnkPvf8j8DCpYc8XgJJJG_mwNTLS366RalNpNnlQia34QqzT7JxxcrNLxBqn-eYpZHpWLHFqxAqoY-F4UpaLiCwRcssT1ocztp_J_23pnc8j6VdRJRFDJMiji2V1c8biLBUnjDzI5okJiO9o9zNqmCCjHGEcNrX5u3iPwvOzlztYYZvLfee0C0WXmKXhF-5pFGci7aq4s8Pi27smZ2u0j9Kc2XaUJRStstTXMg1ZyfleGJUpkeNpQH872P5cVUgVjEx8kmT8uU6ESDE_5UjU4-adNpemEKmranhsCcTLxN8IUm_TuakLoVixvW5CmCwAG7UIXIiFYngRuYQw";
     private final ActivityResultLauncher<String> pdfPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -157,13 +160,18 @@ public class StudentProfileActivity extends AppCompatActivity {
         });
         viewBtn.setOnClickListener(v -> {
             if (cvUrl != null && !cvUrl.isEmpty()) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(cvUrl));
-                startActivity(browserIntent);
-
+                Intent intent = new Intent(StudentProfileActivity.this, PdfViewerActivity.class);
+                intent.putExtra("pdf_url", cvUrl);
+                startActivity(intent);
             } else {
                 Toast.makeText(this, "No CV uploaded", Toast.LENGTH_SHORT).show();
             }
         });
+        generateCvBtn.setOnClickListener(v -> {
+                Intent intent = new Intent(StudentProfileActivity.this, CvGenerated.class);
+                startActivity(intent);
+        });
+
 
 
 
@@ -185,20 +193,34 @@ public class StudentProfileActivity extends AppCompatActivity {
 
         try {
             InputStream inputStream = getContentResolver().openInputStream(pdfUri);
+            if (inputStream == null) {
+                progressDialog.dismiss();
+                Toast.makeText(this, "Failed to read selected PDF", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             byte[] pdfData = getBytes(inputStream);
 
             OkHttpClient client = new OkHttpClient();
 
-            RequestBody body = RequestBody.create(MediaType.parse("application/octet-stream"), pdfData);
-            Request request = new Request.Builder()
+            // Step 1: Upload the PDF to Dropbox
+            JSONObject dropboxArg = new JSONObject();
+            dropboxArg.put("path", "/cv_" + STUDENT_ID + ".pdf");
+            dropboxArg.put("mode", "overwrite");
+            dropboxArg.put("autorename", false);
+            dropboxArg.put("mute", false);
+            dropboxArg.put("strict_conflict", false);
+
+            RequestBody uploadBody = RequestBody.create(MediaType.parse("application/octet-stream"), pdfData);
+            Request uploadRequest = new Request.Builder()
                     .url("https://content.dropboxapi.com/2/files/upload")
                     .addHeader("Authorization", "Bearer " + DROPBOX_ACCESS_TOKEN)
-                    .addHeader("Dropbox-API-Arg", "{\"path\": \"/cv_" + STUDENT_ID + ".pdf\",\"mode\": \"overwrite\"}")
+                    .addHeader("Dropbox-API-Arg", dropboxArg.toString())
                     .addHeader("Content-Type", "application/octet-stream")
-                    .post(body)
+                    .post(uploadBody)
                     .build();
 
-            client.newCall(request).enqueue(new Callback() {
+            client.newCall(uploadRequest).enqueue(new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
                     runOnUiThread(() -> {
@@ -209,67 +231,73 @@ public class StudentProfileActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    if (response.isSuccessful()) {
-                        // Step 2: Create a shared link
-                        String createLinkJson = "{\"path\": \"/cv_" + STUDENT_ID + ".pdf\", \"settings\": {\"requested_visibility\": \"public\"}}";
-
-                        RequestBody linkBody = RequestBody.create(
-                                MediaType.parse("application/json"), createLinkJson);
-
-                        Request linkRequest = new Request.Builder()
-                                .url("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings")
-                                .addHeader("Authorization", "Bearer " + DROPBOX_ACCESS_TOKEN)
-                                .addHeader("Content-Type", "application/json")
-                                .post(linkBody)
-                                .build();
-
-                        client.newCall(linkRequest).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                runOnUiThread(() -> {
-                                    progressDialog.dismiss();
-                                    Toast.makeText(StudentProfileActivity.this, "Failed to generate Dropbox link", Toast.LENGTH_SHORT).show();
-                                });
-                            }
-
-                            @Override
-                            public void onResponse(@NonNull Call call, @NonNull Response linkResponse) throws IOException {
-                                String json = linkResponse.body().string();
-                                try {
-                                    JSONObject obj = new JSONObject(json);
-                                    String url;
-
-                                    // NEW structure (Dropbox API v2 response)
-                                    if (obj.has("url")) {
-                                        url = obj.getString("url");
-                                    } else if (obj.has("result")) {
-                                        url = obj.getJSONObject("result").getString("url");
-                                    } else {
-                                        throw new Exception("No url field found");
-                                    }
-
-                                    url = url.replace("?dl=0", "?raw=1");
-
-                                    String finalUrl = url;
-                                    runOnUiThread(() -> {
-                                        progressDialog.dismiss();
-                                        saveStudentData(finalUrl);
-                                    });
-                                } catch (Exception e) {
-                                    runOnUiThread(() -> {
-                                        progressDialog.dismiss();
-                                        Toast.makeText(StudentProfileActivity.this, "Link parse error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    });
-                                }
-                            }
-
-                        });
-                    } else {
+                    if (!response.isSuccessful()) {
+                        String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                        Log.e("DROPBOX_UPLOAD", "Upload error: " + errorBody);
                         runOnUiThread(() -> {
                             progressDialog.dismiss();
-                            Toast.makeText(StudentProfileActivity.this, "CV upload failed", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(StudentProfileActivity.this, "Upload failed", Toast.LENGTH_SHORT).show();
                         });
+                        return;
                     }
+
+                    // Step 2: Generate a temporary direct link
+                    JSONObject tempLinkBody = new JSONObject();
+                    try {
+                        tempLinkBody.put("path", "/cv_" + STUDENT_ID + ".pdf");
+                    } catch (Exception ex) {
+                        runOnUiThread(() -> {
+                            progressDialog.dismiss();
+                            Toast.makeText(StudentProfileActivity.this, "Failed to build temp link request", Toast.LENGTH_SHORT).show();
+                        });
+                        return;
+                    }
+
+                    Request linkRequest = new Request.Builder()
+                            .url("https://api.dropboxapi.com/2/files/get_temporary_link")
+                            .addHeader("Authorization", "Bearer " + DROPBOX_ACCESS_TOKEN)
+                            .addHeader("Content-Type", "application/json")
+                            .post(RequestBody.create(MediaType.parse("application/json"), tempLinkBody.toString()))
+                            .build();
+
+                    client.newCall(linkRequest).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            runOnUiThread(() -> {
+                                progressDialog.dismiss();
+                                Toast.makeText(StudentProfileActivity.this, "Failed to get link", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response linkResponse) throws IOException {
+                            if (!linkResponse.isSuccessful()) {
+                                String error = linkResponse.body() != null ? linkResponse.body().string() : "Unknown error";
+                                Log.e("DROPBOX_LINK", "Link generation failed: " + error);
+                                runOnUiThread(() -> {
+                                    progressDialog.dismiss();
+                                    Toast.makeText(StudentProfileActivity.this, "Link error", Toast.LENGTH_SHORT).show();
+                                });
+                                return;
+                            }
+
+                            try {
+                                JSONObject json = new JSONObject(linkResponse.body().string());
+                                String tempLink = json.getString("link");
+
+                                runOnUiThread(() -> {
+                                    progressDialog.dismiss();
+                                    saveStudentData(tempLink); // Save direct access link
+                                });
+
+                            } catch (Exception e) {
+                                runOnUiThread(() -> {
+                                    progressDialog.dismiss();
+                                    Toast.makeText(StudentProfileActivity.this, "Failed to parse link", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }
+                    });
                 }
             });
 
@@ -280,22 +308,17 @@ public class StudentProfileActivity extends AppCompatActivity {
     }
 
 
+
     private void deleteCvFromDropbox(String dropboxUrl) {
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Deleting CV...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        // Extract Dropbox path from URL
-        String dropboxPath = extractDropboxPathFromUrl(dropboxUrl);
-        if (dropboxPath == null) {
-            progressDialog.dismiss();
-            Toast.makeText(this, "Invalid Dropbox path", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // We now always know the file path: "/cv_<STUDENT_ID>.pdf"
+        String dropboxPath = "/cv_" + STUDENT_ID + ".pdf";
 
         OkHttpClient client = new OkHttpClient();
-        String accessToken = "sl.u.AFtqXbDKKz-x3kbcl5CsMY4h7R_NAuB1i9wBdD_fFlVSVL0w5nv8rJqYCCWvXjZCNBQ0Elu1pKfiNe6ei_wJ_5foFt-Wven4kXD3E5QdP67-Ag3u-36FozLKuZFnQeHqfyVQ8UhhbWw5Eb4o3mJt79-Y9u01uHVYDVT6niLJlyurdMMrqqa-C_PHqv8QGSN5GvebzPchUr11HPf4EObi06-7acbs1HXWBY8FTmLOG8NQ8OycvAbAQzlugB1JyTZc2raBGSRt5-lGevzT4smdA0fnHC2g_2hLcywgw7b5c9U7777-m2VBHk7CW7nstltwo6o7RFyBq7Q9eO8mgZYLoPJgyin2N7_PpiwHZ-Nb8sRdp4ldJhUeiCJ3zOwYVdU_QBKswK7Pfgn1ozb3WyOK7crkP5DKmG3kncOuNapqyh_Lyy1X5E4xp5R9G3bV8E309uJmxVsifw2Wm2mkU5ZVUH-2beMSrFeaiWqduhqxJOZOd19Sa95xQaIrtBA5ey80b7Sv2Jvc-e0QjhUZD-Bsq0xawpI6NPcFV7JLMbreMPin1AGUxQ7TRjf2vBOOPDcb7KZ-H8Rotl5o2ZoWFiYZf_-EqShmHEkxc74jL-1FRo2rL0xKaxj8R_G5KN3fnF9u0lB69nxb7mzcz2zjheFca4G7pc6GNcFkZoyDWrSG0ODHVRhLjh0NjcVRyxgrqXyQ_ALpeQcSJo6hg9FSNF7srGsKLwnAjsu1XRe3wKo1ggH8EtXw51N3fDV4QeAcTs9po22nYO68uhHGx2fRA-e8Lpqk_qydx2CHJio8MfwDOrxMb5xgxFzkQN0t1s2KYraZUDeNcFCXjLCS1KYFuGpQpFCr74m4xKsS4rh3e_qtMmcFceG35RyzTFV2AeoqkthwjsFzg2DU6hSg4lV9YJFkK36VVEHxLz4YWg815VEW8c9bedlhpqi7rGT1e4F2qkzRLwHe8nwcBryNFJ3IoXuy70AO9YLwTQkow-KUigu-kqvi3YeVbX8eq4lI_myBrMuOyYAfDzkp6I66X7Kt1WVsOkwEOHPskpixSXDQsgO_sQ9H2TzgFDxnnWAVKHLrUa8G6Udk6G_rmq9SIWYxGpOHlmZZMntDiauVrxlIiIkAkNZcML1naUXEDl5YVTWIzZTrsOTtrkCjX65Dd11rLAIbY1sZAuSQdxThT9wn8HyhzuGpXtT487ffDtDJd0qPz6xmWHVtOitGCKazAIs1u5Uz3KF9VCCAEW9H5mU2AxAPNBNfrs96rWVnTq755P-13UwcKkimSRwh5aU8yU0Tv55-GpogaYXNu5-t941iOU5tGSKlWKMDeVlKyglIPRw95vIAnVJ7tKIiUxr37w519eMQ-HRuUy-duGphDR5NJ717RnMpu1l-Du8ZnkFX9YQS_KOeiOGUaAG-KvqN6a855xyTfIaBH2TvqtqjpyJvl8eYXPtf1w"; // <-- Replace with your token
 
         RequestBody body = RequestBody.create(
                 MediaType.parse("application/json"),
@@ -304,7 +327,7 @@ public class StudentProfileActivity extends AppCompatActivity {
 
         Request request = new Request.Builder()
                 .url("https://api.dropboxapi.com/2/files/delete_v2")
-                .addHeader("Authorization", "Bearer " + accessToken)
+                .addHeader("Authorization", "Bearer " + DROPBOX_ACCESS_TOKEN)
                 .addHeader("Content-Type", "application/json")
                 .post(body)
                 .build();
@@ -326,11 +349,13 @@ public class StudentProfileActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         progressDialog.dismiss();
-                        Toast.makeText(StudentProfileActivity.this, "CV deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(StudentProfileActivity.this, "CV deleted successfully", Toast.LENGTH_SHORT).show();
                         cvDisplayLayout.setVisibility(View.GONE);
                         cvUrl = null;
                     });
                 } else {
+                    String errorMsg = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e("DROPBOX_DELETE", "Error: " + errorMsg);
                     runOnUiThread(() -> {
                         progressDialog.dismiss();
                         Toast.makeText(StudentProfileActivity.this, "Dropbox deletion failed", Toast.LENGTH_SHORT).show();
@@ -339,6 +364,7 @@ public class StudentProfileActivity extends AppCompatActivity {
             }
         });
     }
+
     private String extractDropboxPathFromUrl(String url) {
         try {
             Uri uri = Uri.parse(url);
@@ -376,10 +402,14 @@ public class StudentProfileActivity extends AppCompatActivity {
         btnDeleteCv = findViewById(R.id.btnDeleteCv);
         uploadBtn = findViewById(R.id.uploadBtn);
         viewBtn = findViewById(R.id.viewBtn);
+        generateCvBtn = findViewById(R.id.generateCvBtn);
+
 
 
         studentRef = FirebaseDatabase.getInstance().getReference("users").child(STUDENT_ID);
     }
+
+
 
     private void loadCompanyData() {
         studentRef.addListenerForSingleValueEvent(new ValueEventListener() {

@@ -45,4 +45,69 @@
         <item>True/False</item>
         <item>Short Answer</item>
     </string-array>
+    <!-- Language proficiency levels -->
+    <string-array name="proficiency_levels">
+        <item>Native Speaker</item>
+        <item>Fluent</item>
+        <item>Advanced</item>
+        <item>Intermediate</item>
+        <item>Basic</item>
+        <item>Beginner</item>
+    </string-array>
+
+    <!-- Month names for date selection -->
+    <string-array name="months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+
+    <!-- Common job titles for autocomplete suggestions -->
+    <string-array name="job_titles">
+        <item>Software Engineer</item>
+        <item>Project Manager</item>
+        <item>Data Analyst</item>
+        <item>UX Designer</item>
+        <item>Marketing Specialist</item>
+        <item>Financial Analyst</item>
+        <item>HR Manager</item>
+        <item>Sales Executive</item>
+        <item>Product Manager</item>
+        <item>Graphic Designer</item>
+    </string-array>
+
+    <!-- Common skills for autocomplete suggestions -->
+    <string-array name="common_skills">
+        <item>Java</item>
+        <item>Python</item>
+        <item>JavaScript</item>
+        <item>SQL</item>
+        <item>Project Management</item>
+        <item>Data Analysis</item>
+        <item>UI/UX Design</item>
+        <item>Communication</item>
+        <item>Leadership</item>
+        <item>Problem Solving</item>
+    </string-array>
+
+    <!-- Degree types -->
+    <string-array name="degree_types">
+        <item>Bachelor of Science</item>
+        <item>Bachelor of Arts</item>
+        <item>Master of Science</item>
+        <item>Master of Business Administration</item>
+        <item>PhD</item>
+        <item>Associate Degree</item>
+        <item>Diploma</item>
+        <item>Certificate</item>
+    </string-array>
 </resources>
