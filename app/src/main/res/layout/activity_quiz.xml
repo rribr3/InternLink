@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Quiz Header Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/quiz_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.2"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/quiz_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/secondaryText"
+                android:textSize="16sp"
+                android:lineSpacingMultiplier="1.3"/>
+        </LinearLayout>
+
+        <!-- Timer Chip -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/timer_text"
+            style="@style/Widget.MaterialComponents.Chip.Entry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            app:chipBackgroundColor="@color/primaryLight"
+            app:chipIcon="@drawable/ic_time"
+            app:chipIconTint="@color/primaryDark"
+            app:chipStrokeColor="@color/primaryDark"
+            app:chipStrokeWidth="1dp"
+            app:iconStartPadding="4dp"/>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Question Section -->
+        <TextView
+            android:id="@+id/question_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:lineSpacingMultiplier="1.4"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Multiple Choice Layout -->
+        <LinearLayout
+            android:id="@+id/multiple_choice_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <RadioGroup
+                android:id="@+id/mc_radio_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="8dp"/>
+        </LinearLayout>
+
+        <!-- True/False Layout -->
+        <LinearLayout
+            android:id="@+id/true_false_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <RadioGroup
+                android:id="@+id/tf_radio_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+
+                    <RadioButton
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="True"
+                        android:padding="16dp"
+                        style="@style/RadioButtonMaterial"/>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardElevation="2dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+
+                    <RadioButton
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="False"
+                        android:padding="16dp"
+                        style="@style/RadioButtonMaterial"/>
+                </com.google.android.material.card.MaterialCardView>
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Short Answer Layout -->
+        <LinearLayout
+            android:id="@+id/short_answer_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:boxBackgroundMode="outline"
+                app:boxStrokeColor="@color/primaryDark"
+                app:hintTextColor="@color/primaryDark">
+
+                <EditText
+                    android:id="@+id/short_answer_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Type your answer here"
+                    android:minHeight="100dp"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:padding="16dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <!-- Action Buttons -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/next_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Next Question"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/right_arrow"
+            app:iconGravity="end"
+            app:iconPadding="8dp"
+            app:iconTint="@color/white"
+            app:backgroundTint="@color/blue_500"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/submit_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Submit Quiz"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            android:textSize="16sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_done"
+            app:iconGravity="end"
+            app:iconPadding="8dp"
+            app:iconTint="@color/white"
+            app:backgroundTint="@color/blue_500"/>
+    </LinearLayout>
+</ScrollView>

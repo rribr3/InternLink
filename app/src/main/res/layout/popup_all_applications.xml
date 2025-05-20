@@ -1,67 +1,66 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#80000000"> <!-- Semi-transparent black background -->
 
-    <!-- Card-like container -->
-    <LinearLayout
-        android:id="@+id/card_container"
+    <!-- Scrollable Card Container -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:layout_marginStart="24dp"
-        android:layout_marginLeft="24dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginRight="24dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/rounded_background"
-        android:elevation="6dp"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:fillViewport="true"
+        android:layout_margin="24dp">
 
-        <!-- Close Button -->
-        <ImageView
-            android:id="@+id/btn_close_popup"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="end"
-            android:contentDescription="Close"
-            android:src="@drawable/ic_cancel" />
-
-        <!-- Title -->
-        <TextView
-            android:id="@+id/popup_title"
+        <LinearLayout
+            android:id="@+id/card_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center"
-            android:text="My Applications"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:background="@drawable/rounded_background"
+            android:elevation="6dp"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <!-- Applications list -->
+            <!-- Close Button -->
+            <ImageView
+                android:id="@+id/btn_close_popup"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end"
+                android:contentDescription="Close"
+                android:src="@drawable/ic_cancel" />
 
-        <!-- Add Application Button -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_applications"
-            android:layout_width="310dp"
-            android:layout_height="475dp"
-            android:layout_marginBottom="16dp"
-            android:clipToPadding="false" />
+            <!-- Title -->
+            <TextView
+                android:id="@+id/popup_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center"
+                android:text="My Applications"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btn_add_application"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:backgroundTint="@color/blue_info"
-            android:contentDescription="Add Application"
-            android:src="@drawable/ic_add"
-            app:tint="@android:color/white" />
-    </LinearLayout>
+            <!-- RecyclerView with dynamic height -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_applications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Add Application Button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btn_add_application"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/blue_info"
+                android:contentDescription="Add Application"
+                android:src="@drawable/ic_add"
+                app:tint="@android:color/white" />
+        </LinearLayout>
+    </ScrollView>
 </RelativeLayout>

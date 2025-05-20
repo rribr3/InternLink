@@ -1,8 +1,10 @@
 package com.example.internlink;
 
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -17,9 +19,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,6 +36,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import android.graphics.Paint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -338,31 +344,140 @@ public class StudentHomeActivity extends AppCompatActivity
 
 
     private void showAllApplications() {
-        // Inflate the popup layout
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
 
-        // Initialize views
         RecyclerView rvApplications = popupView.findViewById(R.id.rv_applications);
         FloatingActionButton addButton = popupView.findViewById(R.id.btn_add_application);
         ImageView closeButton = popupView.findViewById(R.id.btn_close_popup);
 
-        // Sample data – replace with actual application model
-        List<String> applications = new ArrayList<>();
-        applications.add("UI/UX Designer – Pending");
-        applications.add("Android Developer – Interview");
-        applications.add("Backend Intern – Accepted");
-
-        // Setup RecyclerView
         rvApplications.setLayoutManager(new LinearLayoutManager(this));
-        rvApplications.setAdapter(new ApplicationAdapter(applications));
 
-        // Add new application click
+        List<Application> applications = new ArrayList<>();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("applications");
+
+        ref.orderByChild("userId").equalTo(studentId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            Application app = appSnap.getValue(Application.class);
+                            if (app != null) {
+                                app.setApplicationId(appSnap.getKey());
+                                applications.add(app);
+                            }
+                        }
+
+                        ApplicationAdapter adapter = new ApplicationAdapter(applications, studentId);
+                        rvApplications.setAdapter(adapter);
+
+                        float SWIPE_THRESHOLD = 0.5f;
+
+                        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+                            @Override
+                            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                                  @NonNull RecyclerView.ViewHolder target) {
+                                return false;
+                            }
+
+                            @Override
+                            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                                // Prevent default removal behavior
+                                adapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                            }
+
+                            @Override
+                            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                                                    int actionState, boolean isCurrentlyActive) {
+
+                                View itemView = viewHolder.itemView;
+                                Drawable icon;
+                                int iconMargin = (itemView.getHeight() - 48) / 2;
+                                int iconTop = itemView.getTop() + iconMargin;
+                                int iconBottom = iconTop + 48;
+
+                                if (dX < 0) { // Swipe Left → DELETE
+                                    ColorDrawable background = new ColorDrawable(Color.RED);
+                                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                                    background.draw(c);
+
+                                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_delete_white);
+                                    if (icon != null) {
+                                        int iconRight = itemView.getRight() - iconMargin;
+                                        int iconLeft = iconRight - icon.getIntrinsicWidth();
+                                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                                        icon.draw(c);
+                                    }
+
+                                    // If swipe passed threshold, show confirmation dialog
+                                    if (Math.abs(dX) > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
+                                        int position = viewHolder.getAdapterPosition();
+                                        Application app = applications.get(position);
+
+                                        new AlertDialog.Builder(StudentHomeActivity.this)
+                                                .setTitle("Delete Application")
+                                                .setMessage("Are you sure you want to delete this application?")
+                                                .setPositiveButton("Delete", (dialog, which) -> {
+                                                    FirebaseDatabase.getInstance().getReference("applications")
+                                                            .child(app.getApplicationId())
+                                                            .removeValue()
+                                                            .addOnSuccessListener(aVoid -> {
+                                                                applications.remove(position);
+                                                                adapter.notifyItemRemoved(position);
+                                                                Toast.makeText(StudentHomeActivity.this, "Application deleted", Toast.LENGTH_SHORT).show();
+                                                            })
+                                                            .addOnFailureListener(e -> {
+                                                                Toast.makeText(StudentHomeActivity.this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                                                                adapter.notifyItemChanged(position);
+                                                            });
+                                                })
+                                                .setNegativeButton("Cancel", (dialog, which) -> {
+                                                    adapter.notifyItemChanged(position);
+                                                    dialog.dismiss();
+                                                })
+                                                .setCancelable(false)
+                                                .show();
+                                    }
+                                } else if (dX > 0) { // Swipe Right → VIEW
+                                    ColorDrawable background = new ColorDrawable(Color.parseColor("#2196F3")); // Blue
+                                    background.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getLeft() + (int) dX, itemView.getBottom());
+                                    background.draw(c);
+
+                                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_eye_open);
+                                    if (icon != null) {
+                                        int iconLeft = itemView.getLeft() + iconMargin;
+                                        int iconRight = iconLeft + icon.getIntrinsicWidth();
+                                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                                        icon.draw(c);
+                                    }
+
+                                    if (dX > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
+                                        int position = viewHolder.getAdapterPosition();
+                                        Application app = applications.get(position);
+                                        Intent intent = new Intent(StudentHomeActivity.this, ViewApplications.class);
+                                        intent.putExtra("projectId", app.getProjectId());
+                                        startActivity(intent);
+                                    }
+                                }
+
+                                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+                            }
+                        };
+
+                        new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvApplications);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(StudentHomeActivity.this, "Error loading applications", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
         addButton.setOnClickListener(v -> {
             Toast.makeText(this, "Add new application clicked", Toast.LENGTH_SHORT).show();
-            // TODO: Launch add application screen
         });
 
-        // Create full-screen PopupWindow
         final PopupWindow popupWindow = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -373,9 +488,11 @@ public class StudentHomeActivity extends AppCompatActivity
         popupWindow.setAnimationStyle(R.style.PopupAnimation);
         popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
 
-        // Close popup
         closeButton.setOnClickListener(v -> popupWindow.dismiss());
     }
+
+
+
 
 
 

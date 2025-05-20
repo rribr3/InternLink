@@ -1,15 +1,35 @@
 package com.example.internlink;
 
-import java.util.List;
-import java.util.Map;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class Question {
+import java.util.List;
+
+public class Question implements Parcelable {
     private String text;
-    private String type;
-    private List<Map<String, Object>> options;
+    private String type; // "Multiple Choice", "True/False", or "Short Answer"
+    private List<Option> options; // Can be null for short answer
 
     public Question() {
     }
+
+    protected Question(Parcel in) {
+        text = in.readString();
+        type = in.readString();
+        options = in.createTypedArrayList(Option.CREATOR); // handles Option parcelable list
+    }
+
+    public static final Creator<Question> CREATOR = new Creator<Question>() {
+        @Override
+        public Question createFromParcel(Parcel in) {
+            return new Question(in);
+        }
+
+        @Override
+        public Question[] newArray(int size) {
+            return new Question[size];
+        }
+    };
 
     public String getText() {
         return text;
@@ -27,11 +47,23 @@ public class Question {
         this.type = type;
     }
 
-    public List<Map<String, Object>> getOptions() {
+    public List<Option> getOptions() {
         return options;
     }
 
-    public void setOptions(List<Map<String, Object>> options) {
+    public void setOptions(List<Option> options) {
         this.options = options;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(text);
+        dest.writeString(type);
+        dest.writeTypedList(options);
     }
 }

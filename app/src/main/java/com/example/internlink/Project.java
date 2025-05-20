@@ -1,7 +1,6 @@
 package com.example.internlink;
 
 import java.util.List;
-import java.util.Map;
 
 public class Project {
     private String title;
@@ -24,6 +23,9 @@ public class Project {
     private Quiz quiz;
     private String status;
     private String projectId;
+    private long createdAt;
+    private boolean resumeRequired;
+    private String companyLogoUrl;
 
     // Empty constructor for Firebase
     public Project() {
@@ -32,22 +34,6 @@ public class Project {
     // Getters and setters for all fields
     public String getTitle() {
         return title;
-    }
-    public int getApplicants() {
-        return applicants;
-    }
-    public void setApplicants(int applicants) {
-        this.applicants = applicants;
-    }
-    public String getStatus() {
-        return status;
-    }
-    public String getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(String projectId) {
-        this.projectId = projectId;
     }
 
     public void setTitle(String title) {
@@ -108,6 +94,14 @@ public class Project {
 
     public void setStudentsRequired(int studentsRequired) {
         this.studentsRequired = studentsRequired;
+    }
+
+    public int getApplicants() {
+        return applicants;
+    }
+
+    public void setApplicants(int applicants) {
+        this.applicants = applicants;
     }
 
     public String getEducationLevel() {
@@ -182,11 +176,62 @@ public class Project {
         this.quiz = quiz;
     }
 
-    public int getCompanyLogo() {
-        return 0;
+    public String getStatus() {
+        return status;
     }
 
-    public int getTimeLeft() {
-        return 0;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public boolean isResumeRequired() {
+        return resumeRequired;
+    }
+
+    public void setResumeRequired(boolean resumeRequired) {
+        this.resumeRequired = resumeRequired;
+    }
+
+    public String getCompanyLogoUrl() {
+        return companyLogoUrl;
+    }
+
+    public void setCompanyLogoUrl(String companyLogoUrl) {
+        this.companyLogoUrl = companyLogoUrl;
+    }
+
+    // Helper method to check if project is active
+    public boolean isActive() {
+        return "approved".equalsIgnoreCase(status) &&
+                deadline > System.currentTimeMillis();
+    }
+
+    // Helper method to check if project has quiz
+    public boolean hasQuiz() {
+        return quiz != null;
+    }
+
+    // Helper method to get time left until deadline in days
+    public int getTimeLeftInDays() {
+        if (deadline <= 0) return 0;
+        long currentTime = System.currentTimeMillis();
+        if (deadline <= currentTime) return 0;
+        return (int) ((deadline - currentTime) / (1000 * 60 * 60 * 24));
     }
 }

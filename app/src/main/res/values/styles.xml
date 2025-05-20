@@ -81,4 +81,10 @@
         <item name="android:textColorHint">@color/secondary_text</item>
         <item name="android:textColor">@color/primary_text</item>
     </style>
+    <style name="RadioButtonMaterial" parent="Widget.MaterialComponents.CompoundButton.RadioButton">
+        <item name="android:buttonTint">@color/primaryDark</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+    </style>
 </resources>

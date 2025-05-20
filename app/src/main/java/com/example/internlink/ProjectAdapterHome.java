@@ -1,6 +1,7 @@
 package com.example.internlink;
 
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,15 +93,25 @@ public class ProjectAdapterHome extends RecyclerView.Adapter<ProjectAdapterHome.
                 companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String company = snapshot.child("name").getValue(String.class);
-                        companyName.setText(company != null ? company : "Unknown Company");
+                        Log.d("DebugProjectAdapter", "Snapshot exists: " + snapshot.exists());
+                        Log.d("DebugProjectAdapter", "Snapshot key: " + snapshot.getKey());
+                        Log.d("DebugProjectAdapter", "Name field: " + snapshot.child("name").getValue());
+
+                        String fetchedName = snapshot.child("name").getValue(String.class);
+                        if (fetchedName != null && !fetchedName.trim().isEmpty()) {
+                            companyName.setText(fetchedName);
+                        } else {
+                            companyName.setText("Unknown Company");
+                        }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("DebugProjectAdapter", "Firebase error: " + error.getMessage());
                         companyName.setText("Company info not available");
                     }
                 });
+
             } else {
                 companyName.setText("Company info not available");
             }
