@@ -27,6 +27,8 @@ import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ApplyNowActivity extends AppCompatActivity {
 
@@ -242,6 +244,28 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         }
     }
+    private void notifyCompanyOfApplication(String companyId, String studentName, String projectTitle) {
+        DatabaseReference announcementsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("company");
+
+        String announcementId = announcementsRef.push().getKey();
+        if (announcementId == null) return;
+
+        long timestamp = System.currentTimeMillis();
+        String title = "New Application Received";
+        String message = studentName + " has just applied to your project \"" + projectTitle + "\".\n\n[View Applicants]";
+
+        Map<String, Object> announcementData = new HashMap<>();
+        announcementData.put("title", title);
+        announcementData.put("message", message);
+        announcementData.put("timestamp", timestamp);
+
+        announcementsRef.child(announcementId).setValue(announcementData);
+    }
+
+
+
     private void submitApplicationWithGrade(int quizGrade) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -283,6 +307,23 @@ public class ApplyNowActivity extends AppCompatActivity {
 
                         updateApplicantsCount();
                         showApplicationSuccessDialog();
+                        // Fetch student's name to use in the announcement
+                        FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getUid())
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        String studentName = snapshot.child("name").getValue(String.class);
+                                        if (studentName != null) {
+                                            notifyCompanyOfApplication(currentProject.getCompanyId(), studentName, currentProject.getTitle());
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        Log.e("NotifyError", "Failed to fetch student name for notification.");
+                                    }
+                                });
+
                     });
         });
     }
@@ -339,6 +380,23 @@ public class ApplyNowActivity extends AppCompatActivity {
 
                         updateApplicantsCount();
                         showApplicationSuccessDialog();
+                        // Fetch student's name to use in the announcement
+                        FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getUid())
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        String studentName = snapshot.child("name").getValue(String.class);
+                                        if (studentName != null) {
+                                            notifyCompanyOfApplication(currentProject.getCompanyId(), studentName, currentProject.getTitle());
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        Log.e("NotifyError", "Failed to fetch student name for notification.");
+                                    }
+                                });
+
                     });
         });
     }

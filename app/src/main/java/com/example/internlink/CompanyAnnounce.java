@@ -2,10 +2,16 @@ package com.example.internlink;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -31,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -100,8 +107,8 @@ public class CompanyAnnounce extends AppCompatActivity {
 
     }
 
-    private void addAnnouncement(String announcementId, String title, String body, String date, boolean isRead, long timestamp) {
-        Announcement announcement = new Announcement(announcementId, title, body, date, isRead);
+    private void addAnnouncement(String announcementId, String title, String message, String date, boolean isRead, long timestamp) {
+        Announcement announcement = new Announcement(announcementId, title, message, date, isRead);
         announcement.setTimestamp(timestamp);
         announcementList.add(announcement);
         adapter.notifyItemInserted(announcementList.size() - 1);
@@ -118,7 +125,34 @@ public class CompanyAnnounce extends AppCompatActivity {
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
         titleView.setText(title);
-        bodyView.setText(body);
+        SpannableString spannable = new SpannableString(body);
+
+        int start = body.indexOf("[View Applicants]");
+        if (start != -1) {
+            int end = start + "[View Applicants]".length();
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Intent intent = new Intent(CompanyAnnounce.this, MyApplicants.class);
+                    startActivity(intent);
+                }
+
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(true);
+                    ds.setColor(Color.BLUE);
+                }
+            };
+
+            spannable.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            bodyView.setText(spannable);
+            bodyView.setMovementMethod(LinkMovementMethod.getInstance());
+        } else {
+            bodyView.setText(body);
+        }
+
         dateView.setText("Posted: " + date);
 
         builder.setView(popupView);
@@ -157,12 +191,12 @@ public class CompanyAnnounce extends AppCompatActivity {
                 for (DataSnapshot snap : snapshot.getChildren()) {
                     String id = snap.getKey();
                     String title = snap.child("title").getValue(String.class);
-                    String body = snap.child("message").getValue(String.class);
+                    String message = snap.child("message").getValue(String.class);
                     Long timestamp = snap.child("timestamp").getValue(Long.class);
                     String date = formatTimestamp(timestamp);
                     boolean isRead = readsSnapshot.hasChild(id);
 
-                    addAnnouncement(id, title, body, date, isRead, timestamp != null ? timestamp : 0);
+                    addAnnouncement(id, title, message, date, isRead, timestamp != null ? timestamp : 0);
                 }
                 // Default sort: latest
                 sortAnnouncementsByDate(false);
