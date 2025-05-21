@@ -110,4 +110,9 @@
         <item>Diploma</item>
         <item>Certificate</item>
     </string-array>
+
+    <string-array name="project_locations">
+        <item>Remote</item>
+        <item>In Office</item>
+    </string-array>
 </resources>

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -167,14 +168,41 @@ public class ApplyNowActivity extends AppCompatActivity {
     }
 
     private void showQuizConfirmationDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Quiz Requirement")
-                .setMessage("This project requires you to complete a quiz before applying. Would you like to take the quiz now?")
-                .setPositiveButton("Take Quiz", (dialog, which) -> {
-                    launchQuizActivity();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        // Inflate custom layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_quiz_confirmation, null);
+
+        // Customize the dialog appearance
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.CustomAlertDialog)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        // Get views from custom layout
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        TextView message = dialogView.findViewById(R.id.dialog_message);
+        Button positiveBtn = dialogView.findViewById(R.id.positive_button);
+        Button negativeBtn = dialogView.findViewById(R.id.negative_button);
+
+        // Set content
+        title.setText("Quiz Required");
+        message.setText("To apply for this position, you need to complete a short assessment.\n\n" +
+                "• " + currentProject.getQuiz().getQuestions().size() + " questions\n" +
+                "• " + currentProject.getQuiz().getTimeLimit() + " minute time limit\n" +
+                "• Minimum passing score: " + currentProject.getQuiz().getPassingScore() + "%");
+
+        // Set button actions
+        positiveBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            launchQuizActivity();
+        });
+
+        negativeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        // Show dialog with animation
+        dialog.show();
+
+        // Custom window animations
+        dialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
     }
 
     private void launchQuizActivity() {
@@ -207,15 +235,9 @@ public class ApplyNowActivity extends AppCompatActivity {
         } else if (requestCode == QUIZ_REQUEST_CODE && resultCode == RESULT_OK) {
             applyButton.setEnabled(true);
             if (data != null) {
-                boolean quizPassed = data.getBooleanExtra("QUIZ_PASSED", false);
                 int quizGrade = data.getIntExtra("QUIZ_GRADE", 0); // 🎯 Retrieve grade from QuizActivity
+                submitApplicationWithGrade(quizGrade); // Proceed regardless of quiz outcome
 
-                if (quizPassed) {
-                    // 🎯 Save grade before submitting
-                    submitApplicationWithGrade(quizGrade);
-                } else {
-                    Toast.makeText(this, "You need to pass the quiz to apply", Toast.LENGTH_SHORT).show();
-                }
             }
 
         }
@@ -350,18 +372,44 @@ public class ApplyNowActivity extends AppCompatActivity {
     }
 
     private void showApplicationSuccessDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Application Submitted")
-                .setMessage("Your application has been submitted successfully!\n\nYou can track its status in the 'My Applications' section.")
-                .setPositiveButton("View Applications", (dialog, which) -> {
-                    Intent intent = new Intent(this, StudentHomeActivity.class);
-                    startActivity(intent);
-                    finish();
-                })
-                .setNegativeButton("OK", (dialog, which) -> {
-                    finish();
-                })
-                .show();
+        // Inflate custom layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_application_success, null);
+
+        // Customize the dialog appearance
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.SuccessAlertDialog)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        // Get views from custom layout
+        ImageView icon = dialogView.findViewById(R.id.success_icon);
+        TextView title = dialogView.findViewById(R.id.dialog_title);
+        TextView message = dialogView.findViewById(R.id.dialog_message);
+        Button primaryBtn = dialogView.findViewById(R.id.primary_button);
+        Button secondaryBtn = dialogView.findViewById(R.id.secondary_button);
+
+        // Set content
+        title.setText("Application Submitted!");
+        message.setText("Congratulations!\nYour application has been successfully submitted.\n\nYou can track its status in the 'My Applications' section.");
+
+        // Set button actions
+        primaryBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(this, StudentHomeActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        secondaryBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            finish();
+        });
+
+        // Show dialog with animation
+        dialog.show();
+
+        // Custom window animations
+        dialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
     }
 
     private void showLoginRequiredDialog() {

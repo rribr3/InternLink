@@ -54,9 +54,10 @@ public class CreateProject extends AppCompatActivity {
     private TextInputEditText titleEditText, descriptionEditText;
     private TextInputEditText studentsEditText, amountEditText;
     private TextInputEditText startDateEditText, deadlineEditText;
+    private AutoCompleteTextView locationAutoComplete;
     private ChipGroup skillsChipGroup;
     private TextView contactPersonText, contactEmailText, contactPhoneText;
-    private LinearLayout  amountInputLayout;
+    private LinearLayout amountInputLayout;
 
     // Quiz Fields
     private TextInputEditText quizTitleEditText, quizInstructionsEditText;
@@ -80,26 +81,17 @@ public class CreateProject extends AppCompatActivity {
     // Date Picker
     final Calendar calendar = Calendar.getInstance();
 
-    // File Picker
-    private ActivityResultLauncher<Intent> filePickerLauncher;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_project);
 
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) ImageButton backButton = findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed(); // or finish();
-            }
-        });
-
-        categoriesRef = FirebaseDatabase.getInstance().getReference("categories");
+        ImageButton backButton = findViewById(R.id.back_button);
+        backButton.setOnClickListener(v -> onBackPressed());
 
         // Initialize Firebase
         databaseReference = FirebaseDatabase.getInstance().getReference("projects");
+        categoriesRef = FirebaseDatabase.getInstance().getReference("categories");
         companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         // Initialize views
@@ -113,8 +105,6 @@ public class CreateProject extends AppCompatActivity {
 
         // Setup skills input
         setupSkillsInput();
-
-
 
         // Load company contact info
         loadContactInfo();
@@ -134,10 +124,9 @@ public class CreateProject extends AppCompatActivity {
         amountEditText = findViewById(R.id.amount_edit_text);
         startDateEditText = findViewById(R.id.start_date_edit_text);
         deadlineEditText = findViewById(R.id.deadline_edit_text);
+        locationAutoComplete = findViewById(R.id.location_edit_text);
         skillsChipGroup = findViewById(R.id.skills_chip_group);
         amountInputLayout = findViewById(R.id.amount_input_layout);
-
-
 
         // Quiz fields
         quizTitleEditText = findViewById(R.id.quiz_title_edit_text);
@@ -158,6 +147,11 @@ public class CreateProject extends AppCompatActivity {
     private void setupDropdowns() {
         // Categories from Firebase
         loadCategoriesFromFirebase();
+
+        // Locations
+        String[] locations = getResources().getStringArray(R.array.project_locations);
+        ArrayAdapter<String> locationAdapter = new ArrayAdapter<>(this, R.layout.dropdown_item, locations);
+        locationAutoComplete.setAdapter(locationAdapter);
 
         // Durations
         String[] durations = getResources().getStringArray(R.array.project_durations);
@@ -183,6 +177,7 @@ public class CreateProject extends AppCompatActivity {
         ArrayAdapter<String> skillsAdapter = new ArrayAdapter<>(this, R.layout.dropdown_item, skills);
         skillsAutoComplete.setAdapter(skillsAdapter);
     }
+
     private void loadCategoriesFromFirebase() {
         categoriesRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -195,7 +190,6 @@ public class CreateProject extends AppCompatActivity {
                     }
                 }
 
-                // Update the AutoCompleteTextView with the categories from Firebase
                 ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                         CreateProject.this,
                         R.layout.dropdown_item,
@@ -210,7 +204,7 @@ public class CreateProject extends AppCompatActivity {
                         "Failed to load categories: " + error.getMessage(),
                         Toast.LENGTH_SHORT).show();
 
-                // Fallback to local categories if Firebase fails
+                // Fallback to local categories
                 String[] localCategories = getResources().getStringArray(R.array.project_categories);
                 ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                         CreateProject.this,
@@ -264,7 +258,6 @@ public class CreateProject extends AppCompatActivity {
             skillsAutoComplete.setText("");
         });
 
-        // Allow manual skill entry when pressing enter
         skillsAutoComplete.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == 66) { // Enter key
                 String skill = skillsAutoComplete.getText().toString().trim();
@@ -285,7 +278,6 @@ public class CreateProject extends AppCompatActivity {
         chip.setOnCloseIconClickListener(v -> skillsChipGroup.removeView(chip));
         skillsChipGroup.addView(chip);
     }
-
 
     private void loadContactInfo() {
         DatabaseReference companyRef = FirebaseDatabase.getInstance()
@@ -313,7 +305,6 @@ public class CreateProject extends AppCompatActivity {
                 contactPhoneText.setText("Not available");
             }
         });
-
     }
 
     private void setupQuizToggle() {
@@ -337,9 +328,9 @@ public class CreateProject extends AppCompatActivity {
 
         TextInputEditText questionText = dialogView.findViewById(R.id.question_text);
         Spinner questionTypeSpinner = dialogView.findViewById(R.id.question_type_spinner);
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout trueFalseContainer = dialogView.findViewById(R.id.true_false_container);
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) RadioGroup trueFalseRadioGroup = dialogView.findViewById(R.id.true_false_radio_group);
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout multipleChoiceContainer = dialogView.findViewById(R.id.multiple_choice_container);
+        LinearLayout trueFalseContainer = dialogView.findViewById(R.id.true_false_container);
+        RadioGroup trueFalseRadioGroup = dialogView.findViewById(R.id.true_false_radio_group);
+        LinearLayout multipleChoiceContainer = dialogView.findViewById(R.id.multiple_choice_container);
         LinearLayout optionsContainer = dialogView.findViewById(R.id.options_container);
         Button addOptionButton = dialogView.findViewById(R.id.add_option_button);
 
@@ -357,8 +348,6 @@ public class CreateProject extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedType = parent.getItemAtPosition(position).toString();
-
-                // Show/hide appropriate containers
                 trueFalseContainer.setVisibility(selectedType.equals("True/False") ? View.VISIBLE : View.GONE);
                 multipleChoiceContainer.setVisibility(selectedType.equals("Multiple Choice") ? View.VISIBLE : View.GONE);
             }
@@ -377,10 +366,7 @@ public class CreateProject extends AppCompatActivity {
             CheckBox correctCheckbox = optionView.findViewById(R.id.correct_checkbox);
             ImageView removeOption = optionView.findViewById(R.id.remove_option);
 
-            removeOption.setOnClickListener(removeView -> {
-                optionsContainer.removeView(optionView);
-            });
-
+            removeOption.setOnClickListener(removeView -> optionsContainer.removeView(optionView));
             optionsContainer.addView(optionView);
         });
 
@@ -439,8 +425,6 @@ public class CreateProject extends AppCompatActivity {
                 }
 
                 boolean isTrue = selectedId == R.id.true_radio;
-
-                // Create both options but mark only the selected one as correct
                 List<Map<String, Object>> options = new ArrayList<>();
 
                 Map<String, Object> trueOption = new HashMap<>();
@@ -489,6 +473,11 @@ public class CreateProject extends AppCompatActivity {
             return;
         }
 
+        if (locationAutoComplete.getText().toString().trim().isEmpty()) {
+            showError("Project location is required");
+            return;
+        }
+
         if (descriptionEditText.getText().toString().trim().isEmpty()) {
             showError("Project description is required");
             return;
@@ -518,7 +507,7 @@ public class CreateProject extends AppCompatActivity {
 
         // Check if paid project has amount
         String compensationType = stipendAutoComplete.getText().toString();
-        if (compensationType.equals("Paid")){
+        if (compensationType.equals("Paid")) {
             if (amountEditText.getText().toString().trim().isEmpty()) {
                 showError("Please enter amount for paid project");
                 return;
@@ -529,6 +518,7 @@ public class CreateProject extends AppCompatActivity {
         Map<String, Object> project = new HashMap<>();
         project.put("title", titleEditText.getText().toString().trim());
         project.put("description", descriptionEditText.getText().toString().trim());
+        project.put("location", locationAutoComplete.getText().toString().trim());
         project.put("skills", getSkillsList());
         project.put("category", categoryAutoComplete.getText().toString());
         project.put("duration", durationAutoComplete.getText().toString());
@@ -537,10 +527,9 @@ public class CreateProject extends AppCompatActivity {
         project.put("studentsRequired", Integer.parseInt(studentsEditText.getText().toString()));
         project.put("educationLevel", educationAutoComplete.getText().toString());
         project.put("compensationType", compensationType);
-        // Add these to your project map before saving
-        project.put("companyName", FirebaseAuth.getInstance().getCurrentUser().getDisplayName()); // or get from your company data
-        project.put("createdAt", ServerValue.TIMESTAMP); // Use server timestamp
-        project.put("status", "pending"); // Initial status
+        project.put("companyName", FirebaseAuth.getInstance().getCurrentUser().getDisplayName());
+        project.put("createdAt", ServerValue.TIMESTAMP);
+        project.put("status", "pending");
         project.put("applicants", 0);
 
         if (compensationType.equals("Paid")) {
@@ -564,15 +553,6 @@ public class CreateProject extends AppCompatActivity {
             project.put("quiz", quiz);
         }
 
-        // Upload files and get URLs (would need to be implemented)
-        if (!fileUris.isEmpty()) {
-            // Implement file upload to storage and get download URLs
-            List<String> fileUrls = new ArrayList<>();
-            for (Uri uri : fileUris) {
-                fileUrls.add(uri.toString()); // This would be replaced with actual download URLs
-            }
-            project.put("files", fileUrls);
-        }
         // Show progress dialog
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Publishing project...");
@@ -586,6 +566,7 @@ public class CreateProject extends AppCompatActivity {
             Toast.makeText(this, "You must be logged in to publish a project", Toast.LENGTH_SHORT).show();
             return;
         }
+
         databaseReference.child(projectId).setValue(project)
                 .addOnSuccessListener(aVoid -> {
                     progressDialog.dismiss();
@@ -595,7 +576,6 @@ public class CreateProject extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     progressDialog.dismiss();
                     Toast.makeText(this, "Failed to publish project: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    // Log the error for debugging
                     Log.e("CreateProject", "Error publishing project", e);
                 });
     }
@@ -649,14 +629,14 @@ public class CreateProject extends AppCompatActivity {
         }
         return skills;
     }
+
     private long parseDateToTimestamp(String dateString) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.US);
             return sdf.parse(dateString).getTime();
         } catch (Exception e) {
             e.printStackTrace();
-            return 0L;  // fallback if parsing fails
+            return 0L;
         }
     }
-
 }

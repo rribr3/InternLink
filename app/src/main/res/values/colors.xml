@@ -142,4 +142,6 @@
     <!-- Chart Colors -->
     <color name="chartPrimary">#2563EB</color>
     <color name="chartSecondary">#10B981</color>
+
+    <color name="shadow">#40000000</color>
 </resources>

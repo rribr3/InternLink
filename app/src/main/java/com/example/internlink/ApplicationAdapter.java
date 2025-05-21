@@ -18,10 +18,18 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
 
     private final List<Application> applicationList;
     private final String currentUserId;
+    private String applicationId;
 
     public ApplicationAdapter(List<Application> applicationList, String currentUserId) {
         this.applicationList = applicationList;
         this.currentUserId = currentUserId;
+    }
+    public String getApplicationId() {
+        return applicationId;
+    }
+
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
     }
 
     @NonNull
@@ -58,6 +66,12 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
                 holder.company.setText("Unknown Company");
             }
         }).addOnFailureListener(e -> holder.company.setText("Error loading company"));
+        holder.itemView.setOnClickListener(v -> {
+            android.content.Context context = v.getContext();
+            android.content.Intent intent = new android.content.Intent(context, ViewApplications.class);
+            intent.putExtra("APPLICATION_ID", app.getApplicationId());
+            context.startActivity(intent);
+        });
     }
 
 
@@ -69,7 +83,6 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, status, company, date;
 
-
         ViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.project_title);
@@ -78,4 +91,5 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
             date = itemView.findViewById(R.id.applied_date);
         }
     }
+
 }

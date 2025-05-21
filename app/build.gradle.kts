@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.core.ktx)
     implementation(libs.ui.graphics.android)
+    implementation(libs.swiperefreshlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

@@ -27,6 +27,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -45,17 +46,20 @@ public class StudentHomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout drawerLayout;
-    private TextView welcomeText;
+    private TextView welcomeText, navMenuName, navMenuMail;
     private ImageView notificationBell;
     private TextView notificationBadge;
     private RecyclerView projectsRecyclerView;
     private ProjectAdapterHome projectAdapterHome;
     private List<Project> allProjects;
     private ProgressBar loadingIndicator;
-    private View mainContent;
+    private View mainContent, headerView;
     private LinearLayout dotIndicatorLayout;
     private Intent intent;
     private String studentId;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private NavigationView navigationView;
+
 
 
     @Override
@@ -74,6 +78,11 @@ public class StudentHomeActivity extends AppCompatActivity
         loadingIndicator = findViewById(R.id.home_loading_indicator);
         mainContent = findViewById(R.id.home_main_content);
         dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        navigationView = findViewById(R.id.nav_view);
+        headerView = navigationView.getHeaderView(0);
+        navMenuName = headerView.findViewById(R.id.menu_name);
+        navMenuMail = headerView.findViewById(R.id.menu_mail);
 
         loadingIndicator.setVisibility(View.VISIBLE);
         mainContent.setVisibility(View.GONE);
@@ -87,7 +96,38 @@ public class StudentHomeActivity extends AppCompatActivity
         setupNotificationBell();
         setupProjectsRecyclerView();
         setupClickListeners();
+        setupSwipeRefresh();
     }
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Refresh all data
+            refreshAllData();
+        });
+
+        // Customize the progress indicator color
+        swipeRefreshLayout.setColorSchemeResources(
+                R.color.blue_500,
+                R.color.green,
+                R.color.red,
+                R.color.yellow
+        );
+    }
+
+    private void refreshAllData() {
+        // Show the main loading indicator if content isn't visible yet
+        if (mainContent.getVisibility() != View.VISIBLE) {
+            loadingIndicator.setVisibility(View.VISIBLE);
+        }
+
+        // Refresh all the data components
+        setWelcomeMessage();
+        setupNotificationBell();
+        setupProjectsRecyclerView();
+
+        // Hide the swipe refresh indicator when all operations are complete
+        swipeRefreshLayout.setRefreshing(false);
+    }
+
     private void addDots(int count) {
         if (dotIndicatorLayout == null || count <= 0) return;
 
@@ -133,9 +173,37 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void setWelcomeMessage() {
-        String userName = "John Doe"; // Replace with actual user name
-        welcomeText.setText(String.format("Welcome back, %s", userName));
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(studentId);
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        View headerView = navigationView.getHeaderView(0);
+        TextView navMenuName = headerView.findViewById(R.id.menu_name);
+        TextView navMenuMail = headerView.findViewById(R.id.menu_mail);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name = snapshot.child("name").getValue(String.class);
+                String email = snapshot.child("email").getValue(String.class);
+
+                if (name != null) {
+                    welcomeText.setText("Welcome back, " + name);
+                    navMenuName.setText(name);
+                } else {
+                    welcomeText.setText("Welcome back");
+                }
+
+                if (email != null) {
+                    navMenuMail.setText(email);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                welcomeText.setText("Welcome back");
+            }
+        });
     }
+
 
     private void setupNotificationBell() {
         String userId = studentId;
@@ -276,11 +344,15 @@ public class StudentHomeActivity extends AppCompatActivity
 
                         loadingIndicator.setVisibility(View.GONE);
                         mainContent.setVisibility(View.VISIBLE);
+                        swipeRefreshLayout.setRefreshing(false);
+
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+                        swipeRefreshLayout.setRefreshing(false);
+
                     }
                 });
             }
@@ -288,6 +360,8 @@ public class StudentHomeActivity extends AppCompatActivity
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(StudentHomeActivity.this, "Failed to load applied projects", Toast.LENGTH_SHORT).show();
+                swipeRefreshLayout.setRefreshing(false);
+
             }
         });
     }
@@ -456,7 +530,7 @@ public class StudentHomeActivity extends AppCompatActivity
                                         int position = viewHolder.getAdapterPosition();
                                         Application app = applications.get(position);
                                         Intent intent = new Intent(StudentHomeActivity.this, ViewApplications.class);
-                                        intent.putExtra("projectId", app.getProjectId());
+                                        intent.putExtra("APPLICATION_ID", app.getApplicationId());
                                         startActivity(intent);
                                     }
                                 }

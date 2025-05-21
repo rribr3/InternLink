@@ -153,6 +153,32 @@
 
                 <!-- Project Category -->
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/location_input_layout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:hint="Project Location"
+                    app:boxStrokeColor="#1E293B"
+                    app:hintTextColor="#64748B"
+                    app:boxStrokeWidth="1.5dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/location_edit_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:padding="16dp"
+                        android:textColor="#0F172A"
+                        tools:ignore="SpeakableTextPresentCheck" />
+                </com.google.android.material.textfield.TextInputLayout>
+                <!-- Project Category -->
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/category_input_layout"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"

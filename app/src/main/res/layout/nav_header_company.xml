@@ -9,12 +9,6 @@
     android:padding="16dp"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
-    <ImageView
-        android:id="@+id/companyLogo"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:src="@drawable/ic_company" />
-
     <TextView
         android:id="@+id/company_name"
         android:layout_width="match_parent"
