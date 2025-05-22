@@ -92,17 +92,36 @@ public class MyProjectsAdapter extends RecyclerView.Adapter<MyProjectsAdapter.Pr
         }
 
         private void deleteProjectFromFirebase(String projectId, int position) {
-            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+            DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+            DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
 
-            ref.removeValue().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    projectList.remove(position);
-                    notifyItemRemoved(position);
-                    Toast.makeText(itemView.getContext(), "Project deleted", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(itemView.getContext(), "Failed to delete project", Toast.LENGTH_SHORT).show();
-                }
-            });
+            // Step 1: Delete related applications
+            applicationsRef.orderByChild("projectId").equalTo(projectId)
+                    .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull com.google.firebase.database.DataSnapshot snapshot) {
+                            for (com.google.firebase.database.DataSnapshot appSnap : snapshot.getChildren()) {
+                                appSnap.getRef().removeValue();
+                            }
+
+                            // Step 2: Delete the project itself
+                            projectRef.removeValue().addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    projectList.remove(position);
+                                    notifyItemRemoved(position);
+                                    Toast.makeText(itemView.getContext(), "Project and its applications deleted", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(itemView.getContext(), "Failed to delete project", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {
+                            Toast.makeText(itemView.getContext(), "Failed to delete applications", Toast.LENGTH_SHORT).show();
+                        }
+                    });
         }
+
     }
 }

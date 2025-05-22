@@ -14,6 +14,7 @@ public class Application {
     private String resumeUrl;
     private String notes;
     private Integer quizGrade;
+    private boolean isReapplication;
 
 
 
@@ -33,8 +34,13 @@ public class Application {
         setQuizGrade(quizGrade); // ✅ new field
     }
 
+    public boolean isReapplication() {
+        return isReapplication;
+    }
+    public void setReapplication(boolean isReapplication) {
+        this.isReapplication = isReapplication;
+    }
 
-    // Getters
     public Integer getQuizGrade() {
         return quizGrade;
     }

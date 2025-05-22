@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -21,14 +23,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,8 +64,9 @@ public class StudentHomeActivity extends AppCompatActivity
     private String studentId;
     private SwipeRefreshLayout swipeRefreshLayout;
     private NavigationView navigationView;
-
-
+    private BottomNavigationView bottomNavigationView;
+    private boolean isBottomNavVisible = true;
+    private FloatingActionButton fabViewAllProjects;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +86,8 @@ public class StudentHomeActivity extends AppCompatActivity
         dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         navigationView = findViewById(R.id.nav_view);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        fabViewAllProjects = findViewById(R.id.fab_view_all_projects);
         headerView = navigationView.getHeaderView(0);
         navMenuName = headerView.findViewById(R.id.menu_name);
         navMenuMail = headerView.findViewById(R.id.menu_mail);
@@ -92,12 +100,107 @@ public class StudentHomeActivity extends AppCompatActivity
 
         initializeViews();
         setupNavigationDrawer();
+        setupBottomNavigation();
         setWelcomeMessage();
         setupNotificationBell();
         setupProjectsRecyclerView();
         setupClickListeners();
         setupSwipeRefresh();
     }
+
+    private void setupBottomNavigation() {
+        // Set up bottom navigation listener
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            // Apply animation to the selected item
+            applyItemSelectionAnimation(item.getItemId());
+
+            int id = item.getItemId();
+            if (id == R.id.navigation_home) {
+                // We're already on home screen, refresh data
+                refreshAllData();
+                return true;
+            } else if (id == R.id.navigation_projects) {
+                showAllProjectsPopup();
+                return true;
+            } else if (id == R.id.navigation_applications) {
+                showAllApplications();
+                return true;
+            } else if (id == R.id.navigation_profile) {
+                intent = new Intent(this, StudentProfileActivity.class);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+
+        // Set up scroll behavior for bottom navigation
+        swipeRefreshLayout.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            if (swipeRefreshLayout.getScrollY() > 0 && isBottomNavVisible) {
+                // Scrolling down, hide bottom navigation and FAB
+                hideBottomNavigation();
+            } else if (swipeRefreshLayout.getScrollY() == 0 && !isBottomNavVisible) {
+                // At top, show bottom navigation and FAB
+                showBottomNavigation();
+            }
+        });
+
+        // Initialize with home selected
+        bottomNavigationView.setSelectedItemId(R.id.navigation_home);
+    }
+
+    private void applyItemSelectionAnimation(int itemId) {
+        // Find the view for the selected item
+        View itemView = bottomNavigationView.findViewById(itemId);
+
+        // Apply scale animation to the selected item
+        if (itemView != null) {
+            itemView.animate()
+                    .scaleX(1.2f)
+                    .scaleY(1.2f)
+                    .setDuration(200)
+                    .withEndAction(() -> {
+                        itemView.animate()
+                                .scaleX(1.0f)
+                                .scaleY(1.0f)
+                                .setDuration(100)
+                                .start();
+                    })
+                    .start();
+        }
+    }
+
+    private void showBottomNavigation() {
+        bottomNavigationView.animate()
+                .translationY(0f)
+                .setInterpolator(new DecelerateInterpolator(2f))
+                .setDuration(300)
+                .start();
+
+        fabViewAllProjects.animate()
+                .translationY(0f)
+                .setInterpolator(new DecelerateInterpolator(2f))
+                .setDuration(300)
+                .start();
+
+        isBottomNavVisible = true;
+    }
+
+    private void hideBottomNavigation() {
+        bottomNavigationView.animate()
+                .translationY(bottomNavigationView.getHeight())
+                .setInterpolator(new AccelerateInterpolator(2f))
+                .setDuration(300)
+                .start();
+
+        fabViewAllProjects.animate()
+                .translationY(bottomNavigationView.getHeight())
+                .setInterpolator(new AccelerateInterpolator(2f))
+                .setDuration(300)
+                .start();
+
+        isBottomNavVisible = false;
+    }
+
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener(() -> {
             // Refresh all data
@@ -268,6 +371,7 @@ public class StudentHomeActivity extends AppCompatActivity
             startActivity(intent);
         });
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -339,6 +443,15 @@ public class StudentHomeActivity extends AppCompatActivity
                                     int firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
                                     updateActiveDot(firstVisibleItem);
                                 }
+
+                                // Handle bottom navigation visibility based on recyclerview scroll
+                                if (dy > 0 && isBottomNavVisible) {
+                                    // Scrolling down, hide bottom navigation
+                                    hideBottomNavigation();
+                                } else if (dy < 0 && !isBottomNavVisible) {
+                                    // Scrolling up, show bottom navigation
+                                    showBottomNavigation();
+                                }
                             }
                         });
 
@@ -366,16 +479,18 @@ public class StudentHomeActivity extends AppCompatActivity
         });
     }
 
-
-
     private List<Project> getSampleProjects() {
         return java.util.Collections.emptyList();
     }
 
     private void setupClickListeners() {
-        findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> showAllApplications());
+        findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> {
+            bottomNavigationView.setSelectedItemId(R.id.navigation_applications);
+        });
         findViewById(R.id.see_all_tips_btn).setOnClickListener(v -> showAllTips());
-        findViewById(R.id.btn_view_all_projects).setOnClickListener(v -> showAllProjectsPopup());
+        fabViewAllProjects.setOnClickListener(v -> {
+            bottomNavigationView.setSelectedItemId(R.id.navigation_projects);
+        });
         notificationBell.setOnClickListener(v -> {
             // Navigate to CompanyAnnounce.java
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
@@ -489,6 +604,14 @@ public class StudentHomeActivity extends AppCompatActivity
                                         int position = viewHolder.getAdapterPosition();
                                         Application app = applications.get(position);
 
+                                        // ❌ Prevent deletion of Accepted/Rejected applications
+                                        if ("Accepted".equalsIgnoreCase(app.getStatus()) || "Rejected".equalsIgnoreCase(app.getStatus())) {
+                                            Toast.makeText(StudentHomeActivity.this, "You cannot delete an accepted or rejected application.", Toast.LENGTH_SHORT).show();
+                                            adapter.notifyItemChanged(position); // Restore the item
+                                            return;
+                                        }
+
+                                        // ✅ Proceed with deletion confirmation for other statuses
                                         new AlertDialog.Builder(StudentHomeActivity.this)
                                                 .setTitle("Delete Application")
                                                 .setMessage("Are you sure you want to delete this application?")
@@ -513,6 +636,7 @@ public class StudentHomeActivity extends AppCompatActivity
                                                 .setCancelable(false)
                                                 .show();
                                     }
+
                                 } else if (dX > 0) { // Swipe Right → VIEW
                                     ColorDrawable background = new ColorDrawable(Color.parseColor("#2196F3")); // Blue
                                     background.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getLeft() + (int) dX, itemView.getBottom());
@@ -565,11 +689,6 @@ public class StudentHomeActivity extends AppCompatActivity
         closeButton.setOnClickListener(v -> popupWindow.dismiss());
     }
 
-
-
-
-
-
     private void showAllTips() {
         Toast.makeText(this, "Showing all tips", Toast.LENGTH_SHORT).show();
     }
@@ -579,11 +698,10 @@ public class StudentHomeActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_profile) {
-            intent = new Intent(this, StudentProfileActivity.class);
-            startActivity(intent);
+            bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
         }
         else if (id == R.id.nav_applications) {
-            showAllApplications();
+            bottomNavigationView.setSelectedItemId(R.id.navigation_applications);
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
@@ -601,6 +719,7 @@ public class StudentHomeActivity extends AppCompatActivity
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
+
     private void updateActiveDot(int position) {
         if (dotIndicatorLayout == null) return;
 
@@ -612,8 +731,6 @@ public class StudentHomeActivity extends AppCompatActivity
             dotIndicatorLayout.getChildAt(position).setBackgroundResource(R.drawable.circle_dot_active);
         }
     }
-
-
 
     @Override
     public void onBackPressed() {

@@ -887,6 +887,37 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         tvTotalApplicants.setText(String.valueOf(totalApplicants));
         tvTotalHired.setText(String.valueOf(totalHired));
     }
+    private void deleteProjectWithApplications(String projectId) {
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+        DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+
+        // Step 1: Delete all applications for this project
+        applicationsRef.orderByChild("projectId").equalTo(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            appSnap.getRef().removeValue(); // delete each application
+                        }
+
+                        // Step 2: Delete the actual project
+                        projectRef.removeValue().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(CompanyHomeActivity.this, "Project and its applications deleted", Toast.LENGTH_SHORT).show();
+                                setupDashboardContent(); // refresh your dashboard UI if needed
+                            } else {
+                                Toast.makeText(CompanyHomeActivity.this, "Failed to delete project", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(CompanyHomeActivity.this, "Error deleting applications", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
 
     @Override
     public void onBackPressed() {

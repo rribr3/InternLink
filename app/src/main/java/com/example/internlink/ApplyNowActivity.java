@@ -47,6 +47,7 @@ public class ApplyNowActivity extends AppCompatActivity {
     private boolean hasQuiz = false;
     private boolean hasResume = false; // Set based on project requirements
     private String resumeUrl = null;
+    private boolean isReapplying = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,28 +107,51 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
 
             // Check if student has already applied
-            checkExistingApplication(user.getUid());
+            checkExistingApplication(user.getUid(), true);
         });
     }
 
-    private void checkExistingApplication(String userId) {
+    private void checkExistingApplication(String userId, boolean isFromButtonClick) {
         DatabaseReference appsRef = FirebaseDatabase.getInstance().getReference("applications");
+
         appsRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                boolean hasApplied = false;
+                long latestTime = -1;
+                String latestStatus = null;
+
                 for (DataSnapshot appSnapshot : snapshot.getChildren()) {
                     Application app = appSnapshot.getValue(Application.class);
                     if (app != null && app.getProjectId().equals(projectId)) {
-                        hasApplied = true;
-                        break;
+                        if (app.getAppliedDate() > latestTime) {
+                            latestTime = app.getAppliedDate();
+                            latestStatus = app.getStatus();
+                        }
                     }
                 }
 
-                if (hasApplied) {
-                    Toast.makeText(ApplyNowActivity.this, "You've already applied to this project", Toast.LENGTH_SHORT).show();
+                isReapplying = "Rejected".equalsIgnoreCase(latestStatus);
+
+                if (latestStatus != null && !"Rejected".equalsIgnoreCase(latestStatus)) {
+                    applyButton.setText("Already Applied");
+                    applyButton.setEnabled(false); // ❌ disable permanently
+                    applyButton.setAlpha(0.5f);    // optional: fade the button visually
+                    if (isFromButtonClick) {
+                        Toast.makeText(ApplyNowActivity.this, "You've already applied to this project", Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    startApplicationProcess();
+                    if (isReapplying) {
+                        applyButton.setText("Reapply");
+                    } else {
+                        applyButton.setText("Apply Now");
+                    }
+
+                    applyButton.setEnabled(true);  // ensure it's enabled
+                    applyButton.setAlpha(1.0f);
+
+                    if (isFromButtonClick) {
+                        startApplicationProcess();
+                    }
                 }
             }
 
@@ -137,6 +161,10 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
         });
     }
+
+
+
+
 
     private void startApplicationProcess() {
         // Step 1: Check if resume is required
@@ -289,6 +317,8 @@ public class ApplyNowActivity extends AppCompatActivity {
                     null,
                     quizGrade // ✅ Pass quiz grade here
             );
+            application.setReapplication(isReapplying);
+
 
             DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
             String applicationId = applicationsRef.push().getKey();
@@ -355,6 +385,8 @@ public class ApplyNowActivity extends AppCompatActivity {
                     null,
                     null
             );
+            application.setReapplication(isReapplying);
+
 
             // Save to Firebase
             DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -497,6 +529,7 @@ public class ApplyNowActivity extends AppCompatActivity {
                     return;
                 }
 
+                // Populate UI with project info
                 titleText.setText(currentProject.getTitle());
                 descText.setText(currentProject.getDescription());
                 categoryText.setText(currentProject.getCategory());
@@ -514,7 +547,6 @@ public class ApplyNowActivity extends AppCompatActivity {
                     skillsText.setText("No specific skills listed");
                 }
 
-                // Show amount if Paid
                 if ("Paid".equalsIgnoreCase(currentProject.getCompensationType())) {
                     amountSection.setVisibility(View.VISIBLE);
                     amountText.setText(String.valueOf(currentProject.getAmount()));
@@ -527,9 +559,13 @@ public class ApplyNowActivity extends AppCompatActivity {
                     quizInstructions.setText(quiz.getInstructions());
                     quizTime.setText(quiz.getTimeLimit() + " mins");
                     quizScore.setText(quiz.getPassingScore() + "%");
-
-                    // Set this flag so quiz logic works
                     hasQuiz = true;
+                }
+
+                // 🔍 Now check if user already applied and update button
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    checkExistingApplication(user.getUid(), false); // false = not from button click
                 }
             }
 
@@ -540,6 +576,7 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private String formatDate(long timestamp) {
         if (timestamp == 0) return "N/A";

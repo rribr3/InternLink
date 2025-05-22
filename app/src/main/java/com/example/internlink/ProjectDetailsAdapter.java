@@ -13,8 +13,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
@@ -62,42 +65,49 @@ public class ProjectDetailsAdapter extends RecyclerView.Adapter<ProjectDetailsAd
             popupMenu.getMenu().add("Delete");
             popupMenu.setOnMenuItemClickListener(item -> {
                 if (item.getTitle().equals("Delete")) {
-                    String projectId = project.getProjectId();
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
-                    ref.removeValue().addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            if (position >= 0 && position < projectList.size()) {
-                                projectList.remove(position);
-                                notifyItemRemoved(position);
-                            } else {
-                                Log.w("ProjectAdapter", "Invalid position on remove: " + position);
-                            }
-                            Toast.makeText(holder.itemView.getContext(), "Project deleted", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(holder.itemView.getContext(), "Failed to delete", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    deleteProjectFromFirebase(project.getProjectId(), holder.getAdapterPosition(), holder.itemView);
                 }
                 return true;
             });
+
             popupMenu.show();
         });
 
     }
 
-    private void deleteProjectFromFirebase(String projectId, int position) {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+    private void deleteProjectFromFirebase(String projectId, int position, View itemView) {
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+        DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
 
-        ref.removeValue().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                projectList.remove(position);
-                notifyItemRemoved(position);
-                // Toast.makeText(context, "Project deleted", Toast.LENGTH_SHORT).show();
-            } else {
-                // Toast.makeText(context, "Failed to delete project", Toast.LENGTH_SHORT).show();
-            }
-        });
+        applicationsRef.orderByChild("projectId").equalTo(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            appSnap.getRef().removeValue(); // Delete each application
+                        }
+
+                        // Now delete the project itself
+                        projectRef.removeValue().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                if (position >= 0 && position < projectList.size()) {
+                                    projectList.remove(position);
+                                    notifyItemRemoved(position);
+                                }
+                                Toast.makeText(itemView.getContext(), "Project and applications deleted", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(itemView.getContext(), "Failed to delete project", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(itemView.getContext(), "Error deleting applications", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
 
 
     @Override

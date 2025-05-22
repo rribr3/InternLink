@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +48,15 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
         holder.status.setText(app.getStatus());
         holder.date.setText("Applied: " + android.text.format.DateFormat.format("MMM dd, yyyy", app.getAppliedDate()));
 
+        if (app.isReapplication()) {
+            holder.reapplicationLabel.setVisibility(View.VISIBLE);
+            holder.reapplicationLabel.setPaintFlags(holder.reapplicationLabel.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        } else {
+            holder.reapplicationLabel.setVisibility(View.GONE);
+        }
+
+
+
         // 🔍 Fetch project title
         DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(app.getProjectId());
         projectRef.get().addOnSuccessListener(snapshot -> {
@@ -81,7 +91,7 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView title, status, company, date;
+        TextView title, status, company, date, reapplicationLabel;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -89,6 +99,8 @@ public class ApplicationAdapter extends RecyclerView.Adapter<ApplicationAdapter.
             status = itemView.findViewById(R.id.application_status);
             company = itemView.findViewById(R.id.company_name);
             date = itemView.findViewById(R.id.applied_date);
+            reapplicationLabel = itemView.findViewById(R.id.reapplication_label);
+
         }
     }
 

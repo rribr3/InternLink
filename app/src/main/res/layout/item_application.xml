@@ -47,7 +47,20 @@
                 app:textStartPadding="4dp"
                 app:textEndPadding="4dp"
                 tools:text="Pending"/>
+
         </LinearLayout>
+        <TextView
+            android:id="@+id/reapplication_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reapplication"
+            android:textColor="@color/blue_500"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"
+            android:visibility="gone"
+            />
+
+
 
         <!-- Company Name with Icon -->
         <LinearLayout

@@ -31,9 +31,11 @@ public class ViewApplications extends AppCompatActivity {
             tvCategory, tvSkillsRequired, tvLocation, tvDuration,
             tvPaymentInfo, tvPostedDate, tvContact,
             tvStatus, tvSubmissionDate, tvQuizScore, tvCompanyMessage;
-    private Button btnWithdraw, btnReapply;
+    private Button btnWithdraw;
 
     private String applicationId;
+    private TextView tvReapplicationLabel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,9 +66,10 @@ public class ViewApplications extends AppCompatActivity {
         tvStatus = findViewById(R.id.tv_status);
         tvSubmissionDate = findViewById(R.id.tv_submission_date);
         tvQuizScore = findViewById(R.id.tv_quiz_score);
+        tvReapplicationLabel = findViewById(R.id.tv_reapplication_label);
+
 
         btnWithdraw = findViewById(R.id.btn_withdraw);
-        btnReapply = findViewById(R.id.btn_reapply);
 
         loadApplicationData();
 
@@ -123,6 +126,14 @@ public class ViewApplications extends AppCompatActivity {
                     finish();
                     return;
                 }
+                Boolean isReapplication = snapshot.child("reapplication").getValue(Boolean.class);
+                if (Boolean.TRUE.equals(isReapplication)) {
+                    tvReapplicationLabel.setVisibility(View.VISIBLE);
+                    tvReapplicationLabel.setPaintFlags(tvReapplicationLabel.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+                } else {
+                    tvReapplicationLabel.setVisibility(View.GONE);
+                }
+
 
                 String projectId = snapshot.child("projectId").getValue(String.class);
                 String companyId = snapshot.child("companyId").getValue(String.class);
@@ -133,6 +144,12 @@ public class ViewApplications extends AppCompatActivity {
                 tvStatus.setText(getStatusTag(status));
                 tvSubmissionDate.setText("Submitted on: " + formatDate(appliedDate));
                 tvQuizScore.setText("Quiz Score: " + (quizGrade != null ? quizGrade + "/100" : "N/A"));
+
+                if ("Accepted".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status)) {
+                    btnWithdraw.setVisibility(View.GONE);
+                } else {
+                    btnWithdraw.setVisibility(View.VISIBLE);
+                }
 
                 loadProjectAndCompany(projectId, companyId);
             }
