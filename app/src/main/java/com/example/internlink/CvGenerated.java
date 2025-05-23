@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -43,12 +44,14 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 
-
 public class CvGenerated extends AppCompatActivity {
+
 
     private EditText firstName, lastName, email, phoneNumber, address, linkedin, profileDescription, university1, degree1,
             educationStartYear1, educationEndYear1, skills, jobTitle1, company1, jobLocation1, jobStartDate1, jobEndDate1,
-            jobDescription1, projectName1, projectRole1, projectDescription1, certificationName1, certificationOrg1, certificationYear1;
+            jobDescription1, projectName1, projectRole1, projectDescription1, certificationName1, certificationOrg1, certificationYear1, language1, language2;
+
+    private Spinner proficiency1, proficiency2;
 
     private Button btnGenerate;
     private ProgressDialog progressDialog;
@@ -91,6 +94,8 @@ public class CvGenerated extends AppCompatActivity {
         certificationName1 = findViewById(R.id.certificationName1);
         certificationOrg1 = findViewById(R.id.certificationOrg1);
         certificationYear1 = findViewById(R.id.certificationYear1);
+        language1 = findViewById(R.id.language1);
+        language2 = findViewById(R.id.language2);
         btnGenerate = findViewById(R.id.generateBtn);
     }
 
@@ -109,6 +114,10 @@ public class CvGenerated extends AppCompatActivity {
             json.put("educationStartYear1", educationStartYear1.getText().toString());
             json.put("educationEndYear1", educationEndYear1.getText().toString());
             json.put("skills", skills.getText().toString());
+            json.put("language1", ((EditText) findViewById(R.id.language1)).getText().toString());
+            json.put("proficiency1", ((Spinner) findViewById(R.id.proficiency1)).getSelectedItem().toString());
+            json.put("language2", ((EditText) findViewById(R.id.language2)).getText().toString());
+            json.put("proficiency2", ((Spinner) findViewById(R.id.proficiency2)).getSelectedItem().toString());
             json.put("jobTitle1", jobTitle1.getText().toString());
             json.put("company1", company1.getText().toString());
             json.put("jobLocation1", jobLocation1.getText().toString());
@@ -130,7 +139,12 @@ public class CvGenerated extends AppCompatActivity {
     private void generateCVFromCohere(JSONObject profileData) {
         progressDialog = ProgressDialog.show(this, "Generating CV", "Please wait...", true);
 
-        OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+
 
         RequestBody requestBody = RequestBody.create(
                 MediaType.parse("application/json"),
@@ -138,7 +152,7 @@ public class CvGenerated extends AppCompatActivity {
         );
 
         Request request = new Request.Builder()
-                .url("http://192.168.1.109:3000/generate-cv")
+                .url("https://0765-194-126-21-21.ngrok-free.app/generate-cv")
                 .post(requestBody)
                 .build();
 
@@ -147,9 +161,10 @@ public class CvGenerated extends AppCompatActivity {
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
-                    Toast.makeText(CvGenerated.this, "Failed to connect to server", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(CvGenerated.this, "Failed to connect: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
+
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
@@ -245,7 +260,9 @@ public class CvGenerated extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setDataAndType(pdfUri, "application/pdf");
             intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
+            Intent chooser = Intent.createChooser(intent, "Open PDF");
+            startActivity(chooser);
+
 
         } catch (Exception e) {
             Toast.makeText(this, "Error generating PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-files-path name="cv_files" path="cvs/" />
+    <external-files-path
+        name="my_pdfs"
+        path="pdfs/" />
 </paths>

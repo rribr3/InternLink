@@ -43,6 +43,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+
         <activity
             android:name=".CvGenerated"
             android:exported="false" />
