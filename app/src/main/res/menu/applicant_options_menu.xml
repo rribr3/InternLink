@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/menu_download_cv"
-        android:title="Download CV"
-        android:icon="@drawable/ic_download"/>
-    <item
-        android:id="@+id/menu_reject"
-        android:title="Reject"
-        android:icon="@drawable/ic_cancel"/>
+        android:id="@+id/menu_view_cv"
+        android:title="View CV"
+        android:icon="@drawable/ic_eye_closed" />
+
     <item
         android:id="@+id/menu_shortlist"
-        android:title="Shortlist"
-        android:icon="@drawable/ic_star_filled"/>
+        android:title="Add to Shortlist"
+        android:icon="@drawable/ic_star_filled" />
+
+    <item
+        android:id="@+id/menu_accept"
+        android:title="Accept Applicant"
+        android:icon="@drawable/ic_approve" />
+
+    <item
+        android:id="@+id/menu_reject"
+        android:title="Reject Applicant"
+        android:icon="@drawable/ic_reject" />
 </menu>

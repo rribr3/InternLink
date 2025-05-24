@@ -114,7 +114,7 @@ public class CompanyAnnounce extends AppCompatActivity {
         adapter.notifyItemInserted(announcementList.size() - 1);
     }
 
-    void showAnnouncementPopup(String title, String body, String date) {
+    void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
         popupView.setBackgroundColor(getResources().getColor(android.R.color.white));
@@ -161,6 +161,33 @@ public class CompanyAnnounce extends AppCompatActivity {
         dialog.show();
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
+
+        // Mark the announcement as read when it's opened
+        markAnnouncementAsRead(announcementId);
+    }
+
+    private void markAnnouncementAsRead(String announcementId) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userReadsRef = FirebaseDatabase.getInstance()
+                .getReference("user_reads")
+                .child(userId)
+                .child(announcementId);
+
+        // Set the timestamp when the announcement was read
+        userReadsRef.setValue(System.currentTimeMillis())
+                .addOnSuccessListener(aVoid -> {
+                    // Update the local list to reflect the read status
+                    for (Announcement announcement : announcementList) {
+                        if (announcement.getId().equals(announcementId)) {
+                            announcement.setRead(true);
+                            adapter.notifyDataSetChanged();
+                            break;
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(CompanyAnnounce.this, "Failed to mark as read", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void loadAllAnnouncements() {

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/rounded_background"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="2dp"
+    android:outlineProvider="background">
+
+    <!-- Project Header -->
+    <LinearLayout
+        android:id="@+id/project_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Top row with icon, title and expand button -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Project Icon -->
+            <FrameLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="12dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:alpha="0.7"
+                    android:background="@drawable/rounded_background_bottom" />
+
+                <ImageView
+                    android:id="@+id/project_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_folder_open"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+
+            <!-- Project Info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/project_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="2"
+                    android:text="Project Title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Advanced AI Research Project" />
+
+                <!-- Metadata row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Applicants count -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alpha="0.9"
+                        android:background="@drawable/rounded_background"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:id="@+id/applicants_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp"
+                            tools:text="12 applicants" />
+                    </LinearLayout>
+
+                    <!-- Project status -->
+                    <TextView
+                        android:id="@+id/project_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:alpha="0.8"
+                        android:background="@drawable/rounded_background"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="4dp"
+                        android:text="Active"
+                        android:textColor="@color/blue_500"
+                        android:textSize="8sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Expand button -->
+            <ImageView
+                android:id="@+id/expand_collapse_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:padding="4dp"
+                android:rotation="0"
+                android:src="@drawable/right_arrow"
+                app:tint="@color/blue_500"
+                tools:ignore="ContentDescription" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Progress indicator -->
+    <View
+        android:id="@+id/progress_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@drawable/rounded_background"
+        android:backgroundTint="@color/blue_500"
+        android:layout_marginHorizontal="16dp"
+        android:visibility="gone"
+        android:alpha="0.7" />
+
+    <!-- Applicants Container -->
+    <LinearLayout
+        android:id="@+id/applicants_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:layout_marginTop="4dp">
+
+        <!-- Filter tabs - MADE SMALLER -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:background="@drawable/rounded_background"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/section_all_applicants"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="All"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/blue_500"
+                android:gravity="center"
+                android:padding="4dp"
+                android:background="@drawable/rounded_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/section_accepted"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Accepted"
+                android:textSize="7sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:padding="4dp"
+                android:layout_marginStart="2dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/section_shortlist"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Shortlist"
+                android:textSize="7sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:padding="4dp"
+                android:layout_marginStart="2dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground" />
+        </LinearLayout>
+
+        <!-- Header with title and actions -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="14dp"
+            android:background="@drawable/rounded_background"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:id="@+id/current_section_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="All Applications"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:fontFamily="sans-serif-medium" />
+
+            <!-- Action buttons -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/sort_applicants"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/rounded_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:layout_marginEnd="6dp"
+                    android:alpha="0.8">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="↕"
+                        android:textSize="14sp"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/filter_applicants"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/rounded_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:alpha="0.8">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="⚙"
+                        android:textSize="12sp"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold" />
+                </FrameLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginVertical="4dp"
+            android:background="@color/divider_color"
+            android:alpha="0.4" />
+
+        <!-- Applicants list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/applicants_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:clipToPadding="false"
+            android:paddingHorizontal="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="16dp"
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+</LinearLayout>

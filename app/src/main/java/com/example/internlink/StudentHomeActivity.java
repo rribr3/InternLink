@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -36,6 +38,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.search.SearchBar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -43,6 +46,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import android.graphics.Paint;
+import com.google.android.material.search.SearchView;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +72,8 @@ public class StudentHomeActivity extends AppCompatActivity
     private NavigationView navigationView;
     private BottomNavigationView bottomNavigationView;
     private boolean isBottomNavVisible = true;
-    private FloatingActionButton fabViewAllProjects;
+    private SearchView searchView;
+    private SearchBar searchBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,10 +94,11 @@ public class StudentHomeActivity extends AppCompatActivity
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         navigationView = findViewById(R.id.nav_view);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        fabViewAllProjects = findViewById(R.id.fab_view_all_projects);
         headerView = navigationView.getHeaderView(0);
         navMenuName = headerView.findViewById(R.id.menu_name);
         navMenuMail = headerView.findViewById(R.id.menu_mail);
+        searchBar = findViewById(R.id.search_bar);
+        searchView = findViewById(R.id.search_view);
 
         loadingIndicator.setVisibility(View.VISIBLE);
         mainContent.setVisibility(View.GONE);
@@ -106,7 +114,170 @@ public class StudentHomeActivity extends AppCompatActivity
         setupProjectsRecyclerView();
         setupClickListeners();
         setupSwipeRefresh();
+
+
+        if (searchView != null && searchBar != null) {
+            // Connect SearchBar with SearchView properly
+            searchView.setupWithSearchBar(searchBar);
+
+            // Set up the SearchBar click listener
+            searchBar.setOnClickListener(v -> {
+                searchView.show();
+            });
+
+            // Configure the SearchView's EditText
+            EditText editText = searchView.getEditText();
+            if (editText != null) {
+                editText.setTextColor(Color.BLACK);
+                editText.setHintTextColor(Color.GRAY);
+                editText.setTextSize(16f);
+
+                // Set up the search listener
+                editText.setOnEditorActionListener((v, actionId, event) -> {
+                    String query = v.getText().toString().trim().toLowerCase();
+                    if (!query.isEmpty()) {
+                        performSearch(query);
+                        searchView.hide();  // hide overlay after search
+                    }
+                    return true;
+                });
+            }
+
+            // Optional: Add text change listener for real-time search
+            searchView.getEditText().addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    // Optional: Implement real-time search here if needed
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
+
+
+
     }
+    private void performSearch(String query) {
+        List<Project> matchingProjects = new ArrayList<>();
+        List<String> matchingCompanyIds = new ArrayList<>();
+
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+        DatabaseReference companiesRef = FirebaseDatabase.getInstance().getReference("users");
+
+        projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
+                for (DataSnapshot snap : projectSnapshot.getChildren()) {
+                    Project project = snap.getValue(Project.class);
+                    if (project != null && "approved".equals(project.getStatus())) {
+                        boolean match = false;
+
+                        // Match title
+                        if (project.getTitle().toLowerCase().contains(query)) {
+                            match = true;
+                        }
+
+                        // Match skills
+                        if (!match && project.getSkills() != null) {
+                            for (String skill : project.getSkills()) {
+                                if (skill.toLowerCase().contains(query)) {
+                                    match = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (match) {
+                            project.setProjectId(snap.getKey());
+                            matchingProjects.add(project);
+                        }
+                    }
+                }
+
+                // Now search for matching companies
+                companiesRef.orderByChild("role").equalTo("company")
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot companySnapshot) {
+                                for (DataSnapshot companySnap : companySnapshot.getChildren()) {
+                                    String companyId = companySnap.getKey();
+                                    String companyName = companySnap.child("name").getValue(String.class);
+
+                                    if (companyName != null && companyName.toLowerCase().contains(query)) {
+                                        matchingCompanyIds.add(companyId);
+                                    }
+                                }
+
+                                // Add projects belonging to matching companies
+                                for (DataSnapshot snap : projectSnapshot.getChildren()) {
+                                    Project project = snap.getValue(Project.class);
+                                    if (project != null && "approved".equals(project.getStatus())) {
+                                        if (matchingCompanyIds.contains(project.getCompanyId())) {
+                                            project.setProjectId(snap.getKey());
+                                            if (!matchingProjects.contains(project)) {
+                                                matchingProjects.add(project);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                List<String> matchingCompanyNames = new ArrayList<>();
+                                for (DataSnapshot companySnap : companySnapshot.getChildren()) {
+                                    String companyName = companySnap.child("name").getValue(String.class);
+                                    if (companyName != null && companyName.toLowerCase().contains(query)) {
+                                        matchingCompanyNames.add(companyName);
+                                    }
+                                }
+                                showSearchResults(matchingProjects, matchingCompanyNames);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Toast.makeText(StudentHomeActivity.this, "Failed to search companies", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(StudentHomeActivity.this, "Failed to search projects", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void showSearchResults(List<Project> matchingProjects, List<String> matchingCompanyNames) {
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_search_results, null);
+
+        // Setup RecyclerView for projects
+        RecyclerView rvProjects = popupView.findViewById(R.id.rv_matching_projects);
+        rvProjects.setLayoutManager(new LinearLayoutManager(this));
+        ProjectAdapterHome projectAdapter = new ProjectAdapterHome(matchingProjects, project -> {
+            Toast.makeText(this, "Selected Project: " + project.getTitle(), Toast.LENGTH_SHORT).show();
+        }, false);
+        rvProjects.setAdapter(projectAdapter);
+
+        // Setup RecyclerView for companies
+        RecyclerView rvCompanies = popupView.findViewById(R.id.rv_matching_companies);
+        rvCompanies.setLayoutManager(new LinearLayoutManager(this));
+        CompanyNameAdapter companyAdapter = new CompanyNameAdapter(matchingCompanyNames);
+        rvCompanies.setAdapter(companyAdapter);
+
+        // Popup setup
+        PopupWindow popupWindow = new PopupWindow(
+                popupView,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+        );
+
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
+    }
+
 
     private void setupBottomNavigation() {
         // Set up bottom navigation listener
@@ -175,13 +346,6 @@ public class StudentHomeActivity extends AppCompatActivity
                 .setInterpolator(new DecelerateInterpolator(2f))
                 .setDuration(300)
                 .start();
-
-        fabViewAllProjects.animate()
-                .translationY(0f)
-                .setInterpolator(new DecelerateInterpolator(2f))
-                .setDuration(300)
-                .start();
-
         isBottomNavVisible = true;
     }
 
@@ -192,11 +356,6 @@ public class StudentHomeActivity extends AppCompatActivity
                 .setDuration(300)
                 .start();
 
-        fabViewAllProjects.animate()
-                .translationY(bottomNavigationView.getHeight())
-                .setInterpolator(new AccelerateInterpolator(2f))
-                .setDuration(300)
-                .start();
 
         isBottomNavVisible = false;
     }
@@ -487,10 +646,7 @@ public class StudentHomeActivity extends AppCompatActivity
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> {
             bottomNavigationView.setSelectedItemId(R.id.navigation_applications);
         });
-        findViewById(R.id.see_all_tips_btn).setOnClickListener(v -> showAllTips());
-        fabViewAllProjects.setOnClickListener(v -> {
-            bottomNavigationView.setSelectedItemId(R.id.navigation_projects);
-        });
+
         notificationBell.setOnClickListener(v -> {
             // Navigate to CompanyAnnounce.java
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
@@ -737,7 +893,6 @@ public class StudentHomeActivity extends AppCompatActivity
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
-        }
+            super.onBackPressed();}
     }
 }

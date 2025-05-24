@@ -3,6 +3,7 @@ package com.example.internlink;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -29,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+
 public class LoginActivity extends AppCompatActivity {
 
     ImageButton facebookButton;
@@ -51,11 +53,16 @@ public class LoginActivity extends AppCompatActivity {
         signupButton = findViewById(R.id.signup);
         backButton = findViewById(R.id.backButton);
 
-        facebookButton.setOnClickListener(v ->
-                Toast.makeText(this, "Facebook login", Toast.LENGTH_SHORT).show());
+        facebookButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com"));
+            startActivity(intent);
+        });
 
-        googleButton.setOnClickListener(v ->
-                Toast.makeText(this, "Google login", Toast.LENGTH_SHORT).show());
+        googleButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com"));
+            startActivity(intent);
+        });
+
 
         loginButton.setOnClickListener(v -> showLoginPopup());
 
@@ -354,6 +361,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
             return false;
- }
-}
+        }
+    }
 }

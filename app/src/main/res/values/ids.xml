@@ -7,4 +7,7 @@
     <item name="viewBtn" type="id" />
     <item name="generationProgress" type="id" />
     <item name="generationStatus" type="id" />
+    <item name="applicants_recycler" type="id" />
+    <item name="applicants_container" type="id" />
+    <item name="expand_collapse_icon" type="id" />
 </resources>

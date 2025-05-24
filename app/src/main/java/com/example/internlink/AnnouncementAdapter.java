@@ -52,18 +52,13 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         holder.itemView.setBackgroundColor(item.isRead() ? Color.WHITE : Color.parseColor("#E6E6FA"));
 
         holder.itemView.setOnClickListener(v -> {
-            ((CompanyAnnounce) context).showAnnouncementPopup(item.getTitle(), item.getBody(), item.getDate());
-
-            if (!item.isRead()) {
-                item.setRead(true);
-                notifyItemChanged(position);
-
-                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                FirebaseDatabase.getInstance().getReference("user_reads")
-                        .child(userId)
-                        .child(item.getId())
-                        .setValue(true);
-            }
+            // Pass the announcement ID to the popup method
+            ((CompanyAnnounce) context).showAnnouncementPopup(
+                    item.getId(),  // Add this parameter
+                    item.getTitle(),
+                    item.getBody(),
+                    item.getDate()
+            );
         });
     }
 

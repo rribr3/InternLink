@@ -97,20 +97,35 @@
                                 android:visibility="gone" />
                         </RelativeLayout>
                     </com.google.android.material.appbar.MaterialToolbar>
+                    <!-- Search Bar -->
+                    <com.google.android.material.search.SearchBar
+                        android:id="@+id/search_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:hint="Search projects, opportunities..."
+                        app:strokeColor="@color/gray_200"
+                        app:strokeWidth="1dp"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SearchBar.Rounded"
+                        style="@style/Widget.Material3.SearchBar"
+                        app:elevation="2dp"/>
+
 
                     <!-- Scrollable Content -->
                     <androidx.core.widget.NestedScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="540dp"
                         android:background="@color/light_gray_bg"
                         android:paddingBottom="50dp"
-                        android:paddingEnd="16dp"
+                        android:paddingEnd="20dp"
                         android:paddingTop="16dp"
                         android:paddingStart="16dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="200dp"
                             android:orientation="vertical">
 
                             <!-- Cards -->
@@ -118,32 +133,29 @@
                             <include layout="@layout/card_my_applications"/>
                             <include layout="@layout/card_activity_overview"/>
                             <include layout="@layout/card_quick_tips"/>
-
                         </LinearLayout>
                     </androidx.core.widget.NestedScrollView>
                 </LinearLayout>
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
         </FrameLayout>
+        <com.google.android.material.search.SearchView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="top"
+            android:hint="Search projects, companies, skills..."
+            app:layout_anchor="@id/search_bar"/>
 
-        <!-- Floating Action Button -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_view_all_projects"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:layout_gravity="bottom|end"
-            android:src="@drawable/ic_add"
-            android:contentDescription="View all projects"
-            app:tint="@color/blue_500"
-            app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
 
         <!-- Animated Bottom Navigation -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="70dp"
             android:layout_gravity="bottom"
-            android:background="@drawable/rounded_background"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/rounded_background_bottom"
             app:itemIconTint="@drawable/bottom_nav_item_color"
             app:itemTextColor="@drawable/bottom_nav_item_color"
             app:itemRippleColor="@color/ripple_material_light"

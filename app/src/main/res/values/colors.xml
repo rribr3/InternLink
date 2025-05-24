@@ -144,4 +144,45 @@
     <color name="chartSecondary">#10B981</color>
 
     <color name="shadow">#40000000</color>
+
+    <!-- Primary Colors -->
+    <color name="primary_color">#667eea</color>
+    <color name="primary_accent">#764ba2</color>
+    <color name="accent_color">#f093fb</color>
+    <color name="success_color">#4CAF50</color>
+
+    <!-- Background Colors -->
+    <color name="dialog_background">#F8F9FF</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="project_card_background">#FFFFFF</color>
+    <color name="glass_background">#EEFFFFFF</color>
+    <color name="applicants_header_bg">#F8F9FF</color>
+
+
+    <color name="text_muted">#A0AEC0</color>
+
+    <!-- Button Colors -->
+    <color name="close_button_bg">#FF5252</color>
+    <color name="close_button_tint">#FFFFFF</color>
+    <color name="expand_button_bg">#F7FAFC</color>
+    <color name="expand_icon_tint">#667eea</color>
+
+    <!-- Status Colors -->
+    <color name="status_badge_bg">#E6FFFA</color>
+    <color name="status_text">#319795</color>
+    <color name="status_active">#48BB78</color>
+    <!-- Icon Colors -->
+    <color name="icon_background">#EDF2F7</color>
+    <color name="icon_tint">#667eea</color>
+
+    <!-- FAB Colors -->
+    <color name="fab_background">#667eea</color>
+    <color name="fab_icon_tint">#FFFFFF</color>
+
+    <!-- Divider and Border -->
+    <color name="border_color">#F1F5F9</color>
+
+    <!-- Basic Colors -->
+
+    <color name="transparent">#00000000</color>
 </resources>

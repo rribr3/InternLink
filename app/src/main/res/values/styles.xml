@@ -106,4 +106,12 @@
         <item name="android:windowAnimationStyle">@style/DialogAnimation</item>
         <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
     </style>
+    <style name="ShapeAppearanceOverlay.SearchBar.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    <style name="RoundedImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
 </resources>

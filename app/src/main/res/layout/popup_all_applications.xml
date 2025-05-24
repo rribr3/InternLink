@@ -23,11 +23,11 @@
             <!-- Close Button -->
             <ImageView
                 android:id="@+id/btn_close_popup"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
                 android:layout_gravity="end"
                 android:contentDescription="Close"
-                android:src="@drawable/ic_cancel" />
+                android:src="@drawable/ic_close" />
 
             <!-- Title -->
             <TextView
