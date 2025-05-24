@@ -42,6 +42,11 @@ public class ProjectsWithApplicantsAdapter extends RecyclerView.Adapter<Projects
         holder.bind(project);
     }
 
+    public void updateData(List<CompanyHomeActivity.ProjectWithApplicants> newProjects) {
+        this.projects = newProjects;
+        notifyDataSetChanged(); // Tells RecyclerView to refresh
+    }
+
     @Override
     public int getItemCount() {
         return projects.size();

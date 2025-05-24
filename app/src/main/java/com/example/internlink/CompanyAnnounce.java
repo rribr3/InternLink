@@ -114,6 +114,8 @@ public class CompanyAnnounce extends AppCompatActivity {
         adapter.notifyItemInserted(announcementList.size() - 1);
     }
 
+    // In CompanyAnnounce.java, update the showAnnouncementPopup method:
+
     void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
@@ -134,6 +136,7 @@ public class CompanyAnnounce extends AppCompatActivity {
             ClickableSpan clickableSpan = new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
+                    // Navigate to MyApplicants activity
                     Intent intent = new Intent(CompanyAnnounce.this, MyApplicants.class);
                     startActivity(intent);
                 }

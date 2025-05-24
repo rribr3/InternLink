@@ -56,6 +56,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private LinearLayout dotIndicatorLayout;
     private ProgressBar loadingIndicator;
     private View mainContent;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -880,7 +881,11 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         View viewAllApplicantsButton = findViewById(R.id.view_all_applicants_button);
         if (viewAllApplicantsButton != null) {
-            viewAllApplicantsButton.setOnClickListener(v -> showAllApplicantsDialog());
+            viewAllApplicantsButton.setOnClickListener(v -> {
+                // Updated: Navigate to MyApplicants activity instead of showing dialog
+                Intent intent = new Intent(CompanyHomeActivity.this, MyApplicants.class);
+                startActivity(intent);
+            });
         }
     }
 
@@ -917,7 +922,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         dialog.show();
     }
 
-    private void showAllApplicantsDialog() {
+    /*private void showAllApplicantsDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_all_applicants_by_project);
 
@@ -943,7 +948,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
 
         dialog.show();
-    }
+    }*/
 
     private void fetchRecentCompanyAnnouncements() {
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
@@ -1065,10 +1070,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     // Implement OnApplicantActionListener methods
     @Override
     public void onViewProfile(Applicant applicant) {
-        // Create intent to view student profile
-        Intent intent = new Intent(this, StudentProfileActivity.class);
-        intent.putExtra("STUDENT_ID", applicant.getUserId());
-        intent.putExtra("STUDENT_NAME", applicant.getName());
+        Intent intent = new Intent(this, ApplicantProfileActivity.class);
+        intent.putExtra("APPLICANT_ID", applicant.getUserId());
         startActivity(intent);
     }
 
@@ -1248,7 +1251,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             intent = new Intent(this, MyProjectsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_applicant) {
-            showAllApplicantsDialog();
+            // Updated: Navigate to MyApplicants activity instead of showing dialog
+            intent = new Intent(this, MyApplicants.class);
+            startActivity(intent);
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
@@ -1338,6 +1343,5 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
-        }
-    }
+        }}
 }

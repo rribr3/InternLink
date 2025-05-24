@@ -60,9 +60,10 @@ public class EnhancedApplicantsAdapter extends RecyclerView.Adapter<EnhancedAppl
 
         holder.btnMoreOptions.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onMoreOptions(applicants.get(position), v);  // Pass the clicked view
+                listener.onMoreOptions(applicant, holder.btnMoreOptions); // Use the anchorView for PopupMenu
             }
         });
+
     }
 
     @Override
