@@ -10,21 +10,23 @@ app.post('/generate-cv', async (req, res) => {
   const profile = req.body.profile;
 
   const prompt = `
-You are a professional resume writer.
-Using the following profile, write a full, professional, well-formatted CV in natural English text. Include:
-
-- Full name and contact info at the top
-- A short professional summary
-- Education history
-- Work experience (as bullet points)
-- Projects (with descriptions)
-- Skills (bulleted list)
-- Certifications
-
-Make it sound polished and suitable for job applications in tech:
-
-${JSON.stringify(profile, null, 2)}
-`;
+  You are a professional resume writer.
+  Using the following profile, write a full, professional, well-formatted CV in natural English text. Include:
+  
+  - Full name and contact info at the top
+  - A short professional summary
+  - Education history
+  - Work experience (as bullet points)
+  - Projects (with descriptions)
+  - Skills (bulleted list)
+  - Certifications
+  - Languages (language name + proficiency level)
+  
+  Make it sound polished and suitable for job applications in tech:
+  
+  ${JSON.stringify(profile, null, 2)}
+  `;
+  
 
 
   try {

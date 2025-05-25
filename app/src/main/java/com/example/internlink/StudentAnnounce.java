@@ -2,10 +2,16 @@ package com.example.internlink;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -31,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -38,7 +45,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StudentAnnounce extends AppCompatActivity {
+public class StudentAnnounce extends AppCompatActivity implements AnnouncementAdapter.AnnouncementClickListener {
 
     private LinearLayout announcementContainer;
     private RecyclerView recyclerView;
@@ -72,10 +79,8 @@ public class StudentAnnounce extends AppCompatActivity {
         toolbar = findViewById(R.id.topAppBar);
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
-        // Load announcements from Firebase
         loadAllAnnouncements();
 
-        // Search listener
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -89,15 +94,14 @@ public class StudentAnnounce extends AppCompatActivity {
             if (chip != null) {
                 String chipText = chip.getText().toString();
                 if (chipText.equalsIgnoreCase("Earliest")) {
-                    sortAnnouncementsByDate(true);  // Sorting in ascending order (earliest first)
+                    sortAnnouncementsByDate(true);
                 } else if (chipText.equalsIgnoreCase("Latest")) {
-                    sortAnnouncementsByDate(false);  // Sorting in descending order (latest first)
+                    sortAnnouncementsByDate(false);
                 } else {
-                    adapter.filterChip(chipText);  // Handle other filters like Read/Unread
+                    adapter.filterChip(chipText);
                 }
             }
         });
-
     }
 
     private void addAnnouncement(String announcementId, String title, String body, String date, boolean isRead, long timestamp) {
@@ -107,7 +111,8 @@ public class StudentAnnounce extends AppCompatActivity {
         adapter.notifyItemInserted(announcementList.size() - 1);
     }
 
-    void showAnnouncementPopup(String title, String body, String date) {
+    // UPDATED: Enhanced popup method to handle clickable links for students
+    public void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
         popupView.setBackgroundColor(getResources().getColor(android.R.color.white));
@@ -118,7 +123,12 @@ public class StudentAnnounce extends AppCompatActivity {
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
         titleView.setText(title);
-        bodyView.setText(body);
+
+        // Handle clickable links for students
+        SpannableString spannable = createClickableSpannable(body);
+        bodyView.setText(spannable);
+        bodyView.setMovementMethod(LinkMovementMethod.getInstance());
+
         dateView.setText("Posted: " + date);
 
         builder.setView(popupView);
@@ -127,6 +137,75 @@ public class StudentAnnounce extends AppCompatActivity {
         dialog.show();
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
+
+        // Mark the announcement as read when it's opened
+        markAnnouncementAsRead(announcementId);
+    }
+
+    // NEW: Method to create clickable spans for student-specific links
+    private SpannableString createClickableSpannable(String body) {
+        SpannableString spannable = new SpannableString(body);
+
+        // Handle [View Details] links - navigate to applications
+        handleClickableLink(spannable, body, "[View Details]", () -> {
+            Intent intent = new Intent(StudentAnnounce.this, MyApplicationsActivity.class);
+            startActivity(intent);
+        });
+
+        // Handle [View Status] links - navigate to applications
+        handleClickableLink(spannable, body, "[View Status]", () -> {
+            Intent intent = new Intent(StudentAnnounce.this, MyApplicationsActivity.class);
+            startActivity(intent);
+        });
+
+        return spannable;
+    }
+
+    // NEW: Helper method to handle clickable links
+    private void handleClickableLink(SpannableString spannable, String body, String linkText, Runnable action) {
+        int start = body.indexOf(linkText);
+        if (start != -1) {
+            int end = start + linkText.length();
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    action.run();
+                }
+
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(true);
+                    ds.setColor(Color.BLUE);
+                }
+            };
+
+            spannable.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+
+    // NEW: Method to mark announcement as read (similar to company version)
+    private void markAnnouncementAsRead(String announcementId) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userReadsRef = FirebaseDatabase.getInstance()
+                .getReference("user_reads")
+                .child(userId)
+                .child(announcementId);
+
+        userReadsRef.setValue(System.currentTimeMillis())
+                .addOnSuccessListener(aVoid -> {
+                    for (Announcement announcement : announcementList) {
+                        if (announcement.getId().equals(announcementId)) {
+                            announcement.setRead(true);
+                            adapter.notifyDataSetChanged();
+                            break;
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(StudentAnnounce.this, "Failed to mark as read", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void loadAllAnnouncements() {
@@ -164,7 +243,6 @@ public class StudentAnnounce extends AppCompatActivity {
 
                     addAnnouncement(id, title, body, date, isRead, timestamp != null ? timestamp : 0);
                 }
-                // Default sort: latest
                 sortAnnouncementsByDate(false);
             }
 
@@ -184,17 +262,13 @@ public class StudentAnnounce extends AppCompatActivity {
     private void sortAnnouncementsByDate(boolean ascending) {
         if (announcementList == null || announcementList.isEmpty()) return;
 
-        // Sort the announcements based on the timestamp
         announcementList.sort((a1, a2) -> {
             long t1 = a1.getTimestamp();
             long t2 = a2.getTimestamp();
             return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
         });
 
-        // Update the filtered list after sorting
-        adapter.filterChip("All");  // To refresh the filtered list after sorting (you can also call `adapter.notifyDataSetChanged()` here directly if no filtering is needed)
-
-        adapter.notifyDataSetChanged();  // Notify the adapter that the data has changed
+        adapter.filterChip("All");
+        adapter.notifyDataSetChanged();
     }
-
 }

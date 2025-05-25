@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Objects;
 
+
 public class Application {
     private String applicationId;
     private String projectId;
@@ -15,6 +16,9 @@ public class Application {
     private String notes;
     private Integer quizGrade;
     private boolean isReapplication;
+    private String interviewDate;
+    private String interviewTime;
+    private long lastUpdated;
 
 
 
@@ -34,6 +38,28 @@ public class Application {
         setQuizGrade(quizGrade); // ✅ new field
     }
 
+    public void setInterviewDate(String interviewDate) {
+        this.interviewDate = interviewDate;
+    }
+
+    public void setInterviewTime(String interviewTime) {
+        this.interviewTime = interviewTime;
+    }
+    public String getInterviewDate() {
+        return interviewDate;
+    }
+
+    public String getInterviewTime() {
+        return interviewTime;
+    }
+
+    public long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(long lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
     public boolean isReapplication() {
         return isReapplication;
     }

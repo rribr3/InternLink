@@ -96,15 +96,14 @@ public class CompanyAnnounce extends AppCompatActivity {
             if (chip != null) {
                 String chipText = chip.getText().toString();
                 if (chipText.equalsIgnoreCase("Earliest")) {
-                    sortAnnouncementsByDate(true);  // Sorting in ascending order (earliest first)
+                    sortAnnouncementsByDate(true);
                 } else if (chipText.equalsIgnoreCase("Latest")) {
-                    sortAnnouncementsByDate(false);  // Sorting in descending order (latest first)
+                    sortAnnouncementsByDate(false);
                 } else {
-                    adapter.filterChip(chipText);  // Handle other filters like Read/Unread
+                    adapter.filterChip(chipText);
                 }
             }
         });
-
     }
 
     private void addAnnouncement(String announcementId, String title, String message, String date, boolean isRead, long timestamp) {
@@ -114,8 +113,7 @@ public class CompanyAnnounce extends AppCompatActivity {
         adapter.notifyItemInserted(announcementList.size() - 1);
     }
 
-    // In CompanyAnnounce.java, update the showAnnouncementPopup method:
-
+    // UPDATED: Enhanced popup method to handle all clickable links
     void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
@@ -127,34 +125,11 @@ public class CompanyAnnounce extends AppCompatActivity {
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
         titleView.setText(title);
-        SpannableString spannable = new SpannableString(body);
 
-        int start = body.indexOf("[View Applicants]");
-        if (start != -1) {
-            int end = start + "[View Applicants]".length();
-
-            ClickableSpan clickableSpan = new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    // Navigate to MyApplicants activity
-                    Intent intent = new Intent(CompanyAnnounce.this, MyApplicants.class);
-                    startActivity(intent);
-                }
-
-                @Override
-                public void updateDrawState(@NonNull TextPaint ds) {
-                    super.updateDrawState(ds);
-                    ds.setUnderlineText(true);
-                    ds.setColor(Color.BLUE);
-                }
-            };
-
-            spannable.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            bodyView.setText(spannable);
-            bodyView.setMovementMethod(LinkMovementMethod.getInstance());
-        } else {
-            bodyView.setText(body);
-        }
+        // Handle multiple types of clickable links
+        SpannableString spannable = createClickableSpannable(body);
+        bodyView.setText(spannable);
+        bodyView.setMovementMethod(LinkMovementMethod.getInstance());
 
         dateView.setText("Posted: " + date);
 
@@ -169,6 +144,43 @@ public class CompanyAnnounce extends AppCompatActivity {
         markAnnouncementAsRead(announcementId);
     }
 
+    // NEW: Method to create clickable spans for different link types
+    private SpannableString createClickableSpannable(String body) {
+        SpannableString spannable = new SpannableString(body);
+
+        // Handle [View Applicants] links
+        handleClickableLink(spannable, body, "[View Applicants]", () -> {
+            Intent intent = new Intent(CompanyAnnounce.this, MyApplicants.class);
+            startActivity(intent);
+        });
+
+        return spannable;
+    }
+
+    // NEW: Helper method to handle clickable links
+    private void handleClickableLink(SpannableString spannable, String body, String linkText, Runnable action) {
+        int start = body.indexOf(linkText);
+        if (start != -1) {
+            int end = start + linkText.length();
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    action.run();
+                }
+
+                @Override
+                public void updateDrawState(@NonNull TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setUnderlineText(true);
+                    ds.setColor(Color.BLUE);
+                }
+            };
+
+            spannable.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+    }
+
     private void markAnnouncementAsRead(String announcementId) {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance()
@@ -176,10 +188,8 @@ public class CompanyAnnounce extends AppCompatActivity {
                 .child(userId)
                 .child(announcementId);
 
-        // Set the timestamp when the announcement was read
         userReadsRef.setValue(System.currentTimeMillis())
                 .addOnSuccessListener(aVoid -> {
-                    // Update the local list to reflect the read status
                     for (Announcement announcement : announcementList) {
                         if (announcement.getId().equals(announcementId)) {
                             announcement.setRead(true);
@@ -228,7 +238,6 @@ public class CompanyAnnounce extends AppCompatActivity {
 
                     addAnnouncement(id, title, message, date, isRead, timestamp != null ? timestamp : 0);
                 }
-                // Default sort: latest
                 sortAnnouncementsByDate(false);
             }
 
@@ -248,17 +257,13 @@ public class CompanyAnnounce extends AppCompatActivity {
     private void sortAnnouncementsByDate(boolean ascending) {
         if (announcementList == null || announcementList.isEmpty()) return;
 
-        // Sort the announcements based on the timestamp
         announcementList.sort((a1, a2) -> {
             long t1 = a1.getTimestamp();
             long t2 = a2.getTimestamp();
             return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
         });
 
-        // Update the filtered list after sorting
-        adapter.filterChip("All");  // To refresh the filtered list after sorting (you can also call `adapter.notifyDataSetChanged()` here directly if no filtering is needed)
-
-        adapter.notifyDataSetChanged();  // Notify the adapter that the data has changed
+        adapter.filterChip("All");
+        adapter.notifyDataSetChanged();
     }
-
 }

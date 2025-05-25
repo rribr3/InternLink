@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -36,6 +37,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.search.SearchBar;
@@ -51,7 +54,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StudentHomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -74,6 +80,27 @@ public class StudentHomeActivity extends AppCompatActivity
     private boolean isBottomNavVisible = true;
     private SearchView searchView;
     private SearchBar searchBar;
+    private List<Application> allApplications = new ArrayList<>();
+    private List<Application> filteredApplications = new ArrayList<>();
+    private ApplicationAdapter applicationAdapter;
+    private ChipGroup filterChips;
+
+    // Public static classes for search functionality
+    public static class SearchResult {
+        public String type; // "PROJECT" or "COMPANY"
+        public String projectId;
+        public Project project;
+        public CompanyInfo company;
+        public List<String> matchReasons;
+    }
+
+    public static class CompanyInfo {
+        public String id;
+        public String name;
+        public String industry;
+        public String description;
+        public String location;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,8 +141,10 @@ public class StudentHomeActivity extends AppCompatActivity
         setupProjectsRecyclerView();
         setupClickListeners();
         setupSwipeRefresh();
+        setupEnhancedSearch();
+    }
 
-
+    private void setupEnhancedSearch() {
         if (searchView != null && searchBar != null) {
             // Connect SearchBar with SearchView properly
             searchView.setupWithSearchBar(searchBar);
@@ -134,36 +163,47 @@ public class StudentHomeActivity extends AppCompatActivity
 
                 // Set up the search listener
                 editText.setOnEditorActionListener((v, actionId, event) -> {
-                    String query = v.getText().toString().trim().toLowerCase();
-                    if (!query.isEmpty()) {
-                        performSearch(query);
+                    String query = v.getText().toString().trim();
+                    if (!query.isEmpty() && query.length() >= 2) {
+                        performEnhancedSearch(query);
                         searchView.hide();  // hide overlay after search
+                    } else if (query.length() < 2) {
+                        Toast.makeText(StudentHomeActivity.this, "Please enter at least 2 characters", Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 });
             }
 
-            // Optional: Add text change listener for real-time search
+            // Real-time search with debouncing
             searchView.getEditText().addTextChangedListener(new TextWatcher() {
+                private Handler handler = new Handler();
+                private Runnable searchRunnable;
+
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    // Optional: Implement real-time search here if needed
+                    // Cancel previous search
+                    if (searchRunnable != null) {
+                        handler.removeCallbacks(searchRunnable);
+                    }
+
+                    // Create new search with delay
+                    if (s.length() >= 2) {
+                        searchRunnable = () -> performEnhancedSearch(s.toString().trim());
+                        handler.postDelayed(searchRunnable, 500); // 500ms delay
+                    }
                 }
 
                 @Override
                 public void afterTextChanged(Editable s) {}
             });
         }
-
-
-
     }
-    private void performSearch(String query) {
-        List<Project> matchingProjects = new ArrayList<>();
-        List<String> matchingCompanyIds = new ArrayList<>();
+
+    private void performEnhancedSearch(String query) {
+        List<SearchResult> searchResults = new ArrayList<>();
 
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
         DatabaseReference companiesRef = FirebaseDatabase.getInstance().getReference("users");
@@ -171,113 +211,212 @@ public class StudentHomeActivity extends AppCompatActivity
         projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
-                for (DataSnapshot snap : projectSnapshot.getChildren()) {
-                    Project project = snap.getValue(Project.class);
-                    if (project != null && "approved".equals(project.getStatus())) {
-                        boolean match = false;
-
-                        // Match title
-                        if (project.getTitle().toLowerCase().contains(query)) {
-                            match = true;
-                        }
-
-                        // Match skills
-                        if (!match && project.getSkills() != null) {
-                            for (String skill : project.getSkills()) {
-                                if (skill.toLowerCase().contains(query)) {
-                                    match = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (match) {
-                            project.setProjectId(snap.getKey());
-                            matchingProjects.add(project);
-                        }
-                    }
-                }
-
-                // Now search for matching companies
                 companiesRef.orderByChild("role").equalTo("company")
                         .addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot companySnapshot) {
+
+                                // Create a map of company details for easy lookup
+                                Map<String, CompanyInfo> companyMap = new HashMap<>();
                                 for (DataSnapshot companySnap : companySnapshot.getChildren()) {
                                     String companyId = companySnap.getKey();
-                                    String companyName = companySnap.child("name").getValue(String.class);
-
-                                    if (companyName != null && companyName.toLowerCase().contains(query)) {
-                                        matchingCompanyIds.add(companyId);
-                                    }
+                                    CompanyInfo company = new CompanyInfo();
+                                    company.id = companyId;
+                                    company.name = companySnap.child("name").getValue(String.class);
+                                    company.industry = companySnap.child("industry").getValue(String.class);
+                                    company.description = companySnap.child("description").getValue(String.class);
+                                    company.location = companySnap.child("location").getValue(String.class);
+                                    companyMap.put(companyId, company);
                                 }
 
-                                // Add projects belonging to matching companies
-                                for (DataSnapshot snap : projectSnapshot.getChildren()) {
-                                    Project project = snap.getValue(Project.class);
+                                // Search through projects
+                                for (DataSnapshot projectSnap : projectSnapshot.getChildren()) {
+                                    Project project = projectSnap.getValue(Project.class);
                                     if (project != null && "approved".equals(project.getStatus())) {
-                                        if (matchingCompanyIds.contains(project.getCompanyId())) {
-                                            project.setProjectId(snap.getKey());
-                                            if (!matchingProjects.contains(project)) {
-                                                matchingProjects.add(project);
+
+                                        SearchResult result = new SearchResult();
+                                        result.type = "PROJECT";
+                                        result.projectId = projectSnap.getKey();
+                                        result.project = project;
+                                        result.company = companyMap.get(project.getCompanyId());
+
+                                        boolean matchFound = false;
+                                        List<String> matchReasons = new ArrayList<>();
+
+                                        // Check title match
+                                        if (project.getTitle() != null &&
+                                                project.getTitle().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Title: " + project.getTitle());
+                                        }
+
+                                        // Check description match
+                                        if (project.getDescription() != null &&
+                                                project.getDescription().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Description");
+                                        }
+
+                                        // Check category match
+                                        if (project.getCategory() != null &&
+                                                project.getCategory().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Category: " + project.getCategory());
+                                        }
+
+                                        // Check skills match
+                                        if (project.getSkills() != null) {
+                                            for (String skill : project.getSkills()) {
+                                                if (skill.toLowerCase().contains(query.toLowerCase())) {
+                                                    matchFound = true;
+                                                    matchReasons.add("Skill: " + skill);
+                                                    break;
+                                                }
                                             }
+                                        }
+
+                                        // Check company name match
+                                        if (result.company != null && result.company.name != null &&
+                                                result.company.name.toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Company: " + result.company.name);
+                                        }
+
+                                        // Check company industry match
+                                        if (result.company != null && result.company.industry != null &&
+                                                result.company.industry.toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Industry: " + result.company.industry);
+                                        }
+
+                                        // Check education level match
+                                        if (project.getEducationLevel() != null &&
+                                                project.getEducationLevel().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Education: " + project.getEducationLevel());
+                                        }
+
+                                        // Check duration match
+                                        if (project.getDuration() != null &&
+                                                project.getDuration().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Duration: " + project.getDuration());
+                                        }
+
+                                        // Check compensation type match
+                                        if (project.getCompensationType() != null &&
+                                                project.getCompensationType().toLowerCase().contains(query.toLowerCase())) {
+                                            matchFound = true;
+                                            matchReasons.add("Type: " + project.getCompensationType());
+                                        }
+
+                                        if (matchFound) {
+                                            result.matchReasons = matchReasons;
+                                            searchResults.add(result);
                                         }
                                     }
                                 }
 
-                                List<String> matchingCompanyNames = new ArrayList<>();
-                                for (DataSnapshot companySnap : companySnapshot.getChildren()) {
-                                    String companyName = companySnap.child("name").getValue(String.class);
-                                    if (companyName != null && companyName.toLowerCase().contains(query)) {
-                                        matchingCompanyNames.add(companyName);
+                                // Also add company-only results for companies that match but don't have matching projects
+                                for (CompanyInfo company : companyMap.values()) {
+                                    boolean companyMatch = false;
+                                    List<String> companyMatchReasons = new ArrayList<>();
+
+                                    if (company.name != null && company.name.toLowerCase().contains(query.toLowerCase())) {
+                                        companyMatch = true;
+                                        companyMatchReasons.add("Company Name: " + company.name);
+                                    }
+
+                                    if (company.industry != null && company.industry.toLowerCase().contains(query.toLowerCase())) {
+                                        companyMatch = true;
+                                        companyMatchReasons.add("Industry: " + company.industry);
+                                    }
+
+                                    if (company.description != null && company.description.toLowerCase().contains(query.toLowerCase())) {
+                                        companyMatch = true;
+                                        companyMatchReasons.add("Description");
+                                    }
+
+                                    if (companyMatch) {
+                                        // Check if we already have projects from this company in results
+                                        boolean alreadyHasProjects = false;
+                                        for (SearchResult existing : searchResults) {
+                                            if (existing.company != null && company.id.equals(existing.company.id)) {
+                                                alreadyHasProjects = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!alreadyHasProjects) {
+                                            SearchResult companyResult = new SearchResult();
+                                            companyResult.type = "COMPANY";
+                                            companyResult.company = company;
+                                            companyResult.matchReasons = companyMatchReasons;
+                                            searchResults.add(companyResult);
+                                        }
                                     }
                                 }
-                                showSearchResults(matchingProjects, matchingCompanyNames);
+
+                                // Sort results by relevance (projects first, then companies)
+                                Collections.sort(searchResults, (a, b) -> {
+                                    if (a.type.equals("PROJECT") && b.type.equals("COMPANY")) return -1;
+                                    if (a.type.equals("COMPANY") && b.type.equals("PROJECT")) return 1;
+                                    return 0;
+                                });
+
+                                showEnhancedSearchResults(searchResults, query);
                             }
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
-                                Toast.makeText(StudentHomeActivity.this, "Failed to search companies", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(StudentHomeActivity.this, "Search failed", Toast.LENGTH_SHORT).show();
                             }
                         });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(StudentHomeActivity.this, "Failed to search projects", Toast.LENGTH_SHORT).show();
+                Toast.makeText(StudentHomeActivity.this, "Search failed", Toast.LENGTH_SHORT).show();
             }
         });
     }
-    private void showSearchResults(List<Project> matchingProjects, List<String> matchingCompanyNames) {
-        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_search_results, null);
 
-        // Setup RecyclerView for projects
-        RecyclerView rvProjects = popupView.findViewById(R.id.rv_matching_projects);
-        rvProjects.setLayoutManager(new LinearLayoutManager(this));
-        ProjectAdapterHome projectAdapter = new ProjectAdapterHome(matchingProjects, project -> {
-            Toast.makeText(this, "Selected Project: " + project.getTitle(), Toast.LENGTH_SHORT).show();
-        }, false);
-        rvProjects.setAdapter(projectAdapter);
+    private void showEnhancedSearchResults(List<SearchResult> results, String query) {
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_enhanced_search_results, null);
 
-        // Setup RecyclerView for companies
-        RecyclerView rvCompanies = popupView.findViewById(R.id.rv_matching_companies);
-        rvCompanies.setLayoutManager(new LinearLayoutManager(this));
-        CompanyNameAdapter companyAdapter = new CompanyNameAdapter(matchingCompanyNames);
-        rvCompanies.setAdapter(companyAdapter);
+        TextView searchQueryText = popupView.findViewById(R.id.tv_search_query);
+        TextView resultsCountText = popupView.findViewById(R.id.tv_results_count);
+        RecyclerView recyclerView = popupView.findViewById(R.id.rv_search_results);
+        ImageView closeButton = popupView.findViewById(R.id.btn_close_search);
+        LinearLayout emptyStateLayout = popupView.findViewById(R.id.layout_empty_state);
 
-        // Popup setup
+        searchQueryText.setText("Search results for: \"" + query + "\"");
+        resultsCountText.setText(results.size() + " result(s) found");
+
+        if (results.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            emptyStateLayout.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyStateLayout.setVisibility(View.GONE);
+
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            EnhancedSearchAdapter adapter = new EnhancedSearchAdapter(results);
+            recyclerView.setAdapter(adapter);
+        }
+
         PopupWindow popupWindow = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 true
         );
 
-        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        popupWindow.setAnimationStyle(R.style.PopupAnimation);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#F5F5F5")));
         popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
-    }
 
+        closeButton.setOnClickListener(v -> popupWindow.dismiss());
+    }
 
     private void setupBottomNavigation() {
         // Set up bottom navigation listener
@@ -355,8 +494,6 @@ public class StudentHomeActivity extends AppCompatActivity
                 .setInterpolator(new AccelerateInterpolator(2f))
                 .setDuration(300)
                 .start();
-
-
         isBottomNavVisible = false;
     }
 
@@ -412,7 +549,6 @@ public class StudentHomeActivity extends AppCompatActivity
         }
     }
 
-
     private void initializeViews() {
         drawerLayout = findViewById(R.id.drawer_layout);
         welcomeText = findViewById(R.id.welcome_text);
@@ -465,7 +601,6 @@ public class StudentHomeActivity extends AppCompatActivity
             }
         });
     }
-
 
     private void setupNotificationBell() {
         String userId = studentId;
@@ -537,7 +672,6 @@ public class StudentHomeActivity extends AppCompatActivity
         setupNotificationBell(); // Refresh the badge when returning to this screen
     }
 
-
     private void setupProjectsRecyclerView() {
         projectsRecyclerView.setLayoutManager(new LinearLayoutManager(
                 this, LinearLayoutManager.HORIZONTAL, false));
@@ -581,7 +715,6 @@ public class StudentHomeActivity extends AppCompatActivity
                             filteredProjects.add(project);
                         }
 
-
                         // Limit to max 3 projects
                         if (filteredProjects.size() > 3) {
                             filteredProjects = filteredProjects.subList(0, 3);
@@ -617,14 +750,12 @@ public class StudentHomeActivity extends AppCompatActivity
                         loadingIndicator.setVisibility(View.GONE);
                         mainContent.setVisibility(View.VISIBLE);
                         swipeRefreshLayout.setRefreshing(false);
-
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(StudentHomeActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
                         swipeRefreshLayout.setRefreshing(false);
-
                     }
                 });
             }
@@ -633,7 +764,6 @@ public class StudentHomeActivity extends AppCompatActivity
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(StudentHomeActivity.this, "Failed to load applied projects", Toast.LENGTH_SHORT).show();
                 swipeRefreshLayout.setRefreshing(false);
-
             }
         });
     }
@@ -648,7 +778,7 @@ public class StudentHomeActivity extends AppCompatActivity
         });
 
         notificationBell.setOnClickListener(v -> {
-            // Navigate to CompanyAnnounce.java
+            // Navigate to StudentAnnounce.java
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
             startActivity(intent);
         });
@@ -687,7 +817,6 @@ public class StudentHomeActivity extends AppCompatActivity
         );
     }
 
-
     private void showAllApplications() {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
 
@@ -695,131 +824,41 @@ public class StudentHomeActivity extends AppCompatActivity
         FloatingActionButton addButton = popupView.findViewById(R.id.btn_add_application);
         ImageView closeButton = popupView.findViewById(R.id.btn_close_popup);
 
+        // Get filter chip references
+        filterChips = popupView.findViewById(R.id.filter_chips);
+        Chip chipAll = popupView.findViewById(R.id.chip_all);
+        Chip chipAccepted = popupView.findViewById(R.id.chip_accepted);
+        Chip chipInterview = popupView.findViewById(R.id.chip_interview);
+        Chip chipPending = popupView.findViewById(R.id.chip_pending);
+        Chip chipRejected = popupView.findViewById(R.id.chip_rejected);
+
         rvApplications.setLayoutManager(new LinearLayoutManager(this));
 
-        List<Application> applications = new ArrayList<>();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("applications");
 
         ref.orderByChild("userId").equalTo(studentId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        allApplications.clear();
                         for (DataSnapshot appSnap : snapshot.getChildren()) {
                             Application app = appSnap.getValue(Application.class);
                             if (app != null) {
                                 app.setApplicationId(appSnap.getKey());
-                                applications.add(app);
+                                allApplications.add(app);
                             }
                         }
 
-                        ApplicationAdapter adapter = new ApplicationAdapter(applications, studentId);
-                        rvApplications.setAdapter(adapter);
+                        // Initialize with all applications
+                        filteredApplications = new ArrayList<>(allApplications);
+                        applicationAdapter = new ApplicationAdapter(filteredApplications, studentId);
+                        rvApplications.setAdapter(applicationAdapter);
 
-                        float SWIPE_THRESHOLD = 0.5f;
+                        // Set up filter chip listeners
+                        setupFilterChips();
 
-                        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-                            @Override
-                            public boolean onMove(@NonNull RecyclerView recyclerView,
-                                                  @NonNull RecyclerView.ViewHolder viewHolder,
-                                                  @NonNull RecyclerView.ViewHolder target) {
-                                return false;
-                            }
-
-                            @Override
-                            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                                // Prevent default removal behavior
-                                adapter.notifyItemChanged(viewHolder.getAdapterPosition());
-                            }
-
-                            @Override
-                            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
-                                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
-                                                    int actionState, boolean isCurrentlyActive) {
-
-                                View itemView = viewHolder.itemView;
-                                Drawable icon;
-                                int iconMargin = (itemView.getHeight() - 48) / 2;
-                                int iconTop = itemView.getTop() + iconMargin;
-                                int iconBottom = iconTop + 48;
-
-                                if (dX < 0) { // Swipe Left → DELETE
-                                    ColorDrawable background = new ColorDrawable(Color.RED);
-                                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
-                                    background.draw(c);
-
-                                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_delete_white);
-                                    if (icon != null) {
-                                        int iconRight = itemView.getRight() - iconMargin;
-                                        int iconLeft = iconRight - icon.getIntrinsicWidth();
-                                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
-                                        icon.draw(c);
-                                    }
-
-                                    // If swipe passed threshold, show confirmation dialog
-                                    if (Math.abs(dX) > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
-                                        int position = viewHolder.getAdapterPosition();
-                                        Application app = applications.get(position);
-
-                                        // ❌ Prevent deletion of Accepted/Rejected applications
-                                        if ("Accepted".equalsIgnoreCase(app.getStatus()) || "Rejected".equalsIgnoreCase(app.getStatus())) {
-                                            Toast.makeText(StudentHomeActivity.this, "You cannot delete an accepted or rejected application.", Toast.LENGTH_SHORT).show();
-                                            adapter.notifyItemChanged(position); // Restore the item
-                                            return;
-                                        }
-
-                                        // ✅ Proceed with deletion confirmation for other statuses
-                                        new AlertDialog.Builder(StudentHomeActivity.this)
-                                                .setTitle("Delete Application")
-                                                .setMessage("Are you sure you want to delete this application?")
-                                                .setPositiveButton("Delete", (dialog, which) -> {
-                                                    FirebaseDatabase.getInstance().getReference("applications")
-                                                            .child(app.getApplicationId())
-                                                            .removeValue()
-                                                            .addOnSuccessListener(aVoid -> {
-                                                                applications.remove(position);
-                                                                adapter.notifyItemRemoved(position);
-                                                                Toast.makeText(StudentHomeActivity.this, "Application deleted", Toast.LENGTH_SHORT).show();
-                                                            })
-                                                            .addOnFailureListener(e -> {
-                                                                Toast.makeText(StudentHomeActivity.this, "Failed to delete", Toast.LENGTH_SHORT).show();
-                                                                adapter.notifyItemChanged(position);
-                                                            });
-                                                })
-                                                .setNegativeButton("Cancel", (dialog, which) -> {
-                                                    adapter.notifyItemChanged(position);
-                                                    dialog.dismiss();
-                                                })
-                                                .setCancelable(false)
-                                                .show();
-                                    }
-
-                                } else if (dX > 0) { // Swipe Right → VIEW
-                                    ColorDrawable background = new ColorDrawable(Color.parseColor("#2196F3")); // Blue
-                                    background.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getLeft() + (int) dX, itemView.getBottom());
-                                    background.draw(c);
-
-                                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_eye_open);
-                                    if (icon != null) {
-                                        int iconLeft = itemView.getLeft() + iconMargin;
-                                        int iconRight = iconLeft + icon.getIntrinsicWidth();
-                                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
-                                        icon.draw(c);
-                                    }
-
-                                    if (dX > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
-                                        int position = viewHolder.getAdapterPosition();
-                                        Application app = applications.get(position);
-                                        Intent intent = new Intent(StudentHomeActivity.this, ViewApplications.class);
-                                        intent.putExtra("APPLICATION_ID", app.getApplicationId());
-                                        startActivity(intent);
-                                    }
-                                }
-
-                                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
-                            }
-                        };
-
-                        new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvApplications);
+                        // Set up swipe functionality
+                        setupSwipeFunctionality(rvApplications);
                     }
 
                     @Override
@@ -843,6 +882,217 @@ public class StudentHomeActivity extends AppCompatActivity
         popupWindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER, 0, 0);
 
         closeButton.setOnClickListener(v -> popupWindow.dismiss());
+    }
+    private void setupFilterChips() {
+        if (filterChips == null) return;
+
+        filterChips.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                // If no chip is selected, default to "All"
+                Chip chipAll = findViewById(R.id.chip_all);
+                if (chipAll != null) {
+                    chipAll.setChecked(true);
+                }
+                return;
+            }
+
+            int checkedId = checkedIds.get(0);
+            String filterStatus = "";
+
+            if (checkedId == R.id.chip_all) {
+                filterStatus = "All";
+            } else if (checkedId == R.id.chip_accepted) {
+                filterStatus = "Accepted";
+            } else if (checkedId == R.id.chip_interview) {
+                filterStatus = "Shortlisted"; // Interview chip filters for Shortlisted status
+            } else if (checkedId == R.id.chip_pending) {
+                filterStatus = "Pending";
+            } else if (checkedId == R.id.chip_rejected) {
+                filterStatus = "Rejected";
+            }
+
+            filterApplications(filterStatus);
+        });
+    }
+
+    // Add this new method to filter applications
+    private void filterApplications(String status) {
+        filteredApplications.clear();
+
+        if ("All".equals(status)) {
+            filteredApplications.addAll(allApplications);
+        } else {
+            for (Application app : allApplications) {
+                String appStatus = app.getStatus();
+                if (appStatus != null && status.equalsIgnoreCase(appStatus)) {
+                    filteredApplications.add(app);
+                }
+            }
+        }
+
+        if (applicationAdapter != null) {
+            applicationAdapter.notifyDataSetChanged();
+        }
+
+        // Optional: Show count of filtered results
+        String chipText = getChipTextFromStatus(status);
+        Toast.makeText(this, "Showing " + filteredApplications.size() + " " + chipText + " applications", Toast.LENGTH_SHORT).show();
+    }
+
+    // Helper method to get chip text from status
+    private String getChipTextFromStatus(String status) {
+        switch (status) {
+            case "All": return "All";
+            case "Accepted": return "Accepted";
+            case "Shortlisted": return "Interview";
+            case "Pending": return "Pending";
+            case "Rejected": return "Rejected";
+            default: return "All";
+        }
+    }
+
+    // Extract the swipe functionality into a separate method for cleaner code
+    private void setupSwipeFunctionality(RecyclerView rvApplications) {
+        float SWIPE_THRESHOLD = 0.5f;
+
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // Prevent default removal behavior
+                applicationAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                                    int actionState, boolean isCurrentlyActive) {
+
+                View itemView = viewHolder.itemView;
+                Drawable icon;
+                int iconMargin = (itemView.getHeight() - 48) / 2;
+                int iconTop = itemView.getTop() + iconMargin;
+                int iconBottom = iconTop + 48;
+
+                if (dX < 0) { // Swipe Left → DELETE
+                    ColorDrawable background = new ColorDrawable(Color.RED);
+                    background.setBounds(itemView.getRight() + (int) dX, itemView.getTop(), itemView.getRight(), itemView.getBottom());
+                    background.draw(c);
+
+                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_delete_white);
+                    if (icon != null) {
+                        int iconRight = itemView.getRight() - iconMargin;
+                        int iconLeft = iconRight - icon.getIntrinsicWidth();
+                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                        icon.draw(c);
+                    }
+
+                    if (Math.abs(dX) > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
+                        int position = viewHolder.getAdapterPosition();
+                        if (position < 0 || position >= filteredApplications.size()) return;
+
+                        Application app = filteredApplications.get(position);
+
+                        // ❌ Prevent deletion of Accepted/Rejected applications
+                        if ("Accepted".equalsIgnoreCase(app.getStatus()) || "Rejected".equalsIgnoreCase(app.getStatus())) {
+                            Toast.makeText(StudentHomeActivity.this, "You cannot delete an accepted or rejected application.", Toast.LENGTH_SHORT).show();
+                            applicationAdapter.notifyItemChanged(position);
+                            return;
+                        }
+
+                        // ✅ Proceed with deletion confirmation for other statuses
+                        new AlertDialog.Builder(StudentHomeActivity.this)
+                                .setTitle("Delete Application")
+                                .setMessage("Are you sure you want to delete this application?")
+                                .setPositiveButton("Delete", (dialog, which) -> {
+                                    FirebaseDatabase.getInstance().getReference("applications")
+                                            .child(app.getApplicationId())
+                                            .removeValue()
+                                            .addOnSuccessListener(aVoid -> {
+                                                // Remove from both lists
+                                                allApplications.remove(app);
+                                                filteredApplications.remove(position);
+                                                applicationAdapter.notifyItemRemoved(position);
+                                                Toast.makeText(StudentHomeActivity.this, "Application deleted", Toast.LENGTH_SHORT).show();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(StudentHomeActivity.this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                                                applicationAdapter.notifyItemChanged(position);
+                                            });
+                                })
+                                .setNegativeButton("Cancel", (dialog, which) -> {
+                                    applicationAdapter.notifyItemChanged(position);
+                                    dialog.dismiss();
+                                })
+                                .setCancelable(false)
+                                .show();
+                    }
+
+                } else if (dX > 0) { // Swipe Right → VIEW
+                    ColorDrawable background = new ColorDrawable(Color.parseColor("#2196F3"));
+                    background.setBounds(itemView.getLeft(), itemView.getTop(), itemView.getLeft() + (int) dX, itemView.getBottom());
+                    background.draw(c);
+
+                    icon = ContextCompat.getDrawable(StudentHomeActivity.this, R.drawable.ic_eye_open);
+                    if (icon != null) {
+                        int iconLeft = itemView.getLeft() + iconMargin;
+                        int iconRight = iconLeft + icon.getIntrinsicWidth();
+                        icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                        icon.draw(c);
+                    }
+
+                    if (dX > itemView.getWidth() * SWIPE_THRESHOLD && isCurrentlyActive) {
+                        int position = viewHolder.getAdapterPosition();
+                        if (position < 0 || position >= filteredApplications.size()) return;
+
+                        Application app = filteredApplications.get(position);
+                        Intent intent = new Intent(StudentHomeActivity.this, ViewApplications.class);
+                        intent.putExtra("APPLICATION_ID", app.getApplicationId());
+                        startActivity(intent);
+                    }
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(rvApplications);
+    }
+
+    // Optional: Add method to programmatically select a filter (useful for deep linking or testing)
+    public void selectFilter(String status) {
+        if (filterChips == null) return;
+
+        int chipId = R.id.chip_all; // default
+
+        switch (status) {
+            case "Accepted":
+                chipId = R.id.chip_accepted;
+                break;
+            case "Shortlisted":
+                chipId = R.id.chip_interview;
+                break;
+            case "Pending":
+                chipId = R.id.chip_pending;
+                break;
+            case "Rejected":
+                chipId = R.id.chip_rejected;
+                break;
+            default:
+                chipId = R.id.chip_all;
+                break;
+        }
+
+        Chip chipToSelect = findViewById(chipId);
+        if (chipToSelect != null) {
+            chipToSelect.setChecked(true);
+        }
     }
 
     private void showAllTips() {
@@ -893,6 +1143,7 @@ public class StudentHomeActivity extends AppCompatActivity
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();}
+            super.onBackPressed();
+        }
     }
 }

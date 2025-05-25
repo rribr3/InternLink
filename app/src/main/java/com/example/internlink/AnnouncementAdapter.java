@@ -17,10 +17,10 @@ import java.util.List;
 
 public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapter.ViewHolder> {
     private List<Announcement> originalList, filteredList;
-    private Context context;
+    private final AnnouncementClickListener listener;
 
     public AnnouncementAdapter(Context context, List<Announcement> list) {
-        this.context = context;
+        this.listener = (AnnouncementClickListener) context;
         this.originalList = list;
         this.filteredList = new ArrayList<>(list);
     }
@@ -38,9 +38,10 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
 
     @Override
     public AnnouncementAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.announcement_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.announcement_item, parent, false);
         return new ViewHolder(view);
     }
+
 
     @Override
     public void onBindViewHolder(AnnouncementAdapter.ViewHolder holder, int position) {
@@ -53,8 +54,8 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
 
         holder.itemView.setOnClickListener(v -> {
             // Pass the announcement ID to the popup method
-            ((CompanyAnnounce) context).showAnnouncementPopup(
-                    item.getId(),  // Add this parameter
+            listener.showAnnouncementPopup(
+                    item.getId(),
                     item.getTitle(),
                     item.getBody(),
                     item.getDate()
@@ -103,4 +104,8 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         }
         notifyDataSetChanged();
     }
+    public interface AnnouncementClickListener {
+        void showAnnouncementPopup(String id, String title, String body, String date);
+    }
+
 }

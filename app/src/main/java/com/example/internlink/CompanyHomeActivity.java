@@ -29,6 +29,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -104,13 +105,15 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
 
         TextView viewNotification = findViewById(R.id.view_notification);
-        viewNotification.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
-                startActivity(intent);
-            }
-        });
+        if (viewNotification != null) {
+            viewNotification.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
+                    startActivity(intent);
+                }
+            });
+        }
 
         welcomeText = findViewById(R.id.welcome_text);
         databaseReference = FirebaseDatabase.getInstance().getReference("users");
@@ -138,6 +141,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         setupDashboardContent();
         fetchRecentCompanyAnnouncements();
         setupClickListeners();
+        setupBottomNavigation(); // ✅ ADDED THIS LINE - This was missing!
         setupNotificationBell();
         fetchCompanyStats();
         createNotificationChannel();
@@ -473,6 +477,37 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 ApplicantsAdapter adapter = new ApplicantsAdapter(applicants);
                 applicantsRecycler.setAdapter(adapter);
             });
+        }
+    }
+
+    // ✅ FIXED: Bottom Navigation Setup
+    private void setupBottomNavigation() {
+        BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.navigation_home);
+
+            bottomNavigation.setOnItemSelectedListener(item -> {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.navigation_home) {
+                    // Already on home page
+                    return true;
+                } else if (itemId == R.id.navigation_Schedule) {
+                    Intent intent = new Intent(CompanyHomeActivity.this, ScheduleActivity.class);
+                    startActivity(intent);
+                    return true;
+                } else if (itemId == R.id.navigation_profile) {
+                    String companyId = getCurrentCompanyUid();
+                    Intent intent = new Intent(CompanyHomeActivity.this, CompanyProfileActivity.class);
+                    intent.putExtra("companyId", companyId);
+                    startActivity(intent);
+                    return true;
+                }
+
+                return false;
+            });
+        } else {
+            Log.e("CompanyHomeActivity", "Bottom navigation view not found!");
         }
     }
 
@@ -922,34 +957,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         dialog.show();
     }
 
-    /*private void showAllApplicantsDialog() {
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_all_applicants_by_project);
-
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        }
-        dialog.setCancelable(true);
-
-        RecyclerView recyclerView = dialog.findViewById(R.id.projects_with_applicants_recycler);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // Fetch all projects with their applicants
-        fetchProjectsWithApplicants(projectsWithApplicants -> {
-            ProjectsWithApplicantsAdapter adapter = new ProjectsWithApplicantsAdapter(
-                    projectsWithApplicants, this);
-            recyclerView.setAdapter(adapter);
-        });
-
-        View btnClose = dialog.findViewById(R.id.btn_close_applicants);
-        if (btnClose != null) {
-            btnClose.setOnClickListener(v -> dialog.dismiss());
-        }
-
-        dialog.show();
-    }*/
-
     private void fetchRecentCompanyAnnouncements() {
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
         DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
@@ -1343,5 +1350,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
-        }}
+        }
+    }
 }
