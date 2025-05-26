@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- activity_student_chat.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -22,7 +23,7 @@
             android:gravity="center_vertical"
             android:paddingEnd="16dp">
 
-            <!-- Profile Picture -->
+            <!-- Company Logo/Profile -->
             <androidx.cardview.widget.CardView
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -31,10 +32,10 @@
                 app:cardElevation="2dp">
 
                 <ImageView
-                    android:id="@+id/iv_profile"
+                    android:id="@+id/iv_company_logo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_profile"
+                    android:src="@drawable/ic_business"
                     android:scaleType="centerCrop"
                     android:background="@color/primary_light" />
 
@@ -48,19 +49,19 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tv_chat_name"
+                    android:id="@+id/tv_company_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="John Doe"
+                    android:text="TechCorp Inc."
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@color/white" />
 
                 <TextView
-                    android:id="@+id/tv_online_status"
+                    android:id="@+id/tv_project_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🟢 Online"
+                    android:text="📱 Mobile App Development"
                     android:textSize="12sp"
                     android:textColor="@color/white"
                     android:alpha="0.8" />
@@ -70,8 +71,8 @@
             <!-- More Options -->
             <ImageView
                 android:id="@+id/iv_more_options"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_more_vert"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="4dp"
@@ -83,7 +84,61 @@
 
     </com.google.android.material.appbar.MaterialToolbar>
 
-    <!-- Interview Info Banner (Show only if interview is scheduled) -->
+    <!-- Application Status Banner -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_status_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/green_50"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✅"
+                android:textSize="16sp"
+                android:layout_marginEnd="8dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_status_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Application Status: Shortlisted"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/green_700" />
+
+                <TextView
+                    android:id="@+id/tv_status_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Congratulations! You've been shortlisted."
+                    android:textSize="11sp"
+                    android:textColor="@color/text_secondary" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Interview Info Banner -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cv_interview_banner"
         android:layout_width="match_parent"
@@ -136,7 +191,7 @@
                 android:id="@+id/btn_interview_details"
                 android:layout_width="wrap_content"
                 android:layout_height="32dp"
-                android:text="Details"
+                android:text="View"
                 android:textSize="10sp"
                 style="@style/Widget.Material3.Button.TextButton"
                 app:cornerRadius="16dp" />
@@ -176,7 +231,7 @@
             android:id="@+id/tv_typing_indicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="John is typing..."
+            android:text="TechCorp is typing..."
             android:textSize="12sp"
             android:textColor="@color/text_secondary"
             android:fontFamily="sans-serif-medium" />
@@ -191,7 +246,7 @@
         android:background="@color/white"
         android:elevation="4dp">
 
-        <!-- Quick Replies (Optional) -->
+        <!-- Quick Replies for Students -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_quick_replies"
             android:layout_width="match_parent"
@@ -211,8 +266,8 @@
             <!-- Attachment Button -->
             <ImageView
                 android:id="@+id/iv_attach"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:src="@drawable/ic_attach_file"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"

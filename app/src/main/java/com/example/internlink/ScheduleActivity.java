@@ -191,7 +191,7 @@ public class ScheduleActivity extends AppCompatActivity {
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
-    private void loadShortlistedApplicants() {
+    public void loadShortlistedApplicants() {
         showLoading(true);
         String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -232,8 +232,12 @@ public class ScheduleActivity extends AppCompatActivity {
                                     });
 
                                     filteredList = new ArrayList<>(applicantsList);
-                                    adapter = new ShortlistedApplicantsAdapter(filteredList, ScheduleActivity.this);
-                                    recyclerView.setAdapter(adapter);
+                                    if (adapter == null) {
+                                        adapter = new ShortlistedApplicantsAdapter(filteredList, ScheduleActivity.this);
+                                        recyclerView.setAdapter(adapter);
+                                    } else {
+                                        adapter.updateData(filteredList);
+                                    }
 
                                     showLoading(false);
                                     showEmptyState(applicantsList.isEmpty());
