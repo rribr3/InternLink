@@ -561,6 +561,15 @@ public class ApplyNowActivity extends AppCompatActivity {
                     quizScore.setText(quiz.getPassingScore() + "%");
                     hasQuiz = true;
                 }
+                long currentTime = System.currentTimeMillis();
+                long projectStartTime = currentProject.getStartDate();
+
+                if (projectStartTime <= currentTime) {
+                    applyButton.setEnabled(false);
+                    applyButton.setText("Applications Closed");
+                    applyButton.setAlpha(0.5f); // optional: visually fade the button
+                }
+
 
                 // 🔍 Now check if user already applied and update button
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();

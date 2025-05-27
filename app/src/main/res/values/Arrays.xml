@@ -115,4 +115,141 @@
         <item>Remote</item>
         <item>In Office</item>
     </string-array>
+    <!-- Lebanon Governorates -->
+    <string-array name="lebanon_governorates">
+        <item>Beirut</item>
+        <item>Mount Lebanon</item>
+        <item>North Lebanon</item>
+        <item>South Lebanon</item>
+        <item>Bekaa</item>
+        <item>Nabatieh</item>
+        <item>Akkar</item>
+        <item>Baalbek-Hermel</item>
+    </string-array>
+
+    <!-- Districts for each governorate -->
+    <string-array name="lebanon_districts_beirut">
+        <item>Beirut</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_mount_lebanon">
+        <item>Baabda</item>
+        <item>Aley</item>
+        <item>Matn</item>
+        <item>Keserwan</item>
+        <item>Chouf</item>
+        <item>Jbeil</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_north_lebanon">
+        <item>Tripoli</item>
+        <item>Zgharta</item>
+        <item>Bsharri</item>
+        <item>Batroun</item>
+        <item>Koura</item>
+        <item>Miniyeh-Danniyeh</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_south_lebanon">
+        <item>Sidon</item>
+        <item>Tyre</item>
+        <item>Jezzine</item>
+        <item>Nabatieh</item>
+        <item>Hasbaya</item>
+        <item>Marjeyoun</item>
+        <item>Bint Jbeil</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_bekaa">
+        <item>Zahle</item>
+        <item>West Bekaa</item>
+        <item>Rashaya</item>
+        <item>Baalbek</item>
+        <item>Hermel</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_nabatieh">
+        <item>Nabatieh</item>
+        <item>Hasbaya</item>
+        <item>Marjeyoun</item>
+        <item>Bint Jbeil</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_akkar">
+        <item>Akkar</item>
+        <item>Danniyeh</item>
+    </string-array>
+
+    <string-array name="lebanon_districts_baalbek_hermel">
+        <item>Baalbek</item>
+        <item>Hermel</item>
+    </string-array>
+
+    <!-- Cities for each district -->
+    <!-- Beirut -->
+    <string-array name="lebanon_cities_beirut">
+        <item>Downtown Beirut</item>
+        <item>Hamra</item>
+        <item>Achrafieh</item>
+        <item>Gemmayze</item>
+        <item>Verdun</item>
+        <item>Mazraa</item>
+        <item>Ras Beirut</item>
+        <item>Manara</item>
+        <item>Mar Mikhael</item>
+        <item>Badaro</item>
+    </string-array>
+
+    <!-- Mount Lebanon - Baabda -->
+    <string-array name="lebanon_cities_baabda">
+        <item>Baabda</item>
+        <item>Hazmieh</item>
+        <item>Chiyah</item>
+        <item>Furn el Chebbak</item>
+        <item>Hadath</item>
+    </string-array>
+
+    <!-- Mount Lebanon - Matn -->
+    <string-array name="lebanon_cities_matn">
+        <item>Jdeideh</item>
+        <item>Bourj Hammoud</item>
+        <item>Sin el Fil</item>
+        <item>Dekwaneh</item>
+        <item>Fanar</item>
+        <item>Antelias</item>
+        <item>Dbayeh</item>
+    </string-array>
+
+    <!-- Mount Lebanon - Keserwan -->
+    <string-array name="lebanon_cities_keserwan">
+        <item>Jounieh</item>
+        <item>Zouk Mosbeh</item>
+        <item>Harissa</item>
+        <item>Ghosta</item>
+        <item>Ajaltoun</item>
+    </string-array>
+
+    <!-- North Lebanon - Tripoli -->
+    <string-array name="lebanon_cities_tripoli">
+        <item>Tripoli</item>
+        <item>El Mina</item>
+        <item>Qobbeh</item>
+        <item>Abou Samra</item>
+    </string-array>
+
+    <!-- Bekaa - Zahle -->
+    <string-array name="lebanon_cities_zahle">
+        <item>Zahle</item>
+        <item>Kab Elias</item>
+        <item>Taalabaya</item>
+        <item>Chtaura</item>
+    </string-array>
+
+    <!-- South Lebanon - Tyre -->
+    <string-array name="lebanon_cities_tyre">
+        <item>Tyre</item>
+        <item>Qana</item>
+        <item>Abbasiyeh</item>
+        <item>Burj el-Shemali</item>
+    </string-array>
 </resources>

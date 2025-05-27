@@ -11,47 +11,64 @@
         android:orientation="vertical">
 
         <!-- Hero Section with Company Logo -->
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="231dp"
-            android:background="@drawable/header_gradient"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:paddingTop="48dp"
-            android:paddingBottom="32dp">
+            android:layout_height="231dp">
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/iv_company_logo"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="16dp"
-                android:contentDescription="Company Logo"
-                android:scaleType="centerCrop"
-                android:elevation="4dp"
-                app:shapeAppearanceOverlay="@style/RoundedImageView"/>
-
-
-            <TextView
-                android:id="@+id/tv_project_title"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:textColor="@android:color/black"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.03"
-                android:lineSpacingExtra="4dp" />
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="@drawable/header_gradient"
+                android:padding="24dp"
+                android:paddingTop="48dp"
+                android:paddingBottom="32dp">
 
-            <TextView
-                android:id="@+id/tv_company_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:textColor="#CCFFFFFF"
-                android:textSize="15sp"
-                android:layout_marginTop="4dp" />
-        </LinearLayout>
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/iv_company_logo"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="16dp"
+                    android:contentDescription="Company Logo"
+                    android:scaleType="centerCrop"
+                    android:elevation="4dp"
+                    app:shapeAppearanceOverlay="@style/RoundedImageView" />
+
+                <TextView
+                    android:id="@+id/tv_project_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/black"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_company_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="15sp"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <!-- 🆕 ImageButton in top-right corner -->
+            <ImageButton
+                android:id="@+id/btn_top_right"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Top Right Action"
+                android:src="@drawable/ic_more_vert"
+                app:tint="@android:color/white" />
+        </FrameLayout>
+
 
         <!-- Content Cards Container -->
         <LinearLayout

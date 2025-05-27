@@ -710,7 +710,7 @@ public class StudentHomeActivity extends AppCompatActivity
                             boolean isFull = applicants >= needed;
                             boolean alreadyApplied = appliedProjectIds.contains(projectId);
 
-                            if ((isFull && hasStarted) || isFull || alreadyApplied) continue;
+                            if (hasStarted || isFull || alreadyApplied) continue;
 
                             project.setProjectId(projectId);
                             filteredProjects.add(project);

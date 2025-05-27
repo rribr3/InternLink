@@ -19,11 +19,12 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
     private List<Announcement> originalList, filteredList;
     private final AnnouncementClickListener listener;
 
-    public AnnouncementAdapter(Context context, List<Announcement> list) {
-        this.listener = (AnnouncementClickListener) context;
+    public AnnouncementAdapter(List<Announcement> list, AnnouncementClickListener listener) {
+        this.listener = listener;
         this.originalList = list;
         this.filteredList = new ArrayList<>(list);
     }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, body, date;

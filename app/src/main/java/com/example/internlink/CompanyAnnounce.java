@@ -45,7 +45,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class CompanyAnnounce extends AppCompatActivity {
+public class CompanyAnnounce extends AppCompatActivity  {
 
     private LinearLayout announcementContainer;
     private RecyclerView recyclerView;
@@ -73,7 +73,13 @@ public class CompanyAnnounce extends AppCompatActivity {
         chipGroup = findViewById(R.id.filter_chip_group);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new AnnouncementAdapter(this, announcementList);
+        adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
+            @Override
+            public void showAnnouncementPopup(String id, String title, String body, String date) {
+                showAnnouncementPopup(id, title, body, date);
+            }
+        });
+
         recyclerView.setAdapter(adapter);
 
         toolbar = findViewById(R.id.topAppBar);

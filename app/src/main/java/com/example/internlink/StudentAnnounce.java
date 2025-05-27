@@ -73,7 +73,13 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         chipGroup = findViewById(R.id.filter_chip_group);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new AnnouncementAdapter(this, announcementList);
+        adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
+            @Override
+            public void showAnnouncementPopup(String id, String title, String body, String date) {
+                showAnnouncementPopup(id, title, body, date);
+            }
+        });
+
         recyclerView.setAdapter(adapter);
 
         toolbar = findViewById(R.id.topAppBar);
