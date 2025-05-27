@@ -1,13 +1,19 @@
+// MessagesAdapter.java - Complete version with all ViewHolders
 package com.example.internlink;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -20,6 +26,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_MESSAGE_SENT = 1;
     private static final int TYPE_MESSAGE_RECEIVED = 2;
     private static final int TYPE_SYSTEM_MESSAGE = 3;
+    private static final int TYPE_FILE_SENT = 4;
+    private static final int TYPE_FILE_RECEIVED = 5;
+    private static final int TYPE_IMAGE_SENT = 6;
+    private static final int TYPE_IMAGE_RECEIVED = 7;
 
     private List<Message> messages;
     private String currentUserId;
@@ -33,19 +43,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public int getItemViewType(int position) {
         Message message = messages.get(position);
 
+        // Check if we need to show date header
+        if (position > 0 && shouldShowDateHeader(position)) {
+            // This position should show a date header
+            // You might need to insert date headers as separate items in your list
+        }
+
         if ("system".equals(message.getMessageType())) {
             return TYPE_SYSTEM_MESSAGE;
         }
 
-        // Check if we need to show date header
-        if (shouldShowDateHeader(position)) {
-            return TYPE_DATE_HEADER;
-        }
+        boolean isSent = message.isSentByCurrentUser(currentUserId);
 
-        if (message.isSentByCurrentUser(currentUserId)) {
-            return TYPE_MESSAGE_SENT;
-        } else {
-            return TYPE_MESSAGE_RECEIVED;
+        switch (message.getMessageType()) {
+            case "image":
+                return isSent ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
+            case "file":
+                return isSent ? TYPE_FILE_SENT : TYPE_FILE_RECEIVED;
+            default:
+                return isSent ? TYPE_MESSAGE_SENT : TYPE_MESSAGE_RECEIVED;
         }
     }
 
@@ -71,6 +87,22 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 View systemView = inflater.inflate(R.layout.item_system_message, parent, false);
                 return new SystemMessageViewHolder(systemView);
 
+            case TYPE_FILE_SENT:
+                View fileSentView = inflater.inflate(R.layout.item_message_file_sent, parent, false);
+                return new FileSentViewHolder(fileSentView);
+
+            case TYPE_FILE_RECEIVED:
+                View fileReceivedView = inflater.inflate(R.layout.item_message_file_received, parent, false);
+                return new FileReceivedViewHolder(fileReceivedView);
+
+            case TYPE_IMAGE_SENT:
+                View imageSentView = inflater.inflate(R.layout.item_message_image_sent, parent, false);
+                return new ImageSentViewHolder(imageSentView);
+
+            case TYPE_IMAGE_RECEIVED:
+                View imageReceivedView = inflater.inflate(R.layout.item_message_image_received, parent, false);
+                return new ImageReceivedViewHolder(imageReceivedView);
+
             default:
                 View defaultView = inflater.inflate(R.layout.item_message_received, parent, false);
                 return new ReceivedMessageViewHolder(defaultView);
@@ -89,6 +121,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             ((ReceivedMessageViewHolder) holder).bind(message);
         } else if (holder instanceof SystemMessageViewHolder) {
             ((SystemMessageViewHolder) holder).bind(message);
+        } else if (holder instanceof FileSentViewHolder) {
+            ((FileSentViewHolder) holder).bind(message);
+        } else if (holder instanceof FileReceivedViewHolder) {
+            ((FileReceivedViewHolder) holder).bind(message);
+        } else if (holder instanceof ImageSentViewHolder) {
+            ((ImageSentViewHolder) holder).bind(message);
+        } else if (holder instanceof ImageReceivedViewHolder) {
+            ((ImageReceivedViewHolder) holder).bind(message);
         }
     }
 
@@ -188,6 +228,188 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         void bind(Message message) {
             tvSystemMessage.setText(message.getText());
+        }
+    }
+
+    // File Sent ViewHolder
+    static class FileSentViewHolder extends RecyclerView.ViewHolder {
+        TextView tvFileName, tvFileSize, tvTime, tvStatus;
+        ImageView ivFileIcon;
+        LinearLayout messageContainer;
+
+        FileSentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvFileName = itemView.findViewById(R.id.tv_file_name);
+            tvFileSize = itemView.findViewById(R.id.tv_file_size);
+            tvTime = itemView.findViewById(R.id.tv_time);
+            tvStatus = itemView.findViewById(R.id.tv_status);
+            ivFileIcon = itemView.findViewById(R.id.iv_file_icon);
+            messageContainer = itemView.findViewById(R.id.message_container);
+        }
+
+        void bind(Message message) {
+            tvFileName.setText(message.getFileName());
+            tvFileSize.setText(FileAttachmentHelper.formatFileSize(message.getFileSize()));
+            tvTime.setText(message.getFormattedTime());
+
+            // Set file icon based on file type
+            setFileIcon(message.getFileName());
+
+            // Status indicators
+            updateStatus(message.getStatus());
+
+            // Click to open file
+            messageContainer.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(message.getFileUrl()));
+                v.getContext().startActivity(intent);
+            });
+        }
+
+        private void setFileIcon(String fileName) {
+            if (fileName.endsWith(".pdf")) {
+                ivFileIcon.setImageResource(R.drawable.ic_pdf);
+            } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                ivFileIcon.setImageResource(R.drawable.ic_doc);
+            } else {
+                ivFileIcon.setImageResource(R.drawable.ic_file);
+            }
+        }
+
+        private void updateStatus(String status) {
+            if ("sent".equals(status)) {
+                tvStatus.setText("✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white_alpha_70));
+            } else if ("delivered".equals(status)) {
+                tvStatus.setText("✓✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white_alpha_70));
+            } else if ("read".equals(status)) {
+                tvStatus.setText("✓✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white));
+            }
+        }
+    }
+
+    // File Received ViewHolder
+    static class FileReceivedViewHolder extends RecyclerView.ViewHolder {
+        TextView tvFileName, tvFileSize, tvTime;
+        ImageView ivFileIcon, ivDownload;
+        LinearLayout messageContainer;
+
+        FileReceivedViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvFileName = itemView.findViewById(R.id.tv_file_name);
+            tvFileSize = itemView.findViewById(R.id.tv_file_size);
+            tvTime = itemView.findViewById(R.id.tv_time);
+            ivFileIcon = itemView.findViewById(R.id.iv_file_icon);
+            ivDownload = itemView.findViewById(R.id.iv_download);
+            messageContainer = itemView.findViewById(R.id.message_container);
+        }
+
+        void bind(Message message) {
+            tvFileName.setText(message.getFileName());
+            tvFileSize.setText(FileAttachmentHelper.formatFileSize(message.getFileSize()));
+            tvTime.setText(message.getFormattedTime());
+
+            // Set file icon
+            setFileIcon(message.getFileName());
+
+            // Click to download/open
+            View.OnClickListener downloadListener = v -> {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(message.getFileUrl()));
+                v.getContext().startActivity(intent);
+            };
+
+            messageContainer.setOnClickListener(downloadListener);
+            ivDownload.setOnClickListener(downloadListener);
+        }
+
+        private void setFileIcon(String fileName) {
+            if (fileName.endsWith(".pdf")) {
+                ivFileIcon.setImageResource(R.drawable.ic_pdf);
+            } else if (fileName.endsWith(".doc") || fileName.endsWith(".docx")) {
+                ivFileIcon.setImageResource(R.drawable.ic_doc);
+            } else {
+                ivFileIcon.setImageResource(R.drawable.ic_file);
+            }
+        }
+    }
+
+    // Image Sent ViewHolder
+    static class ImageSentViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivImage;
+        TextView tvTime, tvStatus;
+
+        ImageSentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivImage = itemView.findViewById(R.id.iv_image);
+            tvTime = itemView.findViewById(R.id.tv_time);
+            tvStatus = itemView.findViewById(R.id.tv_status);
+        }
+
+        void bind(Message message) {
+            // Load image with Glide
+            Glide.with(itemView.getContext())
+                    .load(message.getFileUrl())
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .error(R.drawable.ic_image_error)
+                    .into(ivImage);
+
+            tvTime.setText(message.getFormattedTime());
+
+            // Status indicators
+            updateStatus(message.getStatus());
+
+            // Click to view full image
+            ivImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
+                intent.putExtra("image_url", message.getFileUrl());
+                v.getContext().startActivity(intent);
+            });
+        }
+
+        private void updateStatus(String status) {
+            if ("sent".equals(status)) {
+                tvStatus.setText("✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white_alpha_70));
+            } else if ("delivered".equals(status)) {
+                tvStatus.setText("✓✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white_alpha_70));
+            } else if ("read".equals(status)) {
+                tvStatus.setText("✓✓");
+                tvStatus.setTextColor(itemView.getContext().getColor(R.color.white));
+            }
+        }
+    }
+
+    // Image Received ViewHolder
+    static class ImageReceivedViewHolder extends RecyclerView.ViewHolder {
+        ImageView ivImage;
+        TextView tvTime;
+
+        ImageReceivedViewHolder(@NonNull View itemView) {
+            super(itemView);
+            ivImage = itemView.findViewById(R.id.iv_image);
+            tvTime = itemView.findViewById(R.id.tv_time);
+        }
+
+        void bind(Message message) {
+            // Load image with Glide
+            Glide.with(itemView.getContext())
+                    .load(message.getFileUrl())
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .error(R.drawable.ic_image_error)
+                    .into(ivImage);
+
+            tvTime.setText(message.getFormattedTime());
+
+            // Click to view full image
+            ivImage.setOnClickListener(v -> {
+                Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
+                intent.putExtra("image_url", message.getFileUrl());
+                v.getContext().startActivity(intent);
+            });
         }
     }
 }

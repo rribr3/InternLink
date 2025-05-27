@@ -1,6 +1,8 @@
 package com.example.internlink;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -66,13 +69,66 @@ public class StudentChatActivity extends AppCompatActivity {
     private ValueEventListener messagesListener;
     private ValueEventListener typingListener;
     private ValueEventListener statusListener;
+    private FileAttachmentHelper fileAttachmentHelper;
+    private ProgressDialog progressDialog;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_chat);
+        if (!PermissionHelper.isNotificationPermissionGranted(this)) {
+            if (PermissionHelper.shouldShowNotificationPermissionRationale(this)) {
+                // Show explanation dialog
+                new AlertDialog.Builder(this)
+                        .setTitle("Notification Permission")
+                        .setMessage("We need notification permission to alert you about new messages.")
+                        .setPositiveButton("Grant", (dialog, which) -> {
+                            PermissionHelper.requestNotificationPermission(this);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } else {
+                PermissionHelper.requestNotificationPermission(this);
+            }
+        }
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Uploading...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setCancelable(false);
 
         initializeViews();
+        // Initialize FileAttachmentHelper
+        fileAttachmentHelper = new FileAttachmentHelper(this, new FileAttachmentHelper.OnFileUploadListener() {
+            @Override
+            public void onUploadProgress(int progress) {
+                if (!progressDialog.isShowing()) {
+                    progressDialog.show();
+                }
+                progressDialog.setProgress(progress);
+            }
+
+            @Override
+            public void onUploadSuccess(String fileUrl, String fileName, long fileSize, String fileType) {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                if (fileType != null && fileType.startsWith("image/")) {
+                    sendImageMessage(fileUrl, fileName, fileSize, fileType);
+                } else {
+                    sendFileMessage(fileUrl, fileName, fileSize, fileType);
+                }
+            }
+
+            @Override
+            public void onUploadFailure(String error) {
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
+                Toast.makeText(StudentChatActivity.this, "Upload failed: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         getIntentData();
         setupFirebaseReferences();
         setupToolbar();
@@ -84,6 +140,49 @@ public class StudentChatActivity extends AppCompatActivity {
 
         // Set user online status
         setUserOnlineStatus(true);
+    }
+    private void sendImageMessage(String imageUrl, String fileName, long fileSize, String fileType) {
+        String messageId = messagesRef.push().getKey();
+        if (messageId == null) return;
+
+        Message message = new Message();
+        message.setText(fileName);
+        message.setSenderId(currentUserId);
+        message.setReceiverId(chatWithId);
+        message.setTimestamp(System.currentTimeMillis());
+        message.setMessageType("image");
+        message.setStatus("sent");
+        message.setFileUrl(imageUrl);
+        message.setFileName(fileName);
+        message.setFileSize(fileSize);
+
+        messagesRef.child(messageId).setValue(message)
+                .addOnSuccessListener(aVoid -> {
+                    // Update chat metadata
+                    updateChatMetadata("📷 Photo");
+
+                    // Send notification
+                    sendNotificationToRecipient("Sent a photo");
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to send image", Toast.LENGTH_SHORT).show();
+                });
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PermissionHelper.NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Notification permission granted
+                Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                // Notification permission denied
+                Toast.makeText(this, "Notifications disabled. You won't receive message alerts.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void initializeViews() {
@@ -103,6 +202,73 @@ public class StudentChatActivity extends AppCompatActivity {
         cvInterviewBanner = findViewById(R.id.cv_interview_banner);
         cvStatusBanner = findViewById(R.id.cv_status_banner);
         btnInterviewDetails = findViewById(R.id.btn_interview_details);
+    }
+    private void showAttachmentOptions() {
+        String[] options = {
+                "📷 Send Image",
+                "📄 Send Document",
+                "📁 Send File"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Send Attachment")
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            fileAttachmentHelper.pickImage();
+                            break;
+                        case 1:
+                            fileAttachmentHelper.pickDocument();
+                            break;
+                        case 2:
+                            fileAttachmentHelper.pickFile();
+                            break;
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (fileAttachmentHelper != null) {
+            fileAttachmentHelper.handleActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void sendFileMessage(String fileUrl, String fileName, long fileSize, String fileType) {
+        String messageId = messagesRef.push().getKey();
+        if (messageId == null) return;
+
+        Message message = new Message();
+        message.setText(fileName);
+        message.setSenderId(currentUserId);
+        message.setReceiverId(chatWithId);
+        message.setTimestamp(System.currentTimeMillis());
+        message.setMessageType("file");
+        message.setStatus("sent");
+        message.setFileUrl(fileUrl);
+        message.setFileName(fileName);
+        message.setFileSize(fileSize);
+
+        messagesRef.child(messageId).setValue(message)
+                .addOnSuccessListener(aVoid -> {
+                    // Update chat metadata
+                    updateChatMetadata("📎 " + fileName);
+
+                    // Send notification
+                    sendNotificationToRecipient("Sent an attachment: " + fileName);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to send file", Toast.LENGTH_SHORT).show();
+                });
+    }
+    private void sendNotificationToRecipient(String messageText) {
+        // Since we're in StudentChatActivity, the recipient is the company
+        // This method is essentially the same as sendNotificationToCompany
+        sendNotificationToCompany(messageText);
     }
 
     private void getIntentData() {
@@ -464,37 +630,6 @@ public class StudentChatActivity extends AppCompatActivity {
         }
     }
 
-    private void showAttachmentOptions() {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setTitle("Send Attachment")
-                .setItems(new String[]{
-                        "📄 Send Resume/CV",
-                        "🎨 Send Portfolio",
-                        "📋 Send Cover Letter",
-                        "📁 Send Document"
-                }, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            // Send Resume/CV
-                            Toast.makeText(this, "Resume attachment coming soon!", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 1:
-                            // Send Portfolio
-                            Toast.makeText(this, "Portfolio attachment coming soon!", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 2:
-                            // Send Cover Letter
-                            Toast.makeText(this, "Cover letter attachment coming soon!", Toast.LENGTH_SHORT).show();
-                            break;
-                        case 3:
-                            // Send Document
-                            Toast.makeText(this, "Document attachment coming soon!", Toast.LENGTH_SHORT).show();
-                            break;
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
 
     private void showMoreOptionsMenu() {
         PopupMenu popup = new PopupMenu(this, ivMoreOptions);

@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.ui.graphics.android)
     implementation(libs.swiperefreshlayout)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -61,6 +62,12 @@ dependencies {
     implementation("com.dropbox.core:dropbox-core-sdk:5.4.6")
     implementation ("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.google.firebase:firebase-messaging:23.4.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
 
 
