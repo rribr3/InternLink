@@ -1,6 +1,7 @@
 package com.example.internlink;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +17,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import java.util.List;
 
 public class MyApplicationsActivity extends AppCompatActivity {
 
+    private static final String TAG = "MyApplicationsActivity";
     private RecyclerView applicationsRecycler;
     private TextView emptyView;
     private ApplicationsAdapter adapter;
@@ -51,38 +54,53 @@ public class MyApplicationsActivity extends AppCompatActivity {
             return;
         }
 
-        DatabaseReference appsRef = (DatabaseReference) FirebaseDatabase.getInstance()
-                .getReference("applications")
-                .orderByChild("userId")
-                .equalTo(user.getUid());
+        Log.d(TAG, "Loading applications for user: " + user.getUid());
+
+        // Alternative approach: Load all applications and filter locally
+        DatabaseReference appsRef = FirebaseDatabase.getInstance().getReference("applications");
 
         appsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d(TAG, "Total applications in database: " + snapshot.getChildrenCount());
                 applications.clear();
+
+                List<Application> userApplications = new ArrayList<>();
+
+                // Filter applications for current user
                 for (DataSnapshot appSnapshot : snapshot.getChildren()) {
                     Application app = appSnapshot.getValue(Application.class);
-                    if (app != null) {
-                        // Fetch project details for each application
-                        fetchProjectDetails(app);
+                    if (app != null && user.getUid().equals(app.getUserId())) {
+                        userApplications.add(app);
+                        Log.d(TAG, "Found user application: " + app.getProjectId());
                     }
                 }
 
-                if (applications.isEmpty()) {
+                Log.d(TAG, "User applications found: " + userApplications.size());
+
+                if (userApplications.isEmpty()) {
                     showEmptyView();
-                } else {
-                    hideEmptyView();
+                    return;
+                }
+
+                // Counter to track when all project details are loaded
+                final int totalApplications = userApplications.size();
+                final int[] loadedCount = {0};
+
+                for (Application app : userApplications) {
+                    fetchProjectDetails(app, totalApplications, loadedCount);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to load applications: " + error.getMessage());
                 Toast.makeText(MyApplicationsActivity.this, "Failed to load applications", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void fetchProjectDetails(Application application) {
+    private void fetchProjectDetails(Application application, int totalApplications, int[] loadedCount) {
         DatabaseReference projectRef = FirebaseDatabase.getInstance()
                 .getReference("projects")
                 .child(application.getProjectId());
@@ -90,9 +108,22 @@ public class MyApplicationsActivity extends AppCompatActivity {
         projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Log.d(TAG, "Fetching project details for: " + application.getProjectId());
                 Project project = snapshot.getValue(Project.class);
                 if (project != null) {
                     applications.add(new ApplicationWithProject(application, project));
+                    Log.d(TAG, "Added application with project. Total count: " + applications.size());
+                } else {
+                    Log.w(TAG, "Project not found for ID: " + application.getProjectId());
+                }
+
+                // Increment the loaded count
+                loadedCount[0]++;
+                Log.d(TAG, "Loaded count: " + loadedCount[0] + "/" + totalApplications);
+
+                // Update UI only when all applications are loaded
+                if (loadedCount[0] == totalApplications) {
+                    Log.d(TAG, "All applications loaded. Final count: " + applications.size());
                     adapter.notifyDataSetChanged();
 
                     if (applications.isEmpty()) {
@@ -106,6 +137,18 @@ public class MyApplicationsActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(MyApplicationsActivity.this, "Error loading project details", Toast.LENGTH_SHORT).show();
+
+                // Still increment count even on error to prevent hanging
+                loadedCount[0]++;
+                if (loadedCount[0] == totalApplications) {
+                    adapter.notifyDataSetChanged();
+
+                    if (applications.isEmpty()) {
+                        showEmptyView();
+                    } else {
+                        hideEmptyView();
+                    }
+                }
             }
         });
     }

@@ -106,8 +106,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_applications"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
+                android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:layout_marginBottom="16dp" />
 

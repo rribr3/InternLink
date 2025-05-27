@@ -19,6 +19,7 @@ public class Application {
     private String interviewDate;
     private String interviewTime;
     private long lastUpdated;
+    private String parentApplicationId;
 
 
 
@@ -36,6 +37,13 @@ public class Application {
         setResumeUrl(resumeUrl);
         setNotes(notes);
         setQuizGrade(quizGrade); // ✅ new field
+    }
+    public String getParentApplicationId() {
+        return parentApplicationId;
+    }
+
+    public void setParentApplicationId(String parentApplicationId) {
+        this.parentApplicationId = parentApplicationId;
     }
 
     public void setInterviewDate(String interviewDate) {
@@ -134,11 +142,19 @@ public class Application {
     }
 
     public void setStatus(String status) {
-        if (!isValidStatus(status)) {
+        // Map "Under Review" to "Shortlisted"
+        if (status.equalsIgnoreCase("Under Review")) {
+            this.status = "Shortlisted";
+        } else if (status.equals("Accepted") ||
+                status.equals("Rejected") ||
+                status.equals("Pending") ||
+                status.equals("Shortlisted")) {
+            this.status = status;
+        } else {
             throw new IllegalArgumentException("Invalid status value: " + status);
         }
-        this.status = status;
     }
+
 
     public void setAppliedDate(long appliedDate) {
         if (appliedDate <= 0) {

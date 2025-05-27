@@ -45,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -412,10 +413,14 @@ public class ScheduleActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String cvUrl = snapshot.getValue(String.class);
                 if (cvUrl != null && !cvUrl.isEmpty()) {
+                    if (cvUrl.contains("www.dropbox.com")) {
+                        cvUrl = cvUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
+                    }
                     Intent intent = new Intent(ScheduleActivity.this, PdfViewerActivity.class);
                     intent.putExtra("pdf_url", cvUrl);
                     startActivity(intent);
-                } else {
+                }
+                else {
                     Toast.makeText(ScheduleActivity.this, "CV not available", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -496,44 +501,102 @@ public class ScheduleActivity extends AppCompatActivity {
 
     private void updateInterviewDetails(ShortlistedApplicant applicant, String date, String time,
                                         String mode, String location, String notes) {
-        DatabaseReference applicationRef = FirebaseDatabase.getInstance()
-                .getReference("applications")
-                .child(applicant.getApplicationId());
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy hh:mm a", Locale.getDefault());
+            Date selectedDateTime = sdf.parse(date + " " + time);
+            long selectedTimeMillis = selectedDateTime.getTime();
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("interviewDate", date.isEmpty() ? null : date);
-        updates.put("interviewTime", time.isEmpty() ? null : time);
-        updates.put("interviewMode", mode.isEmpty() ? "Pending" : mode);
-        updates.put("interviewLocation", location.isEmpty() ? null : location);
-        updates.put("interviewNotes", notes.isEmpty() ? null : notes);
-        updates.put("lastUpdated", System.currentTimeMillis());
+            checkInterviewConflicts(FirebaseAuth.getInstance().getCurrentUser().getUid(), applicant.getUserId(), selectedTimeMillis, canProceed -> {
+                if (!canProceed) {
+                    Toast.makeText(ScheduleActivity.this, "❌ Conflict with another interview time", Toast.LENGTH_LONG).show();
+                    return;
+                }
 
-        applicationRef.updateChildren(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "✅ Interview updated successfully!", Toast.LENGTH_SHORT).show();
+                DatabaseReference applicationRef = FirebaseDatabase.getInstance()
+                        .getReference("applications")
+                        .child(applicant.getApplicationId());
 
-                    // Update local data
-                    applicant.setInterviewDate(date.isEmpty() ? null : date);
-                    applicant.setInterviewTime(time.isEmpty() ? null : time);
-                    applicant.setInterviewMode(mode.isEmpty() ? "Pending" : mode);
-                    applicant.setInterviewLocation(location.isEmpty() ? null : location);
-                    applicant.setInterviewNotes(notes.isEmpty() ? null : notes);
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("interviewDate", date.isEmpty() ? null : date);
+                updates.put("interviewTime", time.isEmpty() ? null : time);
+                updates.put("interviewMode", mode.isEmpty() ? "Pending" : mode);
+                updates.put("interviewLocation", location.isEmpty() ? null : location);
+                updates.put("interviewNotes", notes.isEmpty() ? null : notes);
+                updates.put("lastUpdated", System.currentTimeMillis());
 
-                    // Update status
-                    String status = (date.isEmpty() || time.isEmpty()) ? "Pending" : "Scheduled";
-                    applicant.setInterviewStatus(status);
+                applicationRef.updateChildren(updates)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(ScheduleActivity.this, "✅ Interview updated!", Toast.LENGTH_SHORT).show();
 
-                    if (adapter != null) {
-                        adapter.notifyDataSetChanged();
-                    }
+                            applicant.setInterviewDate(date.isEmpty() ? null : date);
+                            applicant.setInterviewTime(time.isEmpty() ? null : time);
+                            applicant.setInterviewMode(mode.isEmpty() ? "Pending" : mode);
+                            applicant.setInterviewLocation(location.isEmpty() ? null : location);
+                            applicant.setInterviewNotes(notes.isEmpty() ? null : notes);
 
-                    // Create update announcement
-                    createInterviewUpdateAnnouncement(applicant);
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "❌ Failed to update interview", Toast.LENGTH_SHORT).show();
-                });
+                            String status = (date.isEmpty() || time.isEmpty()) ? "Pending" : "Scheduled";
+                            applicant.setInterviewStatus(status);
+
+                            if (adapter != null) adapter.notifyDataSetChanged();
+                            createInterviewUpdateAnnouncement(applicant);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(ScheduleActivity.this, "❌ Failed to update interview", Toast.LENGTH_SHORT).show();
+                        });
+            });
+
+        } catch (Exception e) {
+            Toast.makeText(ScheduleActivity.this, "Invalid date or time", Toast.LENGTH_SHORT).show();
+        }
     }
+    private void checkInterviewConflicts(String companyId, String studentId, long selectedTimeMillis, ConflictCallback callback) {
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+
+        applicationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                long buffer = 30 * 60 * 1000; // 30 minutes
+
+                for (DataSnapshot app : snapshot.getChildren()) {
+                    String appCompanyId = app.child("companyId").getValue(String.class);
+                    String appUserId = app.child("userId").getValue(String.class);
+                    String interviewDate = app.child("interviewDate").getValue(String.class);
+                    String interviewTime = app.child("interviewTime").getValue(String.class);
+
+                    if (interviewDate == null || interviewTime == null) continue;
+
+                    try {
+                        Date existing = new SimpleDateFormat("MMMM d, yyyy hh:mm a", Locale.getDefault())
+                                .parse(interviewDate + " " + interviewTime);
+                        long existingTime = existing.getTime();
+
+                        boolean companyConflict = appCompanyId != null && appCompanyId.equals(companyId)
+                                && Math.abs(existingTime - selectedTimeMillis) < buffer;
+                        boolean studentConflict = appUserId != null && appUserId.equals(studentId)
+                                && existingTime == selectedTimeMillis;
+
+                        if (companyConflict || studentConflict) {
+                            callback.onCheckComplete(false);
+                            return;
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                callback.onCheckComplete(true); // No conflicts
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onCheckComplete(false);
+            }
+        });
+    }
+
+    interface ConflictCallback {
+        void onCheckComplete(boolean canProceed);
+    }
+
+
 
     void updateApplicantStatus(ShortlistedApplicant applicant, String newStatus) {
         DatabaseReference applicationRef = FirebaseDatabase.getInstance()

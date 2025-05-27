@@ -67,7 +67,8 @@ public class StudentProfileActivity extends AppCompatActivity {
     private ImageView studentPfp;
     private Uri selectedLogoUri = null;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFy1pyQScDIMQhT188fkJoFF8832mcW7MGzWZarIROy3Pw6uye7_WnR3mxo-RpfLcvOtlYeb67_mjHxdfFEIq8RnydOcMnpMnR5aJr04cRBeuSsBdglM2QvZaKQ1J_LhXuOEmdDsVsQZQbM9CNBbmzz2Q1A75H3t8Ohx6VHjRnu7MGjHTNgY5Bf_v1UOyDbJ77nYrRdW9KgbYtCLLJ356k7Vh5tuIFvavULQ50oS5MxavoPVXVpr8ppnrZNHfpzlJaPTBeYsFxWgXvJn-DLawaOzL6y3AN3rzXIWjZCk8hVNVG2LaUr3Na3hACPOLkhf5-5xcaP61nQAwDJI5XZNCiFu8cjGrfAFsl6vwkxOTIUNwuGwKYHp5VrwWvuvfY4vnbEcSiv6BYGv3HM9M9QF_GPS1bxOPNEUjMZRfWUV5FN0bHz_Mc68ZCVEC8XWYotnzDWy1RQ47zzPyc4UlqoY3f_EiqT2r-ubMrcufnpZvIs689e9hMBnvttBeBsukXX2nxD6vLAc9t3rFahRRrJXdXlUPMWvMGI1wXl_iS_bCObzd6Qdm6IB9mcMM76KMKi-808RFRf_ddHnF3qvmXpSGFjdIh-3H5cZyJA7Jjq_XQl8u1TtUkYREj_7knVv66QmARTYFQ7NOjbXy-5JHxT9-RyAl_ZI891gk3s4Li6SE8gfheYXYXttAw2lngmhbUK-dWwh1jXptIa7gkezSUEzNM971qsAlbY59Dwnu9XZlqcY_UH6HBEXm7dE9BIqGsWln2uxIi3ivqIN_QNm2vAkis7udh7z3q58O-iXyB4Yzi-IPURwZyS281JPTi7HaXBYGJB1qIXi2ibpRX4GWPPCSVvO1FRySNh6gieq4wmHt9rBSaMxUIRoRrv3sSz6oPZGbZfF9JFnmOQ0VkXi9y_RnGuydU7Xm3a2sZffIWkmxdr_TNGAyZxNo0yZFbGU4dzZbTChIGYiYrQgcJNlla4vStKTBJZ9cxfxcEL_bu4MSESQWptZ6iwac9MTEIB_qTWwZmDZgde4GYecUxE-PkKtVHfz2qgyeUFIsTYd3j-qwg1ZyiagRFLsbAJSvMfQOpLh7p_itmWkKFilS7h0KVkhxE7znFxKgprdU_65qYaVaVHoYyXlZKh9xXxTuz4tA5i7vxEbdGNynlSwAyZucBC8Mp3YZ8XfhyDjU2xctBPcvvc4_DBJUtZsca8BTqbkG6pOKF0ktEpziRriaCK-4FG8JeSYeBCVRtth2_SXSMzufYkoB1lSzXU9mKlbwsEXEQ6WUq2_gEfi-_ba6LhyLKEl7wHLifelWxa7lzt5pjpNNN5nIopDb0eRn0EA35OR9SA2faCBc2pVT8d8mE844whLetTUZwBEEAnEuoCH04-GhT1gqRdzDBLIesxNMrGoF2Qc7sz0mwwiBvROuu7wWoL0GkZsT8TwpLLDyDlq1walbEyFNVySd3WJh106c6NLdhf_o1o";
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFwCy7V8cHUsYrguu9QzH4ltfyhyTn2bQ6wSzTOc6sF-ay1pTEKWxXvc5vb7hPkoC6boFkqomrr8TrUkKPPAGJ_oJ3Kj1ouxHmiZDEqVxgp8gxyu_N2UtXehXMhFhRNMWAQhKQkyKiE-r55x_rPBCPtgrPC5m83jX4ApPr7-srWbibVvKyuSE4VWyrMOJZOkWBdX8dA4zdvdHbUOqrzJblbwKNyHZQ35pZ4oJqVN3VNsFw0FB3dT-Yn4Ds2mahP5Ab7r1XpQcF2XBKE0j4Q61AGtc7NA4iaBlH2IUdwSb1K4AQXuvJ2wsZnIcL-fBK29CLaMYbm3am2J7xKt6QGKIdIV7ovUBPBkBgjaBwvSff87krs7wRjdPDTS2e-Y7gAYCAsll_S72CiVvmnG1N-57arudjaqIZ60Z1NmcbBjpTGIuN6IBsF9LH8uepuGhtvFEzId2hMGWze21tDYqmrS73aaKtux_bK7QAfd5F5VL_Zwn754XJxp1hQe1gXc4jbO3HKAjDrxCbeB5YWYitdFo57gBq21lRnbQ6cVEZJmrzSMrTmi7O_PzStHfV5Y9LLqGQk_djneQeIndh21LhwGAvHhq5AkZ44xqLuWpmQAS39gnuF-36P-pYfxy13HtZJKg0CeT9ltCep1DcRaw3a7MN3obuY3PKUYa_jfivvw5z9PX8O1qln_-lekyojpWXCV-JSG1f_GrXqSknYAIV145tOSp4QptG1_4dx0yfa8Hrl_SqHKL6wPZSiFt1Zz64iacziNia-71EcBd5Rbob2Mpjhwa31b4G4DvikS_u8qSvK0cnd2_hzJQDOfCWdi771QVRY61tleZT26_kBxXoAN-nMy4ssgQeuU9_E4hRWVZo8ysYblvgkP7JV5RU87RGOubutR1qrYtXg649_pIkp19OnnhgMWkxthA-fR0FngRCIkRmnvkJzuujdV5H419hXMrLHOVso-fr87NPw0PdeHSEtlkCaiz88au1uEz9WY4V26C2SxiElMZMPOnJxjlHdc_iI-ni9O239keG0LXGmGQg0UTmAytriDkHjfYbHJCULaJ72RWq24gQ5SFKwJn-D99dhBR35GqizR6Jxff3l_ub0cgg-4Pk3XjKM312JSAsl9cZ48pXutJvjfthvHXZKMLIWzYll-_5WlyAbW2IqzfpYnRisoYcIyr-SSFtz4IsskL9-WTn6Fw1caoGUQoXLAAHEbw8NxYBAV41-HR7lfiKqfkSjIMzxbS-l04oevW7fxeUtnylHZ85rTKRuL3zG84xHB9zEc12gnXFJ2k5DcQSFI_jIRlyofk_fy_UpazbJOA7M-vwIqOBQSOwqa3faTG8KGDotzfITScXSzQ3Ddzqngdj1GWXi7djJFVBY510PNZ8-kj1D3ZWe42XVMk2Eu8081JY13_Xm7jenT_4f8Eop80al5kupl6aI8BBAl7Ay2TsMLMflwE3DnF10AStoy668";
+
     private final ActivityResultLauncher<String> pdfPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -176,14 +177,20 @@ public class StudentProfileActivity extends AppCompatActivity {
 
 
     }
-    private void saveStudentData(String cvUrl) {
+    private void saveStudentData(String tempLink) {
         Map<String, Object> updates = new HashMap<>();
-        if (cvUrl != null) updates.put("cvUrl", cvUrl);
+        if (tempLink != null) {
+            updates.put("cvUrl", tempLink);
+            this.cvUrl = tempLink; // ✅ This line is essential
+            cvFileName.setText(Uri.parse(tempLink).getLastPathSegment());
+            cvDisplayLayout.setVisibility(View.VISIBLE);
+        }
 
         studentRef.updateChildren(updates)
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Saved cv successfully", Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Saved CV successfully", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show());
     }
+
 
     private void uploadPdfToDropbox(Uri pdfUri) {
         ProgressDialog progressDialog = new ProgressDialog(this);

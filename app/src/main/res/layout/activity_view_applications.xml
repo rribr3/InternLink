@@ -430,11 +430,23 @@
                 android:gravity="center"
                 android:paddingHorizontal="16dp"
                 android:layout_marginTop="8dp">
+                <Button
+                    android:id="@+id/btn_view"
+                    android:layout_width="0dp"
+                    android:layout_height="55dp"
+                    android:layout_weight="1"
+                    android:text="View Interview Details"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="#4285F4"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    style="@style/Widget.MaterialComponents.Button"
+                    app:cornerRadius="24dp" />
 
                 <Button
                     android:id="@+id/btn_withdraw"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
+                    android:layout_height="55dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:text="Withdraw Application"
@@ -447,7 +459,7 @@
                 <Button
                     android:id="@+id/btn_reapply"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
+                    android:layout_height="55dp"
                     android:layout_weight="1"
                     android:text="Reapply"
                     android:textColor="@android:color/white"

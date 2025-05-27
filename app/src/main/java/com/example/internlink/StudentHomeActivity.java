@@ -432,8 +432,9 @@ public class StudentHomeActivity extends AppCompatActivity
             } else if (id == R.id.navigation_projects) {
                 showAllProjectsPopup();
                 return true;
-            } else if (id == R.id.navigation_applications) {
-                showAllApplications();
+            } else if (id == R.id.navigation_map) {
+                intent = new Intent(this, MapActivity.class);
+                startActivity(intent);
                 return true;
             } else if (id == R.id.navigation_profile) {
                 intent = new Intent(this, StudentProfileActivity.class);
@@ -774,7 +775,7 @@ public class StudentHomeActivity extends AppCompatActivity
 
     private void setupClickListeners() {
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> {
-            bottomNavigationView.setSelectedItemId(R.id.navigation_applications);
+            showAllApplications();
         });
 
         notificationBell.setOnClickListener(v -> {
@@ -1107,7 +1108,7 @@ public class StudentHomeActivity extends AppCompatActivity
             bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
         }
         else if (id == R.id.nav_applications) {
-            bottomNavigationView.setSelectedItemId(R.id.navigation_applications);
+            showAllApplications();
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
