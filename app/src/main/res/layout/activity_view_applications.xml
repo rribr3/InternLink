@@ -58,7 +58,7 @@
 
             <!-- 🆕 ImageButton in top-right corner -->
             <ImageButton
-                android:id="@+id/btn_top_right"
+                android:id="@+id/btn_chat"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_gravity="top|end"

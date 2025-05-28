@@ -92,7 +92,7 @@
                                 android:layout_alignTop="@id/notification_bell"
                                 android:background="@drawable/bg_card_blue"
                                 android:gravity="center"
-                                android:textColor="@color/white"
+                                android:textColor="@color/black"
                                 android:textSize="10sp"
                                 android:visibility="gone" />
                         </RelativeLayout>
@@ -125,7 +125,7 @@
 
                         <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="200dp"
+                            android:layout_height="wrap_content"
                             android:orientation="vertical">
 
                             <!-- Cards -->

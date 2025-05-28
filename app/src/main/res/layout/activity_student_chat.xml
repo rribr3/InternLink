@@ -65,6 +65,14 @@
                     android:textSize="12sp"
                     android:textColor="@color/white"
                     android:alpha="0.8" />
+                <TextView
+                    android:id="@+id/tv_online_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🟢 Online"
+                    android:textSize="12sp"
+                    android:textColor="@color/white"
+                    android:alpha="0.8" />
 
             </LinearLayout>
 

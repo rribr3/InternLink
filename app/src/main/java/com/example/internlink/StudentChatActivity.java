@@ -71,6 +71,8 @@ public class StudentChatActivity extends AppCompatActivity {
     private ValueEventListener statusListener;
     private FileAttachmentHelper fileAttachmentHelper;
     private ProgressDialog progressDialog;
+    private TextView tvOnlineStatus;
+
 
 
     @Override
@@ -202,6 +204,8 @@ public class StudentChatActivity extends AppCompatActivity {
         cvInterviewBanner = findViewById(R.id.cv_interview_banner);
         cvStatusBanner = findViewById(R.id.cv_status_banner);
         btnInterviewDetails = findViewById(R.id.btn_interview_details);
+        tvOnlineStatus = findViewById(R.id.tv_online_status);
+
     }
     private void showAttachmentOptions() {
         String[] options = {
@@ -397,7 +401,6 @@ public class StudentChatActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
-
         // Listen for company online status
         statusListener = userStatusRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -405,13 +408,20 @@ public class StudentChatActivity extends AppCompatActivity {
                 Boolean isOnline = snapshot.child("online").getValue(Boolean.class);
                 Long lastSeen = snapshot.child("lastSeen").getValue(Long.class);
 
-                // Update company status in toolbar if needed
-                // You can add a status indicator for the company
+                if (isOnline != null && isOnline) {
+                    tvOnlineStatus.setText("🟢 Online");
+                } else if (lastSeen != null) {
+                    String lastSeenText = getLastSeenText(lastSeen);
+                    tvOnlineStatus.setText("⚪ " + lastSeenText);
+                } else {
+                    tvOnlineStatus.setText("⚪ Offline");
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
+
     }
 
     private void sendMessage() {

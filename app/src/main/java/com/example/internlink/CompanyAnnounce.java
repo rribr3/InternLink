@@ -45,7 +45,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class CompanyAnnounce extends AppCompatActivity  {
+public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAdapter.AnnouncementClickListener  {
 
     private LinearLayout announcementContainer;
     private RecyclerView recyclerView;
@@ -73,12 +73,7 @@ public class CompanyAnnounce extends AppCompatActivity  {
         chipGroup = findViewById(R.id.filter_chip_group);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
-            @Override
-            public void showAnnouncementPopup(String id, String title, String body, String date) {
-                showAnnouncementPopup(id, title, body, date);
-            }
-        });
+        adapter = new AnnouncementAdapter(announcementList, this);
 
         recyclerView.setAdapter(adapter);
 
@@ -120,7 +115,7 @@ public class CompanyAnnounce extends AppCompatActivity  {
     }
 
     // UPDATED: Enhanced popup method to handle all clickable links
-    void showAnnouncementPopup(String announcementId, String title, String body, String date) {
+    public void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
         popupView.setBackgroundColor(getResources().getColor(android.R.color.white));

@@ -19,12 +19,21 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Add Google Maps API key from local.properties
+            val apiKey = project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
+            resValue("string", "google_maps_key", apiKey.toString())
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Add Google Maps API key from local.properties
+            val apiKey = project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
+            resValue("string", "google_maps_key", apiKey.toString())
+
         }
     }
     compileOptions {
@@ -47,6 +56,7 @@ dependencies {
     implementation(libs.ui.graphics.android)
     implementation(libs.swiperefreshlayout)
     implementation(libs.firebase.messaging)
+    implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -68,7 +78,9 @@ dependencies {
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-
-
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-base:18.2.0")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 
 }

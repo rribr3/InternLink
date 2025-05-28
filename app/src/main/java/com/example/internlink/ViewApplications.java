@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ public class ViewApplications extends AppCompatActivity {
             tvPaymentInfo, tvPostedDate, tvContact,
             tvStatus, tvSubmissionDate, tvQuizScore, tvCompanyMessage;
     private Button btnWithdraw, btnView, btnReapply;
+    private ImageButton btnChat;
 
     private String applicationId;
     private TextView tvReapplicationLabel;
@@ -82,6 +84,8 @@ public class ViewApplications extends AppCompatActivity {
         btnWithdraw = findViewById(R.id.btn_withdraw);
         btnView = findViewById(R.id.btn_view);
         btnReapply = findViewById(R.id.btn_reapply);
+
+
 
         loadApplicationData();
 
@@ -133,9 +137,6 @@ public class ViewApplications extends AppCompatActivity {
                 submitReapplication(null); // no resume, no quiz
             }
         });
-
-
-
 
     }
     private void uploadResume() {
@@ -245,6 +246,36 @@ public class ViewApplications extends AppCompatActivity {
                     finish();
                     return;
                 }
+                btnChat = findViewById(R.id.btn_chat);
+
+                String interviewType = snapshot.child("interviewType").getValue(String.class);
+                String interviewDate = snapshot.child("interviewDate").getValue(String.class);
+                String interviewTime = snapshot.child("interviewTime").getValue(String.class);
+
+                if ("Online".equalsIgnoreCase(interviewType)) {
+                    // Combine date + time and parse
+                    try {
+                        String dateTimeString = interviewDate + " " + interviewTime;
+                        SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
+                        Date interviewDateTime = format.parse(dateTimeString);
+
+                        // Compare with current time
+                        if (interviewDateTime != null && interviewDateTime.after(new Date())) {
+                            btnChat.setEnabled(false);
+                            btnChat.setAlpha(0.5f); // make it visually disabled
+                        } else {
+                            btnChat.setEnabled(true);
+                            btnChat.setAlpha(1.0f);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        btnChat.setEnabled(false); // fail safe
+                    }
+                } else {
+                    // In-person interviews: always allow chat
+                    btnChat.setEnabled(true);
+                    btnChat.setAlpha(1.0f);
+                }
 
                 Boolean isReapplication = snapshot.child("reapplication").getValue(Boolean.class);
                 String parentId = snapshot.child("parentApplicationId").getValue(String.class);
@@ -266,9 +297,25 @@ public class ViewApplications extends AppCompatActivity {
                 tvSubmissionDate.setText("Submitted on: " + formatDate(appliedDate));
                 tvQuizScore.setText("Quiz Score: " + (quizGrade != null ? quizGrade + "/100" : "N/A"));
 
-                setStatusAndButtons(status); // ✅ always use current status
-
+                setStatusAndButtons(status); // always use current status
                 loadProjectAndCompany(projectId, companyId);
+
+                if ("Pending".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status)) {
+                    btnChat.setEnabled(false);
+                    btnChat.setAlpha(0.5f);
+                } else {
+                    btnChat.setOnClickListener(v -> {
+                        Intent intent = new Intent(ViewApplications.this, StudentChatActivity.class);
+                        intent.putExtra("COMPANY_ID", companyId);
+                        intent.putExtra("COMPANY_NAME", tvCompanyName.getText().toString());
+                        intent.putExtra("PROJECT_ID", projectId);
+                        intent.putExtra("PROJECT_TITLE", tvProjectTitle.getText().toString());
+                        intent.putExtra("APPLICATION_ID", applicationId);
+                        startActivity(intent);
+                    });
+                }
+
+
             }
 
             @Override

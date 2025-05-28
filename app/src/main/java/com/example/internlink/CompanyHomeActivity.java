@@ -184,8 +184,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     @Override
                     public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
                         for (DataSnapshot snap : globalSnapshot.getChildren()) {
-                            if (!readsSnapshot.hasChild(snap.getKey())) {
-                                unreadIds.add(snap.getKey());
+                            String key = snap.getKey();
+                            if (key != null && !readsSnapshot.hasChild(key)) {
+                                unreadIds.add(key);
                             }
                         }
 
@@ -193,8 +194,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             @Override
                             public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
                                 for (DataSnapshot snap : roleSnapshot.getChildren()) {
-                                    if (!readsSnapshot.hasChild(snap.getKey())) {
-                                        unreadIds.add(snap.getKey());
+                                    String key = snap.getKey();
+                                    if (key != null && !readsSnapshot.hasChild(key)) {
+                                        unreadIds.add(key);
                                     }
                                 }
 
@@ -227,22 +229,25 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         userReadsRef.addValueEventListener(unreadListener);
 
+        // Click listener - removed markAllAnnouncementsAsRead call
         notificationBell.setOnClickListener(v -> {
-            markAllAnnouncementsAsRead(userId);
             Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
             startActivity(intent);
         });
     }
 
     private void updateNotificationBadge(int unreadCount) {
-        if (unreadCount > 0) {
-            notificationBadge.setVisibility(View.VISIBLE);
-            notificationBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
-        } else {
-            notificationBadge.setVisibility(View.GONE);
+        if (notificationBadge != null) {
+            if (unreadCount > 0) {
+                notificationBadge.setVisibility(View.VISIBLE);
+                notificationBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+            } else {
+                notificationBadge.setVisibility(View.GONE);
+            }
         }
     }
 
+    // Keep this method for use in CompanyAnnounce activity or other places where needed
     private void markAllAnnouncementsAsRead(String userId) {
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
@@ -256,7 +261,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
                 // Mark global announcements as read
                 for (DataSnapshot snap : globalSnapshot.getChildren()) {
-                    updates.put(snap.getKey(), true);
+                    String key = snap.getKey();
+                    if (key != null) {
+                        updates.put(key, true);
+                    }
                 }
 
                 // Then get role-specific announcements
@@ -265,14 +273,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
                         // Mark role announcements as read
                         for (DataSnapshot snap : roleSnapshot.getChildren()) {
-                            updates.put(snap.getKey(), true);
+                            String key = snap.getKey();
+                            if (key != null) {
+                                updates.put(key, true);
+                            }
                         }
 
                         // Update user_reads with all announcements
                         if (!updates.isEmpty()) {
                             userReadsRef.updateChildren(updates)
                                     .addOnSuccessListener(aVoid -> {
-                                        // Badge will update automatically through the listener
+                                        Log.d("NotificationBell", "All announcements marked as read");
                                     })
                                     .addOnFailureListener(e -> {
                                         Log.e("NotificationBell", "Failed to mark announcements as read", e);
@@ -292,6 +303,14 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 Log.e("NotificationBell", "Failed to read global announcements", error.toException());
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // The ValueEventListener will automatically refresh the badge when returning from other activities
+        // No need to call setupNotificationBell() again as it would create duplicate listeners
+
     }
 
     private void initializeViews() {

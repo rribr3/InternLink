@@ -13,6 +13,7 @@ coreKtx = "1.16.0"
 uiGraphicsAndroid = "1.8.0"
 swiperefreshlayout = "1.1.0"
 firebaseMessaging = "24.1.1"
+playServicesMaps = "19.2.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -27,6 +28,7 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx"
 ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
