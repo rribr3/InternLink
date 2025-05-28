@@ -3,11 +3,14 @@ package com.example.internlink;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -26,11 +29,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,16 +43,13 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.search.SearchBar;
+import com.google.android.material.search.SearchView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import android.graphics.Paint;
-import com.google.android.material.search.SearchView;
-import android.text.Editable;
-import android.text.TextWatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +90,8 @@ public class StudentHomeActivity extends AppCompatActivity
         public Project project;
         public CompanyInfo company;
         public List<String> matchReasons;
+        private List<Project> allProjects = new ArrayList<>();
+
     }
 
     public static class CompanyInfo {
@@ -142,6 +142,7 @@ public class StudentHomeActivity extends AppCompatActivity
         setupClickListeners();
         setupSwipeRefresh();
         setupEnhancedSearch();
+        setupClickListeners1();
     }
 
     private void setupEnhancedSearch() {
@@ -429,8 +430,8 @@ public class StudentHomeActivity extends AppCompatActivity
                 // We're already on home screen, refresh data
                 refreshAllData();
                 return true;
-            } else if (id == R.id.navigation_projects) {
-                showAllProjectsPopup();
+            }  else if (id == R.id.nav_messages) {
+                Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.navigation_map) {
                 intent = new Intent(this, MapActivity.class);
@@ -773,15 +774,26 @@ public class StudentHomeActivity extends AppCompatActivity
         return java.util.Collections.emptyList();
     }
 
-    private void setupClickListeners() {
+
+    private void setupClickListeners1() {
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> {
             showAllApplications();
         });
+
+
 
         notificationBell.setOnClickListener(v -> {
             // Navigate to StudentAnnounce.java
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
             startActivity(intent);
+        });
+    }
+
+
+
+    private void setupClickListeners() {
+        findViewById(R.id.btn_view_all_projects).setOnClickListener(v -> {
+            showAllProjectsPopup();
         });
     }
 
@@ -791,32 +803,105 @@ public class StudentHomeActivity extends AppCompatActivity
 
         // Setup RecyclerView
         RecyclerView rvAllProjects = popupView.findViewById(R.id.rv_all_projects);
-        rvAllProjects.setLayoutManager(new LinearLayoutManager(this));
 
-        ProjectAdapterHome adapter = new ProjectAdapterHome(allProjects, project -> {
-            Toast.makeText(this, "Selected: " + project.getTitle(), Toast.LENGTH_SHORT).show();
-        }, false); // false for vertical layout
+        // Use LinearLayoutManager with vertical orientation
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        rvAllProjects.setLayoutManager(layoutManager);
 
-        rvAllProjects.setAdapter(adapter);
+        // Add item decoration for spacing between items
+        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.project_item_spacing);
+        rvAllProjects.addItemDecoration(new SpacesItemDecoration(spacingInPixels));
+
+        List<Project> fetchedProjects = new ArrayList<>();
+        DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects");
+
+        // Show loading indicator
+        ProgressBar progressBar = popupView.findViewById(R.id.progress_bar);
+        progressBar.setVisibility(View.VISIBLE);
+
+        projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                fetchedProjects.clear();
+                for (DataSnapshot projectSnap : snapshot.getChildren()) {
+                    Project project = projectSnap.getValue(Project.class);
+                    if (project != null && "approved".equals(project.getStatus())) {
+                        project.setProjectId(projectSnap.getKey());
+                        fetchedProjects.add(project);
+                    }
+                }
+
+
+
+                ProjectAdapterHome adapter = new ProjectAdapterHome(fetchedProjects, project -> {
+                    // Handle project click - open project details
+                    Intent intent = new Intent(StudentHomeActivity.this, ProjectDetailsActivity.class);
+                    intent.putExtra("PROJECT_ID", project.getProjectId());
+                    startActivity(intent);
+                }, false);
+
+                rvAllProjects.setAdapter(adapter);
+                progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(getApplicationContext(), "Failed to load projects", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Create and show the popup
         PopupWindow popupWindow = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 true
         );
 
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         popupWindow.setAnimationStyle(R.style.PopupAnimation);
 
+        // Set elevation for better visual appearance
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            popupWindow.setElevation(20f);
+        }
+
+        // Set focusable to enable touch outside dismissal
+        popupWindow.setFocusable(true);
+
+        // Add close button functionality
+        ImageView closeButton = popupView.findViewById(R.id.btn_close_popup);
+        closeButton.setOnClickListener(v -> popupWindow.dismiss());
+
         popupWindow.showAtLocation(
                 findViewById(android.R.id.content),
                 Gravity.CENTER,
-                0,
-                0
+                10,
+                10
         );
     }
+
+    // Item decoration class for adding space between items
+    public class SpacesItemDecoration extends RecyclerView.ItemDecoration {
+        private final int space;
+
+        public SpacesItemDecoration(int space) {
+            this.space = space;
+        }
+
+        @Override
+        public void getItemOffsets(Rect outRect, View view,
+                                   RecyclerView parent, RecyclerView.State state) {
+            outRect.bottom = space;
+
+            // Add top margin only for the first item to avoid double space between items
+            if (parent.getChildAdapterPosition(view) == 0) {
+                outRect.top = space;
+            }
+        }
+    }
+
 
     private void showAllApplications() {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
@@ -1107,12 +1192,18 @@ public class StudentHomeActivity extends AppCompatActivity
         if (id == R.id.nav_profile) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
         }
+
         else if (id == R.id.nav_applications) {
             showAllApplications();
+        } else if (id == R.id.nav_projects) {
+            showAllProjectsPopup();
         } else if (id == R.id.nav_messages) {
             Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_notifications) {
-            Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
+            startActivity(intent);
+        } else if (id == R.id.nav_feedback) {
+            Toast.makeText(this, "Feedbacks", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
             intent = new Intent(this, StudentSettingsActivity.class);
             startActivity(intent);

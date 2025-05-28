@@ -1285,6 +1285,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         } else if (id == R.id.nav_notifications) {
             intent = new Intent(this, CompanyAnnounce.class);
             startActivity(intent);
+        } else if (id == R.id.nav_feedback) {
+            Toast.makeText(this, "Feedbacks", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
             intent = new Intent(this, CompanySettingsActivity.class);
             startActivity(intent);

@@ -1,7 +1,10 @@
 package com.example.internlink;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -23,7 +26,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import javax.annotation.Nullable;
@@ -47,22 +53,107 @@ public class ViewApplications extends AppCompatActivity {
     private Project currentProject;
     private boolean hasResume = false;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_applications);
 
-        applicationId = getIntent().getStringExtra("APPLICATION_ID");
+        // Check if we have a specific application ID from announcement
+        String targetApplicationId = getIntent().getStringExtra("APPLICATION_ID");
 
-        if (applicationId == null || applicationId.isEmpty()) {
-            Toast.makeText(this, "Application ID not provided", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        // Debug logging
+        Log.d("ViewApplications", "onCreate called");
+        Log.d("ViewApplications", "APPLICATION_ID from intent: " + targetApplicationId);
+
+        if (targetApplicationId != null && !targetApplicationId.trim().isEmpty()) {
+            // We have a specific application ID from announcement - use it directly
+            applicationId = targetApplicationId;
+            Log.d("ViewApplications", "Using specific applicationId: " + applicationId);
+            Toast.makeText(this, "Loading application: " + applicationId.substring(0, Math.min(8, applicationId.length())) + "...", Toast.LENGTH_SHORT).show();
+            initializeViews();
+            loadApplicationData();
+        } else {
+            // No specific application ID - we need to find the user's applications
+            // This is for cases where ViewApplications is opened normally (not from announcement)
+            Log.d("ViewApplications", "No specific applicationId, finding user applications");
+            findUserApplications();
         }
+    }
 
+    private void findUserApplications() {
+        // Check if we're coming from a specific project context
+        String projectIdFromIntent = getIntent().getStringExtra("PROJECT_ID");
 
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference appsRef = FirebaseDatabase.getInstance().getReference("applications");
+
+        appsRef.orderByChild("userId").equalTo(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists() || !snapshot.hasChildren()) {
+                            Toast.makeText(ViewApplications.this, "No applications found", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        // If we have a project ID from intent, find the application for that specific project
+                        if (projectIdFromIntent != null && !projectIdFromIntent.trim().isEmpty()) {
+                            boolean found = false;
+                            for (DataSnapshot appSnap : snapshot.getChildren()) {
+                                String appProjectId = appSnap.child("projectId").getValue(String.class);
+                                if (projectIdFromIntent.equals(appProjectId)) {
+                                    applicationId = appSnap.getKey();
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (!found) {
+                                Toast.makeText(ViewApplications.this, "No application found for this project", Toast.LENGTH_SHORT).show();
+                                finish();
+                                return;
+                            }
+                        } else {
+                            // No specific project - show a list or the most recent application
+                            List<DataSnapshot> applicationsList = new ArrayList<>();
+                            for (DataSnapshot appSnap : snapshot.getChildren()) {
+                                applicationsList.add(appSnap);
+                            }
+
+                            // Sort by applied date (most recent first)
+                            Collections.sort(applicationsList, (a, b) -> {
+                                Long dateA = a.child("appliedDate").getValue(Long.class);
+                                Long dateB = b.child("appliedDate").getValue(Long.class);
+                                if (dateA == null) dateA = 0L;
+                                if (dateB == null) dateB = 0L;
+                                return dateB.compareTo(dateA);
+                            });
+
+                            // Take the most recent application
+                            if (!applicationsList.isEmpty()) {
+                                applicationId = applicationsList.get(0).getKey();
+                                Toast.makeText(ViewApplications.this, "Showing your most recent application", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        if (applicationId != null) {
+                            initializeViews();
+                            loadApplicationData();
+                        } else {
+                            Toast.makeText(ViewApplications.this, "No valid applications found", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(ViewApplications.this, "Error loading applications", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                });
+    }
+    private void initializeViews() {
         ivCompanyLogo = findViewById(R.id.iv_company_logo);
         tvProjectTitle = findViewById(R.id.tv_project_title);
         tvCompanyName = findViewById(R.id.tv_company_name);
@@ -80,15 +171,14 @@ public class ViewApplications extends AppCompatActivity {
         tvQuizScore = findViewById(R.id.tv_quiz_score);
         tvReapplicationLabel = findViewById(R.id.tv_reapplication_label);
 
-
         btnWithdraw = findViewById(R.id.btn_withdraw);
         btnView = findViewById(R.id.btn_view);
         btnReapply = findViewById(R.id.btn_reapply);
 
+        setupButtonListeners();
+    }
 
-
-        loadApplicationData();
-
+    private void setupButtonListeners() {
         btnWithdraw.setOnClickListener(v -> {
             View dialogView = getLayoutInflater().inflate(R.layout.dialog_withdraw_confirm, null);
 
@@ -128,6 +218,7 @@ public class ViewApplications extends AppCompatActivity {
             // Show the dialog
             dialog.show();
         });
+
         btnReapply.setOnClickListener(v -> {
             if (hasResume && resumeUrl == null) {
                 uploadResume();
@@ -137,8 +228,8 @@ public class ViewApplications extends AppCompatActivity {
                 submitReapplication(null); // no resume, no quiz
             }
         });
-
     }
+
     private void uploadResume() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/pdf");
@@ -171,12 +262,14 @@ public class ViewApplications extends AppCompatActivity {
         negativeBtn.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
+
     private void launchQuizForReapplication() {
         Intent quizIntent = new Intent(this, QuizActivity.class);
         quizIntent.putExtra("QUIZ_DATA", currentProject.getQuiz());
         quizIntent.putExtra("PROJECT_ID", projectId);
         startActivityForResult(quizIntent, 1011); // custom request code
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -233,8 +326,6 @@ public class ViewApplications extends AppCompatActivity {
             }
         });
     }
-
-
 
     private void loadApplicationData() {
         DatabaseReference appRef = FirebaseDatabase.getInstance().getReference("applications").child(applicationId);
@@ -315,7 +406,7 @@ public class ViewApplications extends AppCompatActivity {
                     });
                 }
 
-
+                btnView.setOnClickListener(v -> showInterviewPopup());
             }
 
             @Override
@@ -325,7 +416,111 @@ public class ViewApplications extends AppCompatActivity {
         });
     }
 
+    private void showInterviewPopup() {
+        DatabaseReference appRef = FirebaseDatabase.getInstance().getReference("applications").child(applicationId);
+        appRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @SuppressLint("MissingInflatedId")
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) return;
 
+                String type = snapshot.child("interviewType").getValue(String.class);
+                String date = snapshot.child("interviewDate").getValue(String.class);
+                String time = snapshot.child("interviewTime").getValue(String.class);
+                String method = snapshot.child("interviewMethod").getValue(String.class);
+                String location = snapshot.child("interviewLocation").getValue(String.class);
+                String zoom = snapshot.child("zoomLink").getValue(String.class);
+
+                View view = getLayoutInflater().inflate(R.layout.dialog_interview_details, null);
+                AlertDialog dialog = new AlertDialog.Builder(ViewApplications.this)
+                        .setView(view)
+                        .setCancelable(true)
+                        .create();
+
+                TextView tvType = view.findViewById(R.id.tv_interview_type);
+                TextView tvDate = view.findViewById(R.id.tv_interview_date);
+                TextView tvTime = view.findViewById(R.id.tv_interview_time);
+                TextView tvMethod = view.findViewById(R.id.tv_interview_method);
+                TextView tvLocation = view.findViewById(R.id.tv_interview_location);
+                TextView tvZoom = view.findViewById(R.id.tv_zoom_link);
+
+                tvType.setText("Type: " + (type != null ? type : "N/A"));
+                tvDate.setText("Date: " + (date != null ? date : "N/A"));
+                tvTime.setText("Time: " + (time != null ? time : "N/A"));
+                tvMethod.setText("Method: " + (method != null ? method : "N/A"));
+
+                if ("Zoom".equalsIgnoreCase(method) || "Chat".equalsIgnoreCase(method)) {
+                    tvLocation.setVisibility(View.GONE);
+                } else {
+                    tvLocation.setText("Location: " + (location != null ? location : "N/A"));
+                    tvLocation.setVisibility(View.VISIBLE);
+                }
+
+                // Hide Zoom for "In-person" and "Chat"
+                if ("In-person".equalsIgnoreCase(type) || "Chat".equalsIgnoreCase(method)) {
+                    tvZoom.setVisibility(View.GONE);
+                } else {
+                    tvZoom.setText("Zoom: " + (zoom != null ? zoom : "N/A"));
+                    tvZoom.setVisibility(View.VISIBLE);
+                }
+
+                if ("In-person".equalsIgnoreCase(type)) {
+                    tvMethod.setVisibility(View.GONE);
+                } else {
+                    tvMethod.setText("Method: " + (method != null ? method : "N/A"));
+                    tvMethod.setVisibility(View.VISIBLE);
+                }
+                Button btnAction = view.findViewById(R.id.btn_action);
+                Button btnClose = view.findViewById(R.id.btn_close);
+
+// Set action button text based on method
+                if ("Zoom".equalsIgnoreCase(method)) {
+                    btnAction.setText("Join");
+                    btnAction.setOnClickListener(v -> {
+                        if (zoom != null && !zoom.isEmpty()) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setData(android.net.Uri.parse(zoom));
+                            startActivity(intent);
+                        } else {
+                            Toast.makeText(ViewApplications.this, "No Zoom link available", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else if ("Chat".equalsIgnoreCase(method)) {
+                    btnAction.setText("Message");
+                    btnAction.setOnClickListener(v -> {
+                        Intent intent = new Intent(ViewApplications.this, StudentChatActivity.class);
+                        intent.putExtra("COMPANY_ID", companyId);
+                        intent.putExtra("COMPANY_NAME", tvCompanyName.getText().toString());
+                        intent.putExtra("PROJECT_ID", projectId);
+                        intent.putExtra("PROJECT_TITLE", tvProjectTitle.getText().toString());
+                        intent.putExtra("APPLICATION_ID", applicationId);
+                        startActivity(intent);
+                    });
+                } else if ("In-person".equalsIgnoreCase(type)) {
+                    btnAction.setText("Find Location");
+                    btnAction.setOnClickListener(v -> {
+                        if (location != null && !location.isEmpty()) {
+                            Uri mapIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(location));
+                            Intent mapIntent = new Intent(Intent.ACTION_VIEW, mapIntentUri);
+                            mapIntent.setPackage("com.google.android.apps.maps");
+                            startActivity(mapIntent);
+                        } else {
+                            Toast.makeText(ViewApplications.this, "Location not available", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+// Handle close
+                btnClose.setOnClickListener(close -> dialog.dismiss());
+                dialog.show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ViewApplications.this, "Failed to load interview details", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void loadProjectAndCompany(String projId, String compId) {
         this.projectId = projId;
@@ -377,7 +572,6 @@ public class ViewApplications extends AppCompatActivity {
         });
     }
 
-
     private String joinSkills(DataSnapshot skillsSnap) {
         StringBuilder skills = new StringBuilder();
         for (DataSnapshot skill : skillsSnap.getChildren()) {
@@ -390,6 +584,7 @@ public class ViewApplications extends AppCompatActivity {
         switch (status) {
             case "Accepted": return "🟢 Accepted";
             case "Rejected": return "🔴 Rejected";
+            case "Shortlisted": return "🟡 Shortlisted";
             default: return "🟡 Pending";
         }
     }
@@ -398,6 +593,7 @@ public class ViewApplications extends AppCompatActivity {
         if (timestamp == null) return "N/A";
         return new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(new Date(timestamp));
     }
+
     private void setStatusAndButtons(String status) {
         if (status == null) status = "Pending";
 
@@ -406,5 +602,4 @@ public class ViewApplications extends AppCompatActivity {
         btnReapply.setVisibility("Rejected".equalsIgnoreCase(status) ? View.VISIBLE : View.GONE);
         btnWithdraw.setVisibility(!"Rejected".equalsIgnoreCase(status) ? View.VISIBLE : View.GONE);
     }
-
 }

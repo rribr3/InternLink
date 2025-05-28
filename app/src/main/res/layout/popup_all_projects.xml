@@ -1,6 +1,53 @@
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="400dp" android:layout_margin="16dp" app:cardCornerRadius="8dp" app:cardElevation="8dp">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
-        <TextView android:layout_width="407dp" android:layout_height="wrap_content" android:padding="16dp" android:text="All Suggested Projects" android:textColor="@color/black" android:textSize="20sp" android:textStyle="bold"/>
-        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_all_projects" android:layout_width="425dp" android:layout_height="match_parent" android:padding="8dp"/>
-    </LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="16dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="8dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/btn_close_popup"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/black" />
+
+        <TextView
+            android:id="@+id/tv_popup_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btn_close_popup"
+            android:layout_marginTop="-45dp"
+            android:padding="16dp"
+            android:text="All Available Projects"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_all_projects"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/tv_popup_title"
+            android:clipToPadding="false"
+            android:padding="8dp" />
+
+    </RelativeLayout>
 </androidx.cardview.widget.CardView>

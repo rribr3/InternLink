@@ -19,6 +19,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -35,15 +44,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class StudentAnnounce extends AppCompatActivity implements AnnouncementAdapter.AnnouncementClickListener {
 
@@ -76,7 +76,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
             @Override
             public void showAnnouncementPopup(String id, String title, String body, String date) {
-                showAnnouncementPopup(id, title, body, date);
+                StudentAnnounce.this.showAnnouncementPopup(id, title, body, date); // ☑ this calls the actual method in your Activity
             }
         });
 
@@ -154,13 +154,13 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
 
         // Handle [View Details] links - navigate to applications
         handleClickableLink(spannable, body, "[View Details]", () -> {
-            Intent intent = new Intent(StudentAnnounce.this, MyApplicationsActivity.class);
+            Intent intent = new Intent(StudentAnnounce.this, StudentHomeActivity.class);
             startActivity(intent);
         });
 
         // Handle [View Status] links - navigate to applications
         handleClickableLink(spannable, body, "[View Status]", () -> {
-            Intent intent = new Intent(StudentAnnounce.this, MyApplicationsActivity.class);
+            Intent intent = new Intent(StudentAnnounce.this, StudentHomeActivity.class);
             startActivity(intent);
         });
 

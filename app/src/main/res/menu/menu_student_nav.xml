@@ -4,8 +4,8 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_dashboard"
-            android:icon="@drawable/dashboard"
-            android:title="Dashboard" />
+            android:icon="@drawable/ic_home"
+            android:title="Home" />
 
         <item
             android:id="@+id/nav_profile"
@@ -15,24 +15,32 @@
         <item
             android:id="@+id/nav_projects"
             android:icon="@drawable/ic_project"
-            android:title="My Projects" />
+            android:title="Projects" />
 
         <item
             android:id="@+id/nav_applications"
-            android:icon="@drawable/ic_applications"
+            android:icon="@drawable/ic_report"
+            android:iconTint="@color/black"
             android:title="My Applications" />
-
-        <item
-            android:id="@+id/nav_messages"
-            android:icon="@drawable/ic_reply"
-            android:title="Messages" />
-
-        <item
-            android:id="@+id/nav_notifications"
-            android:icon="@drawable/notification"
-            android:title="Notifications" />
     </group>
+    <item android:title="Communication">
+        <menu>
+            <item
+                android:id="@+id/nav_messages"
+                android:icon="@drawable/ic_reply"
+                android:title="Messages" />
 
+            <item
+                android:id="@+id/nav_notifications"
+                android:icon="@drawable/notification"
+                android:title="Notifications" />
+            <item
+                android:id="@+id/nav_feedback"
+                android:icon="@drawable/feedback"
+                android:title="Feedbacks" />
+
+        </menu>
+    </item>
     <item android:title="Settings">
         <menu>
             <item
