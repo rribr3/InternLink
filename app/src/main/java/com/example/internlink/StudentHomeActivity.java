@@ -431,7 +431,8 @@ public class StudentHomeActivity extends AppCompatActivity
                 refreshAllData();
                 return true;
             }  else if (id == R.id.nav_messages) {
-                Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
+                intent = new Intent(this, MessagesActivity.class);
+                startActivity(intent);
                 return true;
             } else if (id == R.id.navigation_map) {
                 intent = new Intent(this, MapActivity.class);
@@ -1198,7 +1199,8 @@ public class StudentHomeActivity extends AppCompatActivity
         } else if (id == R.id.nav_projects) {
             showAllProjectsPopup();
         } else if (id == R.id.nav_messages) {
-            Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, MessagesActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_notifications) {
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
             startActivity(intent);

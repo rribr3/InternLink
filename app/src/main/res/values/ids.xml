@@ -10,4 +10,8 @@
     <item name="applicants_recycler" type="id" />
     <item name="applicants_container" type="id" />
     <item name="expand_collapse_icon" type="id" />
+    <item name="progressBar" type="id" />
+    <item name="tvTitle" type="id" />
+    <item name="btnSearch" type="id" />
+    <item name="btnStartConversation" type="id" />
 </resources>

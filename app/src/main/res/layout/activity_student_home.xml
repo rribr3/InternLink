@@ -111,6 +111,17 @@
                         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SearchBar.Rounded"
                         style="@style/Widget.Material3.SearchBar"
                         app:elevation="2dp"/>
+                    <TextView
+                        android:id="@+id/chat_alert_banner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="12dp"
+                        android:gravity="center"
+                        android:text="You have a new message from a company"
+                        android:textColor="@android:color/white"
+                        android:background="@color/red"
+                        android:textStyle="bold"
+                        android:visibility="gone"/>
 
 
                     <!-- Scrollable Content -->

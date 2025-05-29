@@ -210,5 +210,29 @@
     <color name="date_header_bg">#E0E0E0</color>
     <color name="system_message_bg">#FFF3E0</color>
     <color name="white_alpha_70">#B3FFFFFF</color>
+    <color name="text_tertiary">#9E9E9E</color>
+    <color name="background_light">#F5F5F5</color>
+    <color name="background_dark">#121212</color>
+    <color name="online_green">#4CAF50</color>
+    <color name="error_red">#F44336</color>
+    <color name="warning_orange">#FF9800</color>
+
+    <color name="secondary_color">#FF9800</color>
+
+    <!-- Background Colors -->
+    <color name="background_color">#FFFFFF</color>
+    <color name="unread_background">#F8F9FF</color>
+
+
+    <!-- User Type Colors -->
+    <color name="company_color">#FF5722</color>
+    <color name="student_color">#4CAF50</color>
+    <color name="default_profile_color">#9E9E9E</color>
+
+    <!-- Message Status Colors -->
+    <color name="message_sent_color">#9E9E9E</color>
+    <color name="message_read_color">#2196F3</color>
+
+
 
 </resources>
