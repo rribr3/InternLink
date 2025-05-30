@@ -1,6 +1,8 @@
 package com.example.internlink;
 
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,7 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -48,8 +52,14 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     private DatabaseReference notificationsRef;
     private SwipeRefreshLayout swipeRefreshLayout;
     private EditText etSearch;
-
-
+    private LinearLayout tabActive, tabArchive;
+    private TextView tabActiveText, tabArchiveText;
+    private View tabActiveIndicator, tabArchiveIndicator;
+    private RecyclerView rvArchivedConversations;
+    private LinearLayout tvEmptyStateArchived;
+    private ConversationsAdapter archivedConversationsAdapter;
+    private List<Conversation> archivedConversationsList = new ArrayList<>();
+    private boolean isShowingActiveTab = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +77,8 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
         Log.d(TAG, "Current User ID: " + currentUserId);
 
         initializeViews();
-        setupRecyclerView();
+        setupRecyclerViews();
+        setupSwipeGestures();
         setupFirebaseReferences();
         loadConversations();
     }
@@ -75,6 +86,17 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     private void initializeViews() {
         rvConversations = findViewById(R.id.messages_recycler_view);
         tvEmptyState = findViewById(R.id.tv_empty_state);
+        tabActive = findViewById(R.id.tab_active);
+        tabArchive = findViewById(R.id.tab_archive);
+        tabActiveText = findViewById(R.id.tab_active_text);
+        tabArchiveText = findViewById(R.id.tab_archive_text);
+        tabActiveIndicator = findViewById(R.id.tab_active_indicator);
+        tabArchiveIndicator = findViewById(R.id.tab_archive_indicator);
+        rvArchivedConversations = findViewById(R.id.archived_messages_recycler_view);
+        tvEmptyStateArchived = findViewById(R.id.tv_empty_state_archive);
+
+        tabActive.setOnClickListener(v -> showActiveTab());
+        tabArchive.setOnClickListener(v -> showArchiveTab());
 
         ImageView menuIcon = findViewById(R.id.menu_icon);
         ImageView filterIcon = findViewById(R.id.ic_filter);
@@ -98,7 +120,6 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
             public void afterTextChanged(Editable s) {}
         });
 
-
         menuIcon.setOnClickListener(v -> onBackPressed());
         fabNewMessage.setVisibility(View.VISIBLE);
         fabNewMessage.setOnClickListener(v -> {
@@ -106,11 +127,240 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
             intent.putExtra("STUDENT_ID", FirebaseAuth.getInstance().getCurrentUser().getUid());
             startActivity(intent);
         });
-
     }
+
+    private void setupRecyclerViews() {
+        // Setup active conversations RecyclerView
+        conversationsAdapter = new ConversationsAdapter(conversationsList, this);
+        rvConversations.setLayoutManager(new LinearLayoutManager(this));
+        rvConversations.setAdapter(conversationsAdapter);
+
+        // Setup archived conversations RecyclerView
+        archivedConversationsAdapter = new ConversationsAdapter(archivedConversationsList, this);
+        rvArchivedConversations.setLayoutManager(new LinearLayoutManager(this));
+        rvArchivedConversations.setAdapter(archivedConversationsAdapter);
+    }
+
+    private void setupSwipeGestures() {
+        // Setup swipe for active conversations
+        setupSwipeGestureForRecyclerView(rvConversations, conversationsList, conversationsAdapter, false);
+
+        // Setup swipe for archived conversations
+        setupSwipeGestureForRecyclerView(rvArchivedConversations, archivedConversationsList, archivedConversationsAdapter, true);
+    }
+
+    private void setupSwipeGestureForRecyclerView(RecyclerView recyclerView, List<Conversation> conversations,
+                                                  ConversationsAdapter adapter, boolean isArchived) {
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                Conversation conversation = conversations.get(position);
+
+                // Show custom action options
+                showSwipeActionDialog(conversation, position, isArchived);
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView,
+                                    @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY,
+                                    int actionState, boolean isCurrentlyActive) {
+                View foregroundView = ((ConversationsAdapter.ConversationViewHolder) viewHolder).itemView.findViewById(R.id.foreground_layout);
+                getDefaultUIUtil().onDraw(c, recyclerView, foregroundView, dX, dY,
+                        actionState, isCurrentlyActive);
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder) {
+                View foregroundView = ((ConversationsAdapter.ConversationViewHolder) viewHolder).itemView.findViewById(R.id.foreground_layout);
+                getDefaultUIUtil().clearView(foregroundView);
+            }
+        };
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    private void showSwipeActionDialog(Conversation conversation, int position, boolean isFromArchived) {
+        String archiveAction = isFromArchived ? "Unarchive" : "Archive";
+
+        new AlertDialog.Builder(this)
+                .setTitle("Choose Action")
+                .setItems(new CharSequence[]{archiveAction, "Delete"}, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            // Archive/Unarchive
+                            if (isFromArchived) {
+                                unarchiveConversation(conversation, position);
+                            } else {
+                                archiveConversation(conversation, position);
+                            }
+                            break;
+                        case 1:
+                            // Delete
+                            deleteConversation(conversation, position, isFromArchived);
+                            break;
+                    }
+                })
+                .setOnDismissListener(dialog -> {
+                    // Reset swipe for the appropriate adapter
+                    if (isFromArchived) {
+                        archivedConversationsAdapter.notifyItemChanged(position);
+                    } else {
+                        conversationsAdapter.notifyItemChanged(position);
+                    }
+                })
+                .show();
+    }
+
+    private void archiveConversation(Conversation conversation, int position) {
+        // Update Firebase
+        chatMetadataRef.child(conversation.getChatId())
+                .child("archivedBy")
+                .child(currentUserId)
+                .setValue(true)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(this, "Conversation archived", Toast.LENGTH_SHORT).show();
+
+                    // Update local state
+                    conversation.setArchived(true);
+
+                    // Move from active to archived list
+                    conversationsList.remove(position);
+                    archivedConversationsList.add(0, conversation); // Add to beginning
+
+                    // Update UI
+                    conversationsAdapter.notifyItemRemoved(position);
+                    archivedConversationsAdapter.notifyItemInserted(0);
+
+                    updateEmptyStates();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to archive", Toast.LENGTH_SHORT).show();
+                    conversationsAdapter.notifyItemChanged(position);
+                });
+    }
+
+    private void unarchiveConversation(Conversation conversation, int position) {
+        // Update Firebase
+        chatMetadataRef.child(conversation.getChatId())
+                .child("archivedBy")
+                .child(currentUserId)
+                .removeValue()
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(this, "Conversation unarchived", Toast.LENGTH_SHORT).show();
+
+                    // Update local state
+                    conversation.setArchived(false);
+
+                    // Move from archived to active list
+                    archivedConversationsList.remove(position);
+
+                    // Insert into active list in correct position based on timestamp
+                    int insertPosition = findInsertPosition(conversation);
+                    conversationsList.add(insertPosition, conversation);
+
+                    // Update UI
+                    archivedConversationsAdapter.notifyItemRemoved(position);
+                    conversationsAdapter.notifyItemInserted(insertPosition);
+
+                    updateEmptyStates();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to unarchive", Toast.LENGTH_SHORT).show();
+                    archivedConversationsAdapter.notifyItemChanged(position);
+                });
+    }
+
+    private int findInsertPosition(Conversation conversation) {
+        // Find the correct position to insert based on timestamp (most recent first)
+        for (int i = 0; i < conversationsList.size(); i++) {
+            if (conversation.getLastMessageTime() > conversationsList.get(i).getLastMessageTime()) {
+                return i;
+            }
+        }
+        return conversationsList.size(); // Insert at end if oldest
+    }
+
+    private void deleteConversation(Conversation conversation, int position, boolean isFromArchived) {
+        // Soft-delete: mark this chat as deleted for this user in chat_metadata
+        chatMetadataRef.child(conversation.getChatId())
+                .child("deletedBy")
+                .child(currentUserId)
+                .setValue(true)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(this, "Conversation deleted", Toast.LENGTH_SHORT).show();
+
+                    if (isFromArchived) {
+                        archivedConversationsList.remove(position);
+                        archivedConversationsAdapter.notifyItemRemoved(position);
+                    } else {
+                        conversationsList.remove(position);
+                        conversationsAdapter.notifyItemRemoved(position);
+                    }
+
+                    updateEmptyStates();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                    if (isFromArchived) {
+                        archivedConversationsAdapter.notifyItemChanged(position);
+                    } else {
+                        conversationsAdapter.notifyItemChanged(position);
+                    }
+                });
+    }
+
+    private void showActiveTab() {
+        isShowingActiveTab = true;
+        rvConversations.setVisibility(View.VISIBLE);
+        tvEmptyState.setVisibility(conversationsList.isEmpty() ? View.VISIBLE : View.GONE);
+        rvArchivedConversations.setVisibility(View.GONE);
+        tvEmptyStateArchived.setVisibility(View.GONE);
+
+        tabActiveText.setTextColor(getResources().getColor(R.color.blue));
+        tabActiveIndicator.setBackgroundColor(getResources().getColor(R.color.blue));
+        tabArchiveText.setTextColor(Color.parseColor("#808080"));
+        tabArchiveIndicator.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+    }
+
+    private void showArchiveTab() {
+        isShowingActiveTab = false;
+        rvConversations.setVisibility(View.GONE);
+        tvEmptyState.setVisibility(View.GONE);
+        rvArchivedConversations.setVisibility(View.VISIBLE);
+        tvEmptyStateArchived.setVisibility(archivedConversationsList.isEmpty() ? View.VISIBLE : View.GONE);
+
+        tabArchiveText.setTextColor(getResources().getColor(R.color.blue));
+        tabArchiveIndicator.setBackgroundColor(getResources().getColor(R.color.blue));
+        tabActiveText.setTextColor(Color.parseColor("#808080"));
+        tabActiveIndicator.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+    }
+
+    private void updateEmptyStates() {
+        runOnUiThread(() -> {
+            if (isShowingActiveTab) {
+                tvEmptyState.setVisibility(conversationsList.isEmpty() ? View.VISIBLE : View.GONE);
+            } else {
+                tvEmptyStateArchived.setVisibility(archivedConversationsList.isEmpty() ? View.VISIBLE : View.GONE);
+            }
+        });
+    }
+
     private void filterConversations(String query) {
         List<Conversation> filteredList = new ArrayList<>();
-        for (Conversation convo : conversationsList) {
+        List<Conversation> sourceList = isShowingActiveTab ? conversationsList : archivedConversationsList;
+
+        for (Conversation convo : sourceList) {
             String name = convo.getOtherUserName() != null ? convo.getOtherUserName().toLowerCase() : "";
             String project = convo.getProjectTitle() != null ? convo.getProjectTitle().toLowerCase() : "";
             if (name.contains(query.toLowerCase()) || project.contains(query.toLowerCase())) {
@@ -118,14 +368,11 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
             }
         }
 
-        conversationsAdapter.updateList(filteredList);
-    }
-
-
-    private void setupRecyclerView() {
-        conversationsAdapter = new ConversationsAdapter(conversationsList, this);
-        rvConversations.setLayoutManager(new LinearLayoutManager(this));
-        rvConversations.setAdapter(conversationsAdapter);
+        if (isShowingActiveTab) {
+            conversationsAdapter.updateList(filteredList);
+        } else {
+            archivedConversationsAdapter.updateList(filteredList);
+        }
     }
 
     private void setupFirebaseReferences() {
@@ -149,12 +396,19 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 Log.d(TAG, "Chat metadata children count: " + snapshot.getChildrenCount());
 
                 conversationsList.clear();
+                archivedConversationsList.clear();
                 Set<String> processedChatIds = new HashSet<>();
 
                 if (snapshot.exists()) {
                     for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
                         String chatId = chatSnapshot.getKey();
                         Log.d(TAG, "Processing chat metadata: " + chatId);
+
+                        Boolean deleted = chatSnapshot.child("deletedBy").child(currentUserId).getValue(Boolean.class);
+                        if (Boolean.TRUE.equals(deleted)) {
+                            Log.d(TAG, "Conversation hidden for this user: " + chatId);
+                            continue; // Skip this conversation
+                        }
 
                         // Check if current user is a participant in this chat
                         DataSnapshot participantsSnapshot = chatSnapshot.child("participants");
@@ -188,19 +442,29 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
 
                                 conversation.setLastSenderId(chatSnapshot.child("lastSenderId").getValue(String.class));
 
+                                // Check if conversation is archived
+                                Boolean archived = chatSnapshot.child("archivedBy").child(currentUserId).getValue(Boolean.class);
+                                conversation.setArchived(Boolean.TRUE.equals(archived));
+
                                 // Calculate unread count from notifications
                                 calculateUnreadCount(conversation, otherUserId);
 
-                                conversationsList.add(conversation);
+                                // Add to appropriate list
+                                if (conversation.isArchived()) {
+                                    archivedConversationsList.add(conversation);
+                                } else {
+                                    conversationsList.add(conversation);
+                                }
+
                                 processedChatIds.add(chatId);
 
-                                Log.d(TAG, "Added conversation with user: " + otherUserId);
+                                Log.d(TAG, "Added conversation with user: " + otherUserId + " (archived: " + conversation.isArchived() + ")");
                             }
                         }
                     }
                 }
 
-                Log.d(TAG, "Found " + conversationsList.size() + " conversations in metadata");
+                Log.d(TAG, "Found " + conversationsList.size() + " active and " + archivedConversationsList.size() + " archived conversations in metadata");
 
                 // Also check direct chats that might not be in metadata
                 loadDirectChats(processedChatIds);
@@ -212,7 +476,6 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 // Try loading direct chats as fallback
                 loadDirectChats(new HashSet<>());
                 swipeRefreshLayout.setRefreshing(false);
-
             }
         });
     }
@@ -242,6 +505,9 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                             if (conversationsAdapter != null) {
                                 conversationsAdapter.notifyDataSetChanged();
                             }
+                            if (archivedConversationsAdapter != null) {
+                                archivedConversationsAdapter.notifyDataSetChanged();
+                            }
                         });
                     }
 
@@ -264,6 +530,12 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 if (snapshot.exists()) {
                     for (DataSnapshot chatSnapshot : snapshot.getChildren()) {
                         String chatId = chatSnapshot.getKey();
+                        Boolean deleted = chatSnapshot.child("deletedBy").child(currentUserId).getValue(Boolean.class);
+                        if (Boolean.TRUE.equals(deleted)) {
+                            Log.d(TAG, "Conversation hidden for this user: " + chatId);
+                            continue; // Skip this conversation
+                        }
+
                         Log.d(TAG, "Checking direct chat: " + chatId);
 
                         // Skip if already processed
@@ -322,6 +594,7 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                                 conversation.setLastMessage(lastMessage);
                                 conversation.setLastMessageTime(lastMessageTime);
                                 conversation.setLastSenderId(lastSenderId);
+                                conversation.setArchived(false); // Direct chats default to not archived
 
                                 // Calculate unread count
                                 calculateUnreadCount(conversation, otherUserId);
@@ -334,7 +607,7 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     }
                 }
 
-                Log.d(TAG, "Total conversations found: " + conversationsList.size());
+                Log.d(TAG, "Total conversations found: " + (conversationsList.size() + archivedConversationsList.size()));
 
                 // Sort and load user details
                 finishLoadingConversations();
@@ -345,16 +618,18 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 Log.e(TAG, "Failed to load direct chats: " + error.getMessage());
                 finishLoadingConversations();
                 swipeRefreshLayout.setRefreshing(false);
-
             }
         });
     }
 
     private void finishLoadingConversations() {
-        Log.d(TAG, "Finishing loading conversations, total: " + conversationsList.size());
+        Log.d(TAG, "Finishing loading conversations, active: " + conversationsList.size() + ", archived: " + archivedConversationsList.size());
 
         // Sort conversations by last message time (most recent first)
         Collections.sort(conversationsList, (c1, c2) ->
+                Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+
+        Collections.sort(archivedConversationsList, (c1, c2) ->
                 Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
 
         // Load user details for each conversation
@@ -376,17 +651,21 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     }
 
     private void loadUserDetailsForConversations() {
-        Log.d(TAG, "Loading user details for " + conversationsList.size() + " conversations");
+        List<Conversation> allConversations = new ArrayList<>();
+        allConversations.addAll(conversationsList);
+        allConversations.addAll(archivedConversationsList);
 
-        if (conversationsList.isEmpty()) {
+        Log.d(TAG, "Loading user details for " + allConversations.size() + " total conversations");
+
+        if (allConversations.isEmpty()) {
             showEmptyState();
             return;
         }
 
-        final int totalConversations = conversationsList.size();
+        final int totalConversations = allConversations.size();
         final int[] loadedCount = {0};
 
-        for (Conversation conversation : conversationsList) {
+        for (Conversation conversation : allConversations) {
             Log.d(TAG, "Loading user details for: " + conversation.getOtherUserId());
 
             usersRef.child(conversation.getOtherUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -400,7 +679,8 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                         conversation.setOtherUserName(name != null ? name : "Unknown User");
                         conversation.setOtherUserRole(role != null ? role : "user");
                         conversation.setOtherUserLogoUrl(logoUrl);
-                        // 🔽 ADD THIS inside onDataChange after setting user info
+
+                        // Add typing status listener
                         DatabaseReference typingRef = FirebaseDatabase.getInstance()
                                 .getReference("user_status")
                                 .child(conversation.getOtherUserId())
@@ -412,6 +692,7 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                                 Boolean typing = snapshot.getValue(Boolean.class);
                                 conversation.setTyping(Boolean.TRUE.equals(typing));
                                 conversationsAdapter.notifyDataSetChanged();
+                                archivedConversationsAdapter.notifyDataSetChanged();
                             }
 
                             @Override
@@ -419,7 +700,6 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                                 Log.e(TAG, "Failed to listen to typing status: " + error.getMessage());
                             }
                         });
-
 
                         Log.d(TAG, "Loaded user details for: " + name + " (role: " + role + ")");
 
@@ -441,12 +721,9 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                         // All user details loaded, update UI
                         Log.d(TAG, "All user details loaded, updating UI");
                         runOnUiThread(() -> {
-                            if (conversationsList.isEmpty()) {
-                                showEmptyState();
-                            } else {
-                                hideEmptyState();
-                                conversationsAdapter.notifyDataSetChanged();
-                            }
+                            updateEmptyStates();
+                            conversationsAdapter.notifyDataSetChanged();
+                            archivedConversationsAdapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
                         });
                     }
@@ -462,19 +739,15 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     loadedCount[0]++;
                     if (loadedCount[0] == totalConversations) {
                         runOnUiThread(() -> {
-                            if (conversationsList.isEmpty()) {
-                                showEmptyState();
-                            } else {
-                                hideEmptyState();
-                                conversationsAdapter.notifyDataSetChanged();
-                            }
+                            updateEmptyStates();
+                            conversationsAdapter.notifyDataSetChanged();
+                            archivedConversationsAdapter.notifyDataSetChanged();
                             swipeRefreshLayout.setRefreshing(false);
                         });
                     }
                 }
             });
         }
-
     }
 
     private void loadProjectInfoForConversation(Conversation conversation) {
@@ -529,6 +802,9 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     if (conversationsAdapter != null) {
                         conversationsAdapter.notifyDataSetChanged();
                     }
+                    if (archivedConversationsAdapter != null) {
+                        archivedConversationsAdapter.notifyDataSetChanged();
+                    }
                 });
             }
 
@@ -542,16 +818,14 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     private void showEmptyState() {
         Log.d(TAG, "Showing empty state");
         runOnUiThread(() -> {
-            rvConversations.setVisibility(View.GONE);
-            tvEmptyState.setVisibility(View.VISIBLE);
+            updateEmptyStates();
         });
     }
 
     private void hideEmptyState() {
         Log.d(TAG, "Hiding empty state");
         runOnUiThread(() -> {
-            rvConversations.setVisibility(View.VISIBLE);
-            tvEmptyState.setVisibility(View.GONE);
+            updateEmptyStates();
         });
     }
 
@@ -577,7 +851,7 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 });
         conversation.setUnreadCount(0);
         conversationsAdapter.notifyDataSetChanged();
-
+        archivedConversationsAdapter.notifyDataSetChanged();
 
         Intent intent = new Intent(this, StudentChatActivity.class);
         intent.putExtra("COMPANY_ID", conversation.getOtherUserId());

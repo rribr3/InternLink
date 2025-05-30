@@ -1,107 +1,99 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- Replace your existing static tips CardView with this dynamic one -->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="8dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Quick Tips"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
+        <!-- Header Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
 
             <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:src="@drawable/ic_tip"
- />
+                android:layout_marginEnd="8dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:text="Personalized Tips"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Improve your CV"
-                    android:textColor="@color/black"
-                    android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tips_refresh_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Refresh"
+                android:textColor="#4299E1"
+                android:textSize="14sp"
+                android:background="?android:attr/selectableItemBackground"
+                android:padding="8dp" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Highlight relevant coursework and projects"
-                    android:textColor="#817B7B"
-                    android:textSize="14sp" />
-            </LinearLayout>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="12dp"
-            android:textColor="#817B7B" />
-
+        <!-- Dynamic Tips Container -->
         <LinearLayout
+            android:id="@+id/tips_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_tip" />
-
+            <!-- Loading indicator while tips are being generated -->
             <LinearLayout
+                android:id="@+id/tips_loading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:padding="20dp">
+
+                <ProgressBar
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="12dp" />
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Interview Preparation"
-                    android:textColor="@color/black"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Practice with our mock interview feature"
-                    android:textColor="#817B7B"
+                    android:text="Generating personalized tips..."
+                    android:textColor="#666666"
                     android:textSize="14sp" />
+
             </LinearLayout>
+
         </LinearLayout>
 
+        <!-- See All Tips Button -->
         <Button
             android:id="@+id/see_all_tips_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:backgroundTint="#03A9F4"
-            android:text="See All Tips"
-            android:textColor="#ffff" />
+            android:backgroundTint="#4299E1"
+            android:text="View All Tips &amp; Recommendations"
+            android:textColor="#ffffff"
+            android:textStyle="bold"
+            style="@style/Widget.Material3.Button.UnelevatedButton" />
+
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,6 +42,7 @@ public class ApplyNowActivity extends AppCompatActivity {
     private CardView quizSection;
     private TextView quizTitle, quizInstructions, quizTime, quizScore;
     private Button applyButton;
+    private ImageButton btnCompanyProfile; // Add company profile button
 
     private String projectId;
     private Project currentProject;
@@ -64,7 +66,7 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         initViews();
         loadProjectData(projectId);
-        setupApplyButton();
+        setupClickListeners();
     }
 
     private void initViews() {
@@ -89,9 +91,11 @@ public class ApplyNowActivity extends AppCompatActivity {
         quizScore = findViewById(R.id.quiz_passing_score);
 
         applyButton = findViewById(R.id.btn_submit_application);
+        btnCompanyProfile = findViewById(R.id.btn_company_profile); // Initialize company profile button
     }
 
-    private void setupApplyButton() {
+    private void setupClickListeners() {
+        // Apply button click listener
         applyButton.setOnClickListener(v -> {
             // Check if user is logged in
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -109,6 +113,21 @@ public class ApplyNowActivity extends AppCompatActivity {
             // Check if student has already applied
             checkExistingApplication(user.getUid(), true);
         });
+
+        // Company profile button click listener
+        btnCompanyProfile.setOnClickListener(v -> {
+            if (currentProject != null && currentProject.getCompanyId() != null && !currentProject.getCompanyId().isEmpty()) {
+                openCompanyProfile();
+            } else {
+                Toast.makeText(this, "Company information not available", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void openCompanyProfile() {
+        Intent intent = new Intent(this, CompanyProfileViewActivity.class);
+        intent.putExtra("COMPANY_ID", currentProject.getCompanyId());
+        startActivity(intent);
     }
 
     private void checkExistingApplication(String userId, boolean isFromButtonClick) {
@@ -161,10 +180,6 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
         });
     }
-
-
-
-
 
     private void startApplicationProcess() {
         // Step 1: Check if resume is required
@@ -267,11 +282,10 @@ public class ApplyNowActivity extends AppCompatActivity {
             if (data != null) {
                 int quizGrade = data.getIntExtra("QUIZ_GRADE", 0); // 🎯 Retrieve grade from QuizActivity
                 submitApplicationWithGrade(quizGrade); // Proceed regardless of quiz outcome
-
             }
-
         }
     }
+
     private void notifyCompanyOfApplication(String companyId, String studentName, String projectTitle) {
         DatabaseReference announcementsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
@@ -291,8 +305,6 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         announcementsRef.child(announcementId).setValue(announcementData);
     }
-
-
 
     private void submitApplicationWithGrade(int quizGrade) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -318,7 +330,6 @@ public class ApplyNowActivity extends AppCompatActivity {
                     quizGrade // ✅ Pass quiz grade here
             );
             application.setReapplication(isReapplying);
-
 
             DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
             String applicationId = applicationsRef.push().getKey();
@@ -353,12 +364,9 @@ public class ApplyNowActivity extends AppCompatActivity {
                                         Log.e("NotifyError", "Failed to fetch student name for notification.");
                                     }
                                 });
-
                     });
         });
     }
-
-
 
     private void submitApplication() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -386,7 +394,6 @@ public class ApplyNowActivity extends AppCompatActivity {
                     null
             );
             application.setReapplication(isReapplying);
-
 
             // Save to Firebase
             DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -428,7 +435,6 @@ public class ApplyNowActivity extends AppCompatActivity {
                                         Log.e("NotifyError", "Failed to fetch student name for notification.");
                                     }
                                 });
-
                     });
         });
     }
@@ -561,15 +567,15 @@ public class ApplyNowActivity extends AppCompatActivity {
                     quizScore.setText(quiz.getPassingScore() + "%");
                     hasQuiz = true;
                 }
-                long currentTime = System.currentTimeMillis();
-                long projectStartTime = currentProject.getStartDate();
 
-                if (projectStartTime <= currentTime) {
-                    applyButton.setEnabled(false);
-                    applyButton.setText("Applications Closed");
-                    applyButton.setAlpha(0.5f); // optional: visually fade the button
+                // Enable/disable company profile button based on company ID availability
+                if (currentProject.getCompanyId() != null && !currentProject.getCompanyId().isEmpty()) {
+                    btnCompanyProfile.setEnabled(true);
+                    btnCompanyProfile.setAlpha(1.0f);
+                } else {
+                    btnCompanyProfile.setEnabled(false);
+                    btnCompanyProfile.setAlpha(0.5f);
                 }
-
 
                 // 🔍 Now check if user already applied and update button
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -585,7 +591,6 @@ public class ApplyNowActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private String formatDate(long timestamp) {
         if (timestamp == 0) return "N/A";

@@ -79,12 +79,17 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             tvUnreadBadge = itemView.findViewById(R.id.tv_unread_badge);
             unreadIndicator = itemView.findViewById(R.id.unread_indicator);
 
-            itemView.setOnClickListener(v -> {
+            View foregroundLayout = itemView.findViewById(R.id.foreground_layout);
+
+            foregroundLayout.setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION && listener != null) {
-                    listener.onConversationClick(conversations.get(position));
+                    // Optional delay to avoid gesture conflicts
+                    v.postDelayed(() -> listener.onConversationClick(conversations.get(position)), 100);
                 }
             });
+
+
         }
 
         public void bind(Conversation conversation) {
@@ -107,6 +112,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             if (conversation.isFromCurrentUser(currentUserId)) {
                 displayMessage = "You: " + displayMessage;
             }
+
             if (conversation.isTyping()) {
                 tvLastMessage.setText("typing...");
                 tvLastMessage.setTypeface(null, android.graphics.Typeface.ITALIC);
@@ -139,7 +145,7 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 ivCompanyLogo.setImageResource(R.drawable.ic_profile);
             }
 
-            // Handle unread count (you can implement this based on your notification system)
+            // Handle unread count
             if (conversation.getUnreadCount() > 0) {
                 tvUnreadBadge.setVisibility(View.VISIBLE);
                 unreadIndicator.setVisibility(View.VISIBLE);
@@ -147,6 +153,16 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             } else {
                 tvUnreadBadge.setVisibility(View.GONE);
                 unreadIndicator.setVisibility(View.GONE);
+            }
+
+            // Update archive text based on conversation state
+            TextView archiveTextView = itemView.findViewById(R.id.archive_text_view);
+            if (archiveTextView != null) {
+                if (conversation.isArchived()) {
+                    archiveTextView.setText("Unarchive");
+                } else {
+                    archiveTextView.setText("Archive");
+                }
             }
         }
 
@@ -174,6 +190,5 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
                 return sdf.format(messageDate);
             }
         }
-
     }
 }

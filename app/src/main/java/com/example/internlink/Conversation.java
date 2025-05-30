@@ -14,12 +14,15 @@ public class Conversation {
     private String applicationId;
     private int unreadCount;
     private boolean isTyping;
+    private boolean archived;
 
     public Conversation() {
         // Default constructor required for Firebase
     }
 
     // Getters and setters
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
     public String getChatId() {
         return chatId;
     }

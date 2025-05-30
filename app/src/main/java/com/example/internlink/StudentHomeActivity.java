@@ -1,15 +1,18 @@
 package com.example.internlink;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,6 +21,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -51,7 +56,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +93,14 @@ public class StudentHomeActivity extends AppCompatActivity
     private ApplicationAdapter applicationAdapter;
     private ChipGroup filterChips;
 
+    // Search History
+    private static final String SEARCH_HISTORY_PREFS = "search_history_prefs";
+    private static final String SEARCH_HISTORY_KEY = "search_history";
+    private static final int MAX_SEARCH_HISTORY = 10;
+    private List<String> searchHistory = new ArrayList<>();
+    private SharedPreferences searchHistoryPrefs;
+    private SearchHistoryAdapter searchHistoryAdapter;
+
     // Public static classes for search functionality
     public static class SearchResult {
         public String type; // "PROJECT" or "COMPANY"
@@ -91,7 +109,6 @@ public class StudentHomeActivity extends AppCompatActivity
         public CompanyInfo company;
         public List<String> matchReasons;
         private List<Project> allProjects = new ArrayList<>();
-
     }
 
     public static class CompanyInfo {
@@ -102,10 +119,28 @@ public class StudentHomeActivity extends AppCompatActivity
         public String location;
     }
 
+    // Tip model class
+    public static class Tip {
+        public int iconResId;
+        public String title;
+        public String description;
+        public String actionId;
+        public String colorHex;
+
+        public Tip(int iconResId, String title, String description, String actionId, String colorHex) {
+            this.iconResId = iconResId;
+            this.title = title;
+            this.description = description;
+            this.actionId = actionId;
+            this.colorHex = colorHex;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_home);
+
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
@@ -142,8 +177,521 @@ public class StudentHomeActivity extends AppCompatActivity
         setupClickListeners();
         setupSwipeRefresh();
         setupEnhancedSearch();
+        setupEnhancedSearchWithHistory();
         setupClickListeners1();
+
+        // Initialize dynamic tips
+        initializeDynamicTips();
     }
+
+    // DYNAMIC TIPS IMPLEMENTATION
+    private void initializeDynamicTips() {
+        setupDynamicTips();
+    }
+
+    private void setupDynamicTips() {
+        LinearLayout tipsContainer = findViewById(R.id.tips_container);
+        if (tipsContainer == null) return;
+
+        // Show loading state
+        showTipsLoading(tipsContainer);
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(studentId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Tip> personalizedTips = generatePersonalizedTipsFromDatabase(snapshot);
+                displayTips(personalizedTips, tipsContainer);
+
+                // Setup refresh button
+                TextView refreshBtn = findViewById(R.id.tips_refresh_btn);
+                if (refreshBtn != null) {
+                    refreshBtn.setOnClickListener(v -> {
+                        showTipsLoading(tipsContainer);
+                        setupDynamicTips(); // Refresh tips
+                    });
+                }
+
+                // Setup "See All Tips" button
+                Button seeAllTipsBtn = findViewById(R.id.see_all_tips_btn);
+                if (seeAllTipsBtn != null) {
+                    seeAllTipsBtn.setOnClickListener(v -> showAllTipsDialog());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                displayDefaultTips(tipsContainer);
+            }
+        });
+    }
+
+    private void showTipsLoading(LinearLayout container) {
+        container.removeAllViews();
+
+        // Create loading view
+        LinearLayout loadingLayout = new LinearLayout(this);
+        loadingLayout.setOrientation(LinearLayout.HORIZONTAL);
+        loadingLayout.setGravity(Gravity.CENTER);
+        loadingLayout.setPadding(0, 40, 0, 40);
+
+        ProgressBar progressBar = new ProgressBar(this);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(60, 60);
+        progressParams.setMarginEnd(24);
+        progressBar.setLayoutParams(progressParams);
+
+        TextView loadingText = new TextView(this);
+        loadingText.setText("Generating personalized tips...");
+        loadingText.setTextColor(Color.parseColor("#666666"));
+        loadingText.setTextSize(14f);
+
+        loadingLayout.addView(progressBar);
+        loadingLayout.addView(loadingText);
+        container.addView(loadingLayout);
+    }
+
+    private List<Tip> generatePersonalizedTipsFromDatabase(DataSnapshot userSnapshot) {
+        List<Tip> tips = new ArrayList<>();
+
+        // Extract user data from Firebase
+        String name = userSnapshot.child("name").getValue(String.class);
+        String bio = userSnapshot.child("bio").getValue(String.class);
+        String cvUrl = userSnapshot.child("cvUrl").getValue(String.class);
+        String linkedin = userSnapshot.child("linkedin").getValue(String.class);
+        String github = userSnapshot.child("github").getValue(String.class);
+        String skills = userSnapshot.child("skills").getValue(String.class);
+        String gpa = userSnapshot.child("gpa").getValue(String.class);
+        String university = userSnapshot.child("university").getValue(String.class);
+        String gradyear = userSnapshot.child("gradyear").getValue(String.class);
+        String degree = userSnapshot.child("degree").getValue(String.class);
+        String phone = userSnapshot.child("phone").getValue(String.class);
+        String email = userSnapshot.child("email").getValue(String.class);
+
+        // Priority 1: CV Upload (Critical)
+        if (cvUrl == null || cvUrl.trim().isEmpty()) {
+            tips.add(new Tip(
+                    R.drawable.ic_download,
+                    "Upload Your CV",
+                    "A professional CV increases your chances by 70%. Upload yours now!",
+                    "upload_cv",
+                    "#E53E3E"
+            ));
+        }
+
+        // Priority 2: Profile Completion
+        int profileCompleteness = calculateProfileCompleteness(userSnapshot);
+        if (profileCompleteness < 80) {
+            List<String> missingFields = getMissingProfileFields(userSnapshot);
+            String missingFieldsText = missingFields.size() > 2 ?
+                    String.join(", ", missingFields.subList(0, 2)) + "..." :
+                    String.join(", ", missingFields);
+
+            tips.add(new Tip(
+                    R.drawable.ic_profile,
+                    "Complete Your Profile (" + profileCompleteness + "%)",
+                    "Complete missing: " + missingFieldsText,
+                    "complete_profile",
+                    "#FF8C00"
+            ));
+        }
+
+        // Priority 3: Skills Enhancement
+        if (skills == null || skills.trim().isEmpty() || skills.split(",").length < 3) {
+            tips.add(new Tip(
+                    R.drawable.ic_skills,
+                    "Add More Skills",
+                    "Students with 5+ skills get 3x more interview calls. Add yours!",
+                    "add_skills",
+                    "#4299E1"
+            ));
+        }
+
+        // Priority 4: LinkedIn Profile
+        if (linkedin == null || linkedin.trim().isEmpty()) {
+            tips.add(new Tip(
+                    R.drawable.ic_linkedin,
+                    "Connect on LinkedIn",
+                    "85% of internships are filled through networking. Create your LinkedIn!",
+                    "add_linkedin",
+                    "#0077B5"
+            ));
+        }
+
+        // Priority 5: GitHub Portfolio (for relevant students)
+        if (github == null || github.trim().isEmpty()) {
+            // Check if student has tech-related skills
+            boolean isTechStudent = skills != null &&
+                    (skills.toLowerCase().contains("java") ||
+                            skills.toLowerCase().contains("python") ||
+                            skills.toLowerCase().contains("javascript") ||
+                            skills.toLowerCase().contains("html") ||
+                            skills.toLowerCase().contains("css") ||
+                            skills.toLowerCase().contains("react"));
+
+            if (isTechStudent) {
+                tips.add(new Tip(
+                        R.drawable.ic_github,
+                        "Showcase Your Code",
+                        "Tech recruiters love seeing your projects. Add your GitHub profile!",
+                        "add_github",
+                        "#333333"
+                ));
+            }
+        }
+
+        // Priority 6: GPA-based tips
+        if (gpa != null && !gpa.trim().isEmpty()) {
+            try {
+                double gpaValue = Double.parseDouble(gpa);
+                if (gpaValue >= 3.5) {
+                    tips.add(new Tip(
+                            R.drawable.ic_star,
+                            "Highlight Your Excellence",
+                            "Your " + gpa + " GPA is impressive! Make sure it's visible on your CV",
+                            "highlight_gpa",
+                            "#38A169"
+                    ));
+                } else if (gpaValue < 3.0) {
+                    tips.add(new Tip(
+                            R.drawable.ic_skills,
+                            "Boost Your Application",
+                            "Compensate with strong projects and skills to impress employers",
+                            "boost_application",
+                            "#4299E1"
+                    ));
+                }
+            } catch (NumberFormatException e) {
+                // Invalid GPA format, skip
+            }
+        }
+
+        // Priority 7: Graduation year-based advice
+        if (gradyear != null && !gradyear.trim().isEmpty()) {
+            try {
+                int gradYear = Integer.parseInt(gradyear);
+                int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+                if (gradYear == currentYear) {
+                    tips.add(new Tip(
+                            R.drawable.ic_clock,
+                            "Final Year Advantage",
+                            "You're graduating this year! Apply to full-time positions too",
+                            "final_year_tip",
+                            "#D69E2E"
+                    ));
+                } else if (gradYear == currentYear + 1) {
+                    tips.add(new Tip(
+                            R.drawable.ic_calendar,
+                            "Perfect Timing",
+                            "Junior year is ideal for summer internships. Start applying now!",
+                            "junior_year_tip",
+                            "#38A169"
+                    ));
+                }
+            } catch (NumberFormatException e) {
+                // Invalid year format, skip
+            }
+        }
+
+        // Priority 8: Application encouragement
+        tips.add(new Tip(
+                R.drawable.ic_target,
+                "This Week's Goal",
+                "Apply to 3 internships and follow up on 2 previous applications",
+                "weekly_goal",
+                "#E53E3E"
+        ));
+
+        // Return top 3 most relevant tips
+        return tips.subList(0, Math.min(3, tips.size()));
+    }
+
+    private int calculateProfileCompleteness(DataSnapshot userSnapshot) {
+        String[] requiredFields = {"name", "bio", "email", "phone", "university", "degree", "gradyear", "gpa", "skills", "cvUrl", "linkedin"};
+        int completedFields = 0;
+
+        for (String field : requiredFields) {
+            String value = userSnapshot.child(field).getValue(String.class);
+            if (value != null && !value.trim().isEmpty()) {
+                completedFields++;
+            }
+        }
+
+        return (completedFields * 100) / requiredFields.length;
+    }
+
+    private List<String> getMissingProfileFields(DataSnapshot userSnapshot) {
+        List<String> missingFields = new ArrayList<>();
+        Map<String, String> fieldDisplayNames = new HashMap<>();
+        fieldDisplayNames.put("bio", "Bio");
+        fieldDisplayNames.put("phone", "Phone");
+        fieldDisplayNames.put("skills", "Skills");
+        fieldDisplayNames.put("cvUrl", "CV");
+        fieldDisplayNames.put("linkedin", "LinkedIn");
+        fieldDisplayNames.put("github", "GitHub");
+        fieldDisplayNames.put("gpa", "GPA");
+        fieldDisplayNames.put("university", "University");
+        fieldDisplayNames.put("degree", "Degree");
+        fieldDisplayNames.put("gradyear", "Graduation Year");
+
+        for (Map.Entry<String, String> entry : fieldDisplayNames.entrySet()) {
+            String value = userSnapshot.child(entry.getKey()).getValue(String.class);
+            if (value == null || value.trim().isEmpty()) {
+                missingFields.add(entry.getValue());
+            }
+        }
+
+        return missingFields;
+    }
+
+    private void displayTips(List<Tip> tips, LinearLayout container) {
+        container.removeAllViews();
+
+        for (int i = 0; i < tips.size(); i++) {
+            Tip tip = tips.get(i);
+            View tipView = createTipView(tip);
+            container.addView(tipView);
+
+            // Add animation
+            tipView.setAlpha(0f);
+            tipView.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .setStartDelay(i * 100)
+                    .start();
+        }
+    }
+
+    private View createTipView(Tip tip) {
+        // Create card view
+        androidx.cardview.widget.CardView cardView = new androidx.cardview.widget.CardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, 0, 0, 24);
+        cardView.setLayoutParams(cardParams);
+        cardView.setRadius(24);
+        cardView.setCardElevation(6);
+        cardView.setForeground(ContextCompat.getDrawable(this, android.R.drawable.list_selector_background));
+
+        // Main container
+        LinearLayout mainContainer = new LinearLayout(this);
+        mainContainer.setOrientation(LinearLayout.HORIZONTAL);
+        mainContainer.setPadding(32, 24, 32, 24);
+        mainContainer.setGravity(Gravity.CENTER_VERTICAL);
+
+        // Color indicator
+        View colorIndicator = new View(this);
+        LinearLayout.LayoutParams colorParams = new LinearLayout.LayoutParams(8, 80);
+        colorParams.setMarginEnd(24);
+        colorIndicator.setLayoutParams(colorParams);
+        colorIndicator.setBackgroundColor(Color.parseColor(tip.colorHex));
+
+        // Create rounded corners for color indicator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                colorIndicator.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_dot_active));
+                colorIndicator.getBackground().setTint(Color.parseColor(tip.colorHex));
+            } catch (Exception e) {
+                colorIndicator.setBackgroundColor(Color.parseColor(tip.colorHex));
+            }
+        } else {
+            colorIndicator.setBackgroundColor(Color.parseColor(tip.colorHex));
+        }
+
+        // Icon container
+        LinearLayout iconContainer = new LinearLayout(this);
+        iconContainer.setOrientation(LinearLayout.VERTICAL);
+        iconContainer.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams iconContainerParams = new LinearLayout.LayoutParams(72, 72);
+        iconContainerParams.setMarginEnd(24);
+        iconContainer.setLayoutParams(iconContainerParams);
+        try {
+            iconContainer.setBackground(ContextCompat.getDrawable(this, R.drawable.circle_dot_faded));
+        } catch (Exception e) {
+            iconContainer.setBackgroundColor(Color.parseColor("#F0F0F0"));
+        }
+
+        // Icon
+        ImageView icon = new ImageView(this);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(48, 48);
+        icon.setLayoutParams(iconParams);
+        icon.setImageResource(tip.iconResId);
+        icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        iconContainer.addView(icon);
+
+        // Text container
+        LinearLayout textContainer = new LinearLayout(this);
+        textContainer.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        textContainer.setLayoutParams(textParams);
+
+        // Title
+        TextView title = new TextView(this);
+        title.setText(tip.title);
+        title.setTextColor(Color.BLACK);
+        title.setTextSize(18f);
+        title.setTypeface(null, Typeface.BOLD);
+        title.setMaxLines(1);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+
+        // Description
+        TextView description = new TextView(this);
+        description.setText(tip.description);
+        description.setTextColor(Color.parseColor("#666666"));
+        description.setTextSize(15f);
+        description.setMaxLines(2);
+        description.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams descParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        descParams.topMargin = 8;
+        description.setLayoutParams(descParams);
+
+        textContainer.addView(title);
+        textContainer.addView(description);
+
+        // Action arrow
+        ImageView arrow = new ImageView(this);
+        LinearLayout.LayoutParams arrowParams = new LinearLayout.LayoutParams(32, 32);
+        arrowParams.setMarginStart(16);
+        arrow.setLayoutParams(arrowParams);
+        try {
+            arrow.setImageResource(R.drawable.right_arrow);
+        } catch (Exception e) {
+            arrow.setImageResource(android.R.drawable.ic_menu_more);
+        }
+        arrow.setAlpha(0.6f);
+        arrow.setColorFilter(Color.BLACK);
+
+        // Add all views to main container
+        mainContainer.addView(colorIndicator);
+        mainContainer.addView(iconContainer);
+        mainContainer.addView(textContainer);
+        mainContainer.addView(arrow);
+
+        cardView.addView(mainContainer);
+
+        // Click listener
+        cardView.setOnClickListener(v -> handleTipClick(tip));
+
+        return cardView;
+    }
+
+    private void handleTipClick(Tip tip) {
+        Intent intent;
+
+        switch (tip.actionId) {
+            case "upload_cv":
+                intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("FOCUS_SECTION", "cv");
+                startActivity(intent);
+                break;
+
+            case "complete_profile":
+                intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("FOCUS_SECTION", "general");
+                startActivity(intent);
+                break;
+
+            case "add_skills":
+                intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("FOCUS_SECTION", "skills");
+                startActivity(intent);
+                break;
+
+            case "add_linkedin":
+            case "add_github":
+                intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("FOCUS_SECTION", "social");
+                startActivity(intent);
+                break;
+
+            case "highlight_gpa":
+            case "boost_application":
+                intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("FOCUS_SECTION", "academic");
+                startActivity(intent);
+                break;
+
+            case "final_year_tip":
+            case "junior_year_tip":
+                showAllProjectsPopup(); // Show projects available
+                break;
+
+            case "weekly_goal":
+                showWeeklyGoalDialog();
+                break;
+
+            default:
+                Toast.makeText(this, "Tip: " + tip.title, Toast.LENGTH_SHORT).show();
+                break;
+        }
+
+        // Track tip interactions
+        trackTipInteraction(tip.actionId);
+    }
+
+    private void showWeeklyGoalDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("This Week's Action Plan")
+                .setMessage("✅ Apply to 3 relevant internships\n" +
+                        "✅ Follow up on 2 previous applications\n" +
+                        "✅ Update one section of your profile\n" +
+                        "✅ Connect with 5 professionals on LinkedIn\n" +
+                        "✅ Practice 1 technical interview question")
+                .setPositiveButton("Let's do this!", null)
+                .setNegativeButton("Remind me later", null)
+                .show();
+    }
+
+    private void trackTipInteraction(String actionId) {
+        // Optional: Send analytics to Firebase
+        Map<String, Object> interaction = new HashMap<>();
+        interaction.put("userId", studentId);
+        interaction.put("tipAction", actionId);
+        interaction.put("timestamp", System.currentTimeMillis());
+
+        // Uncomment if you want to track interactions
+        // FirebaseDatabase.getInstance().getReference("tip_interactions").push().setValue(interaction);
+    }
+
+    private void displayDefaultTips(LinearLayout container) {
+        List<Tip> defaultTips = Arrays.asList(
+                new Tip(R.drawable.ic_profile, "Complete Your Profile", "A complete profile attracts more opportunities", "complete_profile", "#4299E1"),
+                new Tip(R.drawable.ic_download, "Upload Your CV", "Make your CV stand out to employers", "upload_cv", "#E53E3E"),
+                new Tip(R.drawable.ic_target, "Start Applying", "Your dream internship is waiting for you", "weekly_goal", "#38A169")
+        );
+
+        displayTips(defaultTips, container);
+    }
+
+    private void showAllTipsDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("All Tips & Recommendations")
+                .setMessage("Profile Tips:\n" +
+                        "• Complete all profile sections\n" +
+                        "• Upload a professional CV\n" +
+                        "• Add relevant skills\n" +
+                        "• Connect social profiles\n\n" +
+                        "Application Strategy:\n" +
+                        "• Quality over quantity\n" +
+                        "• Research companies before applying\n" +
+                        "• Tailor each application\n" +
+                        "• Follow up strategically\n\n" +
+                        "Networking:\n" +
+                        "• Build LinkedIn presence\n" +
+                        "• Connect with alumni\n" +
+                        "• Attend virtual events\n" +
+                        "• Request informational interviews")
+                .setPositiveButton("Got it!", null)
+                .show();
+    }
+
+// CONTINUATION OF STUDENT HOME ACTIVITY - PART 2
+    // ADD THIS TO THE END OF PART 1
 
     private void setupEnhancedSearch() {
         if (searchView != null && searchBar != null) {
@@ -200,6 +748,229 @@ public class StudentHomeActivity extends AppCompatActivity
                 @Override
                 public void afterTextChanged(Editable s) {}
             });
+        }
+    }
+
+    private void loadSearchHistory() {
+        String historyJson = searchHistoryPrefs.getString(SEARCH_HISTORY_KEY, "[]");
+        try {
+            JSONArray jsonArray = new JSONArray(historyJson);
+            searchHistory.clear();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                searchHistory.add(jsonArray.getString(i));
+            }
+        } catch (JSONException e) {
+            searchHistory = new ArrayList<>();
+        }
+    }
+
+    private void saveSearchHistory() {
+        try {
+            JSONArray jsonArray = new JSONArray();
+            for (String query : searchHistory) {
+                jsonArray.put(query);
+            }
+            searchHistoryPrefs.edit().putString(SEARCH_HISTORY_KEY, jsonArray.toString()).apply();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addToSearchHistory(String query) {
+        // Remove if already exists to move to top
+        searchHistory.remove(query);
+
+        // Add to beginning
+        searchHistory.add(0, query);
+
+        // Limit history size
+        if (searchHistory.size() > MAX_SEARCH_HISTORY) {
+            searchHistory = searchHistory.subList(0, MAX_SEARCH_HISTORY);
+        }
+
+        saveSearchHistory();
+    }
+
+    private void setupEnhancedSearchWithHistory() {
+        if (searchView != null && searchBar != null) {
+            // Connect SearchBar with SearchView properly
+            searchView.setupWithSearchBar(searchBar);
+
+            // Set up the SearchBar click listener
+            searchBar.setOnClickListener(v -> {
+                searchView.show();
+                updateSearchViewVisibility(true);
+            });
+
+            // Configure the SearchView's EditText
+            EditText editText = searchView.getEditText();
+            if (editText != null) {
+                editText.setTextColor(Color.BLACK);
+                editText.setHintTextColor(Color.GRAY);
+                editText.setTextSize(16f);
+                editText.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+
+                // Handle search button click
+                editText.setOnEditorActionListener((v, actionId, event) -> {
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                        String query = v.getText().toString().trim();
+                        if (!query.isEmpty() && query.length() >= 2) {
+                            addToSearchHistory(query);
+                            performEnhancedSearch(query);
+                            searchView.hide();
+                        } else if (query.length() < 2) {
+                            Toast.makeText(StudentHomeActivity.this, "Please enter at least 2 characters", Toast.LENGTH_SHORT).show();
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+
+                // Show/hide search content based on text input
+                editText.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        updateSearchViewVisibility(s.length() == 0);
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {}
+                });
+
+                // Handle focus to show history
+                editText.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus && editText.getText().toString().trim().isEmpty()) {
+                        updateSearchViewVisibility(true);
+                    }
+                });
+            }
+
+            // Setup category chips click listeners
+            setupCategoryChips();
+
+            // Setup clear history button
+            TextView clearHistoryBtn = findViewById(R.id.tv_clear_history);
+            if (clearHistoryBtn != null) {
+                clearHistoryBtn.setOnClickListener(v -> {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Clear Search History")
+                            .setMessage("Are you sure you want to clear all search history?")
+                            .setPositiveButton("Clear", (dialog, which) -> {
+                                searchHistory.clear();
+                                saveSearchHistory();
+                                updateSearchHistoryDisplay();
+                                Toast.makeText(this, "Search history cleared", Toast.LENGTH_SHORT).show();
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                });
+            }
+        }
+    }
+
+    private void setupCategoryChips() {
+        ChipGroup categoryChips = findViewById(R.id.search_categories_chips);
+        if (categoryChips != null) {
+            for (int i = 0; i < categoryChips.getChildCount(); i++) {
+                View child = categoryChips.getChildAt(i);
+                if (child instanceof Chip) {
+                    Chip chip = (Chip) child;
+                    chip.setOnClickListener(v -> {
+                        String categoryText = chip.getText().toString();
+                        searchView.getEditText().setText(categoryText);
+                        addToSearchHistory(categoryText);
+                        performEnhancedSearch(categoryText);
+                        searchView.hide();
+                    });
+                }
+            }
+        }
+    }
+
+    private void updateSearchViewVisibility(boolean showHistory) {
+        LinearLayout historyContainer = findViewById(R.id.search_history_container);
+        LinearLayout categoriesContainer = findViewById(R.id.search_categories_container);
+        LinearLayout tipsContainer = findViewById(R.id.search_tips_container);
+        View divider = findViewById(R.id.search_divider);
+
+        if (showHistory) {
+            // Show history and categories
+            if (historyContainer != null) historyContainer.setVisibility(View.VISIBLE);
+            if (categoriesContainer != null) categoriesContainer.setVisibility(View.VISIBLE);
+            if (tipsContainer != null) tipsContainer.setVisibility(View.VISIBLE);
+            if (divider != null) divider.setVisibility(searchHistory.isEmpty() ? View.GONE : View.VISIBLE);
+
+            updateSearchHistoryDisplay();
+        } else {
+            // Hide everything when typing
+            if (historyContainer != null) historyContainer.setVisibility(View.GONE);
+            if (categoriesContainer != null) categoriesContainer.setVisibility(View.GONE);
+            if (tipsContainer != null) tipsContainer.setVisibility(View.GONE);
+            if (divider != null) divider.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateSearchHistoryDisplay() {
+        RecyclerView historyRecyclerView = findViewById(R.id.rv_search_history);
+        LinearLayout emptyHistoryState = findViewById(R.id.empty_history_state);
+        TextView clearHistoryBtn = findViewById(R.id.tv_clear_history);
+
+        if (historyRecyclerView != null && emptyHistoryState != null) {
+            if (searchHistory.isEmpty()) {
+                historyRecyclerView.setVisibility(View.GONE);
+                emptyHistoryState.setVisibility(View.VISIBLE);
+                if (clearHistoryBtn != null) clearHistoryBtn.setVisibility(View.GONE);
+            } else {
+                historyRecyclerView.setVisibility(View.VISIBLE);
+                emptyHistoryState.setVisibility(View.GONE);
+                if (clearHistoryBtn != null) clearHistoryBtn.setVisibility(View.VISIBLE);
+
+                // Setup RecyclerView
+                if (historyRecyclerView.getAdapter() == null) {
+                    historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+                    searchHistoryAdapter = new SearchHistoryAdapter(searchHistory, new SearchHistoryAdapter.OnHistoryItemClickListener() {
+                        @Override
+                        public void onHistoryClick(String query) {
+                            searchView.getEditText().setText(query);
+                            addToSearchHistory(query);
+                            performEnhancedSearch(query);
+                            searchView.hide();
+                        }
+
+                        @Override
+                        public void onHistoryDelete(String query) {
+                            searchHistory.remove(query);
+                            saveSearchHistory();
+                            updateSearchHistoryDisplay();
+
+                            if (searchHistory.isEmpty()) {
+                                Toast.makeText(StudentHomeActivity.this, "Search history cleared", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onClearAllHistory() {
+                            new AlertDialog.Builder(StudentHomeActivity.this)
+                                    .setTitle("Clear Search History")
+                                    .setMessage("Are you sure you want to clear all search history?")
+                                    .setPositiveButton("Clear", (dialog, which) -> {
+                                        searchHistory.clear();
+                                        saveSearchHistory();
+                                        updateSearchHistoryDisplay();
+                                        Toast.makeText(StudentHomeActivity.this, "Search history cleared", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                        }
+                    });
+                    historyRecyclerView.setAdapter(searchHistoryAdapter);
+                } else {
+                    searchHistoryAdapter.notifyDataSetChanged();
+                }
+            }
         }
     }
 
@@ -504,7 +1275,7 @@ public class StudentHomeActivity extends AppCompatActivity
 
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            // Refresh all data
+            // Refresh all data including tips
             refreshAllData();
         });
 
@@ -523,10 +1294,11 @@ public class StudentHomeActivity extends AppCompatActivity
             loadingIndicator.setVisibility(View.VISIBLE);
         }
 
-        // Refresh all the data components
+        // Refresh all the data components including tips
         setWelcomeMessage();
         setupNotificationBell();
         setupProjectsRecyclerView();
+        setupDynamicTips(); // Refresh tips
 
         // Hide the swipe refresh indicator when all operations are complete
         swipeRefreshLayout.setRefreshing(false);
@@ -675,6 +1447,7 @@ public class StudentHomeActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         setupNotificationBell(); // Refresh the badge when returning to this screen
+        setupDynamicTips(); // Refresh tips when returning to screen
     }
 
     private void setupProjectsRecyclerView() {
@@ -777,13 +1550,10 @@ public class StudentHomeActivity extends AppCompatActivity
         return java.util.Collections.emptyList();
     }
 
-
     private void setupClickListeners1() {
         findViewById(R.id.view_all_applications_btn).setOnClickListener(v -> {
             showAllApplications();
         });
-
-
 
         notificationBell.setOnClickListener(v -> {
             // Navigate to StudentAnnounce.java
@@ -791,8 +1561,6 @@ public class StudentHomeActivity extends AppCompatActivity
             startActivity(intent);
         });
     }
-
-
 
     private void setupClickListeners() {
         findViewById(R.id.btn_view_all_projects).setOnClickListener(v -> {
@@ -833,8 +1601,6 @@ public class StudentHomeActivity extends AppCompatActivity
                         fetchedProjects.add(project);
                     }
                 }
-
-
 
                 ProjectAdapterHome adapter = new ProjectAdapterHome(fetchedProjects, project -> {
                     // Handle project click - open project details
@@ -905,7 +1671,6 @@ public class StudentHomeActivity extends AppCompatActivity
         }
     }
 
-
     private void showAllApplications() {
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
 
@@ -972,6 +1737,7 @@ public class StudentHomeActivity extends AppCompatActivity
 
         closeButton.setOnClickListener(v -> popupWindow.dismiss());
     }
+
     private void setupFilterChips() {
         if (filterChips == null) return;
 
@@ -1184,10 +1950,6 @@ public class StudentHomeActivity extends AppCompatActivity
         }
     }
 
-    private void showAllTips() {
-        Toast.makeText(this, "Showing all tips", Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -1195,7 +1957,6 @@ public class StudentHomeActivity extends AppCompatActivity
         if (id == R.id.nav_profile) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
         }
-
         else if (id == R.id.nav_applications) {
             showAllApplications();
         } else if (id == R.id.nav_projects) {

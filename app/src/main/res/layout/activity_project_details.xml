@@ -15,7 +15,7 @@
         <!-- Hero Section with Project Title -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="231dp"
+            android:layout_height="312dp"
             android:background="@drawable/header_gradient"
             android:orientation="vertical"
             android:padding="24dp"
