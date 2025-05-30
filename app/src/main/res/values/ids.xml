@@ -14,4 +14,11 @@
     <item name="tvTitle" type="id" />
     <item name="btnSearch" type="id" />
     <item name="btnStartConversation" type="id" />
+    <item name="name_text" type="id" />
+    <item name="time_text" type="id" />
+    <item name="last_message_text" type="id" />
+    <item name="online_indicator" type="id" />
+    <item name="unread_badge" type="id" />
+    <item name="unread_count_text" type="id" />
+    <item name="message_status_icon" type="id" />
 </resources>

@@ -60,7 +60,9 @@
                                 android:layout_height="40dp"
                                 android:layout_alignParentStart="true"
                                 android:layout_centerVertical="true"
-                                android:src="@drawable/ic_menu" />
+                                android:src="@drawable/ic_menu"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:padding="8dp" />
 
                             <TextView
                                 android:id="@+id/welcome_text"
@@ -74,30 +76,43 @@
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
 
-                            <ImageView
-                                android:id="@+id/notification_bell"
-                                android:layout_width="30dp"
-                                android:layout_height="30dp"
+                            <RelativeLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
-                                android:layout_marginEnd="16dp"
-                                android:src="@drawable/notification"
-                                app:tint="@color/black" />
+                                android:layout_marginEnd="16dp">
 
-                            <TextView
-                                android:id="@+id/notification_badge"
-                                android:layout_width="16dp"
-                                android:layout_height="16dp"
-                                android:layout_toStartOf="@id/notification_bell"
-                                android:layout_alignTop="@id/notification_bell"
-                                android:background="@drawable/bg_card_blue"
-                                android:gravity="center"
-                                android:textColor="@color/black"
-                                android:textSize="10sp"
-                                android:visibility="gone" />
+                                <ImageView
+                                    android:id="@+id/notification_bell"
+                                    android:layout_width="30dp"
+                                    android:layout_height="30dp"
+                                    android:src="@drawable/notification"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:padding="4dp"
+                                    app:tint="@color/black" />
+
+                                <TextView
+                                    android:id="@+id/notification_badge"
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:layout_alignTop="@id/notification_bell"
+                                    android:layout_alignEnd="@id/notification_bell"
+                                    android:layout_marginTop="2dp"
+                                    android:layout_marginEnd="2dp"
+                                    android:background="@drawable/bg_card_blue"
+                                    android:gravity="center"
+                                    android:textColor="@color/white"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:visibility="gone"
+                                    tools:text="5"
+                                    tools:visibility="visible" />
+                            </RelativeLayout>
                         </RelativeLayout>
                     </com.google.android.material.appbar.MaterialToolbar>
-                    <!-- Search Bar -->
+
+                    <!-- Enhanced Search Bar -->
                     <com.google.android.material.search.SearchBar
                         android:id="@+id/search_bar"
                         android:layout_width="match_parent"
@@ -110,29 +125,20 @@
                         app:strokeWidth="1dp"
                         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SearchBar.Rounded"
                         style="@style/Widget.Material3.SearchBar"
-                        app:elevation="2dp"/>
-                    <TextView
-                        android:id="@+id/chat_alert_banner"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="12dp"
-                        android:gravity="center"
-                        android:text="You have a new message from a company"
-                        android:textColor="@android:color/white"
-                        android:background="@color/red"
-                        android:textStyle="bold"
-                        android:visibility="gone"/>
-
+                        app:elevation="2dp"
+                        app:navigationContentDescription="Search" />
 
                     <!-- Scrollable Content -->
                     <androidx.core.widget.NestedScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="540dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
                         android:background="@color/light_gray_bg"
                         android:paddingBottom="50dp"
                         android:paddingEnd="20dp"
                         android:paddingTop="16dp"
-                        android:paddingStart="16dp">
+                        android:paddingStart="16dp"
+                        android:fillViewport="true">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -149,14 +155,312 @@
                 </LinearLayout>
             </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
         </FrameLayout>
+
+        <!-- Enhanced SearchView with History -->
         <com.google.android.material.search.SearchView
             android:id="@+id/search_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="top"
             android:hint="Search projects, companies, skills..."
-            app:layout_anchor="@id/search_bar"/>
+            app:layout_anchor="@id/search_bar">
 
+            <!-- Search Content Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="@color/white">
+
+                <!-- Search History Section -->
+                <LinearLayout
+                    android:id="@+id/search_history_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="16dp"
+                    android:paddingHorizontal="16dp"
+                    android:visibility="visible">
+
+                    <!-- History Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_pending"
+                            android:layout_marginEnd="8dp"
+                            app:tint="@color/gray_500" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Recent Searches"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/gray_800" />
+
+                        <TextView
+                            android:id="@+id/tv_clear_history"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Clear All"
+                            android:textSize="14sp"
+                            android:textColor="@color/blue_500"
+                            android:background="?attr/selectableItemBackground"
+                            android:padding="8dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <!-- Search History RecyclerView -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_search_history"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:maxHeight="320dp"
+                        android:nestedScrollingEnabled="false"
+                        android:visibility="gone"
+                        tools:itemCount="5"
+                        tools:listitem="@layout/item_search_history" />
+
+                    <!-- Empty History State -->
+                    <LinearLayout
+                        android:id="@+id/empty_history_state"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:paddingVertical="32dp"
+                        android:visibility="visible">
+
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:src="@drawable/ic_search"
+                            android:alpha="0.4"
+                            app:tint="@color/gray_500" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No recent searches"
+                            android:textSize="16sp"
+                            android:textColor="@color/gray_500"
+                            android:layout_marginTop="12dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Your search history will appear here"
+                            android:textSize="14sp"
+                            android:textColor="@color/gray_500"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:id="@+id/search_divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/gray_200"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginVertical="8dp"
+                    android:visibility="gone" />
+
+                <!-- Search Categories/Quick Access -->
+                <LinearLayout
+                    android:id="@+id/search_categories_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="16dp"
+                    android:visibility="visible">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Popular Categories"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/gray_800"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Categories Chips -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/search_categories_chips"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:chipSpacingHorizontal="8dp"
+                        app:chipSpacingVertical="4dp">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_software_dev"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Software Development" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_data_science"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Data Science" />
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_ui_ux"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="UI/UX Design"/>
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_marketing"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Digital Marketing" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_web_dev"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Web Development" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_mobile_dev"
+                            style="@style/Widget.Material3.Chip.Suggestion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Mobile Development" />
+
+                    </com.google.android.material.chip.ChipGroup>
+                </LinearLayout>
+
+                <!-- Search Placeholder/Tips -->
+                <LinearLayout
+                    android:id="@+id/search_tips_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingHorizontal="32dp"
+                    android:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:src="@drawable/ic_search"
+                        android:alpha="0.3"
+                        app:tint="@color/gray_500" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Discover Your Next Opportunity"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/gray_800"
+                        android:layout_marginTop="16dp"
+                        android:textAlignment="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Search for projects, companies, skills, and more.\nUse keywords like 'React', 'Data Analysis', or company names."
+                        android:textSize="14sp"
+                        android:textColor="@color/gray_500"
+                        android:layout_marginTop="8dp"
+                        android:textAlignment="center"
+                        android:lineSpacingExtra="2dp" />
+
+                    <!-- Search Tips -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="24dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_tip"
+                                android:layout_marginEnd="12dp"
+                                app:tint="@color/blue_500" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Try searching for specific skills or technologies"
+                                android:textSize="13sp"
+                                android:textColor="@color/gray_500" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_tip"
+                                android:layout_marginEnd="12dp"
+                                app:tint="@color/green" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Search by company name to find their projects"
+                                android:textSize="13sp"
+                                android:textColor="@color/gray_500" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_tip"
+                                android:layout_marginEnd="12dp"
+                                app:tint="@color/orange" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Filter by project duration or compensation type"
+                                android:textSize="13sp"
+                                android:textColor="@color/gray_500" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.search.SearchView>
 
         <!-- Animated Bottom Navigation -->
         <com.google.android.material.bottomnavigation.BottomNavigationView

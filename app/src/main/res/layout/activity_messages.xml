@@ -1,41 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_refresh_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@android:color/white"
-    android:id="@+id/main"
-    tools:context=".MessagesActivity">
+    android:background="#FFFFFF">
 
-    <!-- Top Bar -->
+    <!-- Top App Bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:orientation="horizontal"
-        android:padding="16dp"
-        android:background="@color/blue"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp">
 
-        <ImageButton
-            android:id="@+id/btnMenu"
+        <!-- Menu Icon -->
+        <ImageView
+            android:id="@+id/menu_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/left_arrow"
-            app:tint="@color/white"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/menu" />
+            app:tint="@color/blue"
+            android:contentDescription="Back" />
 
+        <!-- Title -->
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Messages"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:gravity="center" />
+
+        <!-- Right side space for symmetry -->
+        <View
+            android:layout_width="24dp"
+            android:layout_height="24dp" />
 
     </LinearLayout>
 
@@ -43,57 +53,124 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:paddingTop="0dp"
-        android:gravity="center_vertical">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:background="#FFFFFF">
 
-        <EditText
-            android:id="@+id/etSearch"
+        <androidx.cardview.widget.CardView
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:background="@drawable/search_background"
-            android:hint="Search Messages"
-            android:paddingStart="40dp"
-            android:paddingEnd="16dp"
-            android:textSize="14sp"
-            android:drawableStart="@drawable/ic_search"
-            android:drawablePadding="8dp"
-            android:inputType="text"
-            android:maxLines="1" />
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F5F5F5">
 
-        <ImageButton
-            android:id="@+id/btnFilter"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/blue"
+                    android:layout_marginEnd="8dp" />
+
+                <EditText
+                    android:id="@+id/message_search"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Search messages"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:background="@android:color/transparent"
+                    android:inputType="text" />
+
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Filter Icon -->
+        <ImageView
+            android:id="@+id/ic_filter"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:src="@drawable/ic_filter"
-            android:background="@drawable/filter_button_background"
-            android:contentDescription="@string/filter" />
+            android:layout_marginTop="10dp"
+            app:tint="@color/blue"
+            android:layout_marginStart="12dp" />
 
     </LinearLayout>
 
-    <!-- Messages List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvMessages"
+    <!-- Content Container -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp"
-        tools:listitem="@layout/item_message" />
+        android:layout_weight="1">
 
-    <!-- Floating Action Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabNewMessage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="@color/blue"
-        app:tint="@android:color/white"
-        android:contentDescription="@string/new_message" />
+        <!-- Messages List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/messages_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp"
+            android:clipToPadding="false" />
+
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/tv_empty_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_chat_bubble"
+                android:alpha="0.3"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No conversations yet"
+                android:textSize="18sp"
+                android:textColor="#666666"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start chatting with companies about your applications"
+                android:textSize="14sp"
+                android:textColor="#999999"
+                android:gravity="center"
+                android:layout_marginHorizontal="32dp" />
+
+        </LinearLayout>
+
+        <!-- Floating Action Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_new_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_gravity="bottom|end"
+            android:src="@drawable/ic_add"
+            app:backgroundTint="#007AFF"
+            app:tint="#FFFFFF"
+            app:fabSize="normal" />
+    </FrameLayout>
+
+
 
 </LinearLayout>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
