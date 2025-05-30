@@ -101,6 +101,12 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
 
         menuIcon.setOnClickListener(v -> onBackPressed());
         fabNewMessage.setVisibility(View.VISIBLE);
+        fabNewMessage.setOnClickListener(v -> {
+            Intent intent = new Intent(MessagesActivity.this, AllCompanies.class);
+            intent.putExtra("STUDENT_ID", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            startActivity(intent);
+        });
+
     }
     private void filterConversations(String query) {
         List<Conversation> filteredList = new ArrayList<>();

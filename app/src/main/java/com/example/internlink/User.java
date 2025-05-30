@@ -4,6 +4,8 @@ public class User {
     private String name;
     private String email;
     private String role;
+    private String industry;
+    private String logoUrl;
 
     public User() {
         // Default constructor required for Firebase
@@ -18,6 +20,12 @@ public class User {
     // Getters and setters for the fields
     public String getName() {
         return name;
+    }
+    public String getIndustry() {
+        return industry;
+    }
+    public String getLogoUrl() {
+        return logoUrl;
     }
 
     public void setName(String name) {
