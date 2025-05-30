@@ -13,6 +13,7 @@ public class Conversation {
     private String projectTitle;
     private String applicationId;
     private int unreadCount;
+    private boolean isTyping;
 
     public Conversation() {
         // Default constructor required for Firebase
@@ -21,6 +22,13 @@ public class Conversation {
     // Getters and setters
     public String getChatId() {
         return chatId;
+    }
+    public boolean isTyping() {
+        return isTyping;
+    }
+
+    public void setTyping(boolean typing) {
+        isTyping = typing;
     }
 
     public void setChatId(String chatId) {

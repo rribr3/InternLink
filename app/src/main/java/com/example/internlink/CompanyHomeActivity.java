@@ -28,6 +28,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
@@ -59,92 +60,279 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private View mainContent;
     private Intent intent;
 
+    // ✅ NEW: SwipeRefreshLayout for pull-to-refresh
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    // ✅ NEW: References to adapters for refreshing
+    private CompanyProjectsAdapter projectsAdapter;
+    private ApplicantsAdapter applicantsAdapter;
+    private RecyclerView projectsRecyclerView;
+    private RecyclerView applicantsRecyclerView;
+
+    // ✅ NEW: Track refresh state
+    private boolean isRefreshing = false;
+    private int refreshTasksCount = 0;
+    private int completedRefreshTasks = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("CompanyHomeActivity", "onCreate started");
         setContentView(R.layout.activity_company_home);
-        loadingIndicator = findViewById(R.id.home_loading_indicator);
-        mainContent = findViewById(R.id.home_main_content);
+
+        initializeViews();
+        setupSwipeRefresh(); // ✅ NEW: Setup pull-to-refresh
 
         loadingIndicator.setVisibility(View.VISIBLE);
         mainContent.setVisibility(View.GONE);
 
-        // Initialize the dot indicator layout
-        dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
-
-        // For demonstration, let's assume you want 5 dots (e.g., for 5 pages in a view pager)
-        int numberOfDots = 5; // This can be dynamically set based on your content
-        addDots(numberOfDots);
-
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            String userId = currentUser.getUid();
-            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-
-            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    String status = snapshot.child("status").getValue(String.class);
-                    Long timestamp = snapshot.child("deactivationTimestamp").getValue(Long.class);
-                    if ("deactivated".equals(status) && timestamp != null) {
-                        long now = System.currentTimeMillis();
-                        long monthMillis = 30L * 24 * 60 * 60 * 1000;
-                        if (now - timestamp > monthMillis) {
-                            snapshot.getRef().removeValue(); // deletes user data
-                            currentUser.delete(); // deletes Firebase Auth account
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    // Log error if needed
-                }
-            });
+            checkUserStatus(currentUser);
         }
 
-        TextView viewNotification = findViewById(R.id.view_notification);
-        if (viewNotification != null) {
-            viewNotification.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
-                    startActivity(intent);
-                }
-            });
+        setupClickListeners();
+        setupNavigationDrawer();
+        loadAllData(); // ✅ NEW: Centralized data loading
+        createNotificationChannel();
+    }
+
+    // ✅ NEW: Initialize SwipeRefreshLayout
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setOnRefreshListener(this::refreshAllData);
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blueDark,
+                    R.color.blueLight,
+                    R.color.blue
+            );
+        }
+    }
+
+    // ✅ NEW: Centralized method to load all data
+    private void loadAllData() {
+        refreshTasksCount = 6; // Number of data loading tasks
+        completedRefreshTasks = 0;
+
+        loadCompanyInfo();
+        setupDashboardContent();
+        fetchRecentCompanyAnnouncements();
+        setupBottomNavigation();
+        setupNotificationBell();
+        fetchCompanyStats();
+    }
+
+    // ✅ NEW: Public method to refresh all data
+    public void refreshAllData() {
+        if (isRefreshing) {
+            return; // Prevent multiple simultaneous refreshes
         }
 
-        welcomeText = findViewById(R.id.welcome_text);
+        isRefreshing = true;
+        refreshTasksCount = 6;
+        completedRefreshTasks = 0;
+
+        Log.d("CompanyHomeActivity", "Starting data refresh...");
+
+        // Show refresh indicator if not already visible
+        if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(true);
+        }
+
+        // Clear existing data
+        clearExistingData();
+
+        // Reload all data
+        loadCompanyInfo();
+        refreshDashboardContent();
+        refreshCompanyAnnouncements();
+        refreshNotificationBell();
+        refreshCompanyStats();
+        refreshNavigationDrawer();
+    }
+
+    // ✅ NEW: Clear existing data before refresh
+    private void clearExistingData() {
+        // Clear projects adapter
+        if (projectsAdapter != null) {
+            projectsAdapter.clearData();
+        }
+
+        // Clear applicants adapter
+        if (applicantsAdapter != null) {
+            applicantsAdapter.clearData();
+        }
+
+        // Clear notification feed
+        LinearLayout feedLayout = findViewById(R.id.notification_feed_container);
+        if (feedLayout != null) {
+            feedLayout.removeAllViews();
+        }
+
+        // Clear dots indicator
+        if (dotIndicatorLayout != null) {
+            dotIndicatorLayout.removeAllViews();
+        }
+    }
+
+    // ✅ NEW: Track completion of refresh tasks
+    private void onRefreshTaskCompleted() {
+        completedRefreshTasks++;
+        Log.d("CompanyHomeActivity", "Refresh task completed: " + completedRefreshTasks + "/" + refreshTasksCount);
+
+        if (completedRefreshTasks >= refreshTasksCount) {
+            finishRefresh();
+        }
+    }
+
+    // ✅ NEW: Complete the refresh process
+    private void finishRefresh() {
+        isRefreshing = false;
+
+        // Hide refresh indicator
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
+
+        // Hide loading indicator and show content
+        if (loadingIndicator != null) {
+            loadingIndicator.setVisibility(View.GONE);
+        }
+        if (mainContent != null) {
+            mainContent.setVisibility(View.VISIBLE);
+        }
+
+        Log.d("CompanyHomeActivity", "Data refresh completed");
+    }
+
+    // ✅ UPDATED: Load company info with refresh tracking
+    private void loadCompanyInfo() {
+        String companyUid = getCurrentCompanyUid();
         databaseReference = FirebaseDatabase.getInstance().getReference("users");
 
-        String companyUid = getCurrentCompanyUid();
         databaseReference.child(companyUid).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    String name = "Welcome, "+dataSnapshot.child("name").getValue(String.class);
-                    welcomeText.setText(name);
+                    String name = "Welcome, " + dataSnapshot.child("name").getValue(String.class);
+                    if (welcomeText != null) {
+                        welcomeText.setText(name);
+                    }
                 }
+                onRefreshTaskCompleted();
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                // Handle error
+                Log.e("CompanyHomeActivity", "Failed to load company info", databaseError.toException());
+                onRefreshTaskCompleted();
             }
         });
+    }
 
-        companyLogo = findViewById(R.id.companyLogo);
+    // ✅ UPDATED: Refresh dashboard content
+    private void refreshDashboardContent() {
+        refreshProjectsRecyclerView();
+        refreshApplicantsRecyclerView();
+        refreshProjectStats();
+    }
 
-        initializeViews();
-        setupNavigationDrawer();
-        setupDashboardContent();
+    // ✅ NEW: Refresh projects with tracking
+    private void refreshProjectsRecyclerView() {
+        getSampleProjectsFromFirebase(new ProjectsCallback() {
+            @Override
+            public void onProjectsLoaded(List<EmployerProject> projects) {
+                if (projectsAdapter == null) {
+                    projectsAdapter = new CompanyProjectsAdapter(projects);
+                    if (projectsRecyclerView != null) {
+                        projectsRecyclerView.setAdapter(projectsAdapter);
+                    }
+                } else {
+                    projectsAdapter.updateProjects(projects);
+                }
+
+                // Update dots
+                addDots(projects.size());
+                onRefreshTaskCompleted();
+            }
+        });
+    }
+
+    // ✅ NEW: Refresh applicants with tracking
+    private void refreshApplicantsRecyclerView() {
+        fetchRecentApplicantsFromFirebase(applicants -> {
+            if (applicantsAdapter == null) {
+                applicantsAdapter = new ApplicantsAdapter(applicants);
+                if (applicantsRecyclerView != null) {
+                    applicantsRecyclerView.setAdapter(applicantsAdapter);
+                }
+            } else {
+                applicantsAdapter.updateApplicants(applicants);
+            }
+            onRefreshTaskCompleted();
+        });
+    }
+
+    // ✅ NEW: Refresh project stats
+    private void refreshProjectStats() {
+        fetchProjectStats();
+        // Note: fetchProjectStats calls onRefreshTaskCompleted internally
+    }
+
+    // ✅ NEW: Refresh company announcements
+    private void refreshCompanyAnnouncements() {
         fetchRecentCompanyAnnouncements();
-        setupClickListeners();
-        setupBottomNavigation(); // ✅ ADDED THIS LINE - This was missing!
+        // Note: fetchRecentCompanyAnnouncements calls onRefreshTaskCompleted internally
+    }
+
+    // ✅ NEW: Refresh notification bell
+    private void refreshNotificationBell() {
         setupNotificationBell();
+        // Note: setupNotificationBell calls onRefreshTaskCompleted internally
+    }
+
+    // ✅ NEW: Refresh company stats
+    private void refreshCompanyStats() {
         fetchCompanyStats();
-        createNotificationChannel();
+        // Note: fetchCompanyStats calls onRefreshTaskCompleted internally
+    }
+
+    // ✅ NEW: Refresh navigation drawer
+    private void refreshNavigationDrawer() {
+        setupNavigationDrawer();
+        // Note: setupNavigationDrawer calls onRefreshTaskCompleted internally
+    }
+
+    // ✅ NEW: Manual refresh button (you can add this to toolbar)
+    public void onRefreshButtonClicked(View view) {
+        refreshAllData();
+    }
+
+    private void checkUserStatus(FirebaseUser currentUser) {
+        String userId = currentUser.getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String status = snapshot.child("status").getValue(String.class);
+                Long timestamp = snapshot.child("deactivationTimestamp").getValue(Long.class);
+                if ("deactivated".equals(status) && timestamp != null) {
+                    long now = System.currentTimeMillis();
+                    long monthMillis = 30L * 24 * 60 * 60 * 1000;
+                    if (now - timestamp > monthMillis) {
+                        snapshot.getRef().removeValue();
+                        currentUser.delete();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("CompanyHomeActivity", "Failed to check user status", error.toException());
+            }
+        });
     }
 
     private void createNotificationChannel() {
@@ -166,6 +354,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
+    // ✅ UPDATED: Setup notification bell with refresh tracking
     private void setupNotificationBell() {
         notificationBell = findViewById(R.id.notification_bell);
         notificationBadge = findViewById(R.id.notification_badge);
@@ -200,14 +389,19 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                     }
                                 }
 
-                                // Update the badge
                                 updateNotificationBadge(unreadIds.size());
+                                if (isRefreshing) {
+                                    onRefreshTaskCompleted();
+                                }
                             }
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
                                 Log.e("NotificationBell", "Failed to read role announcements", error.toException());
                                 updateNotificationBadge(unreadIds.size());
+                                if (isRefreshing) {
+                                    onRefreshTaskCompleted();
+                                }
                             }
                         });
                     }
@@ -216,6 +410,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     public void onCancelled(@NonNull DatabaseError error) {
                         Log.e("NotificationBell", "Failed to read global announcements", error.toException());
                         updateNotificationBadge(0);
+                        if (isRefreshing) {
+                            onRefreshTaskCompleted();
+                        }
                     }
                 });
             }
@@ -224,12 +421,14 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             public void onCancelled(@NonNull DatabaseError error) {
                 Log.e("NotificationBell", "Failed to read user reads", error.toException());
                 updateNotificationBadge(0);
+                if (isRefreshing) {
+                    onRefreshTaskCompleted();
+                }
             }
         };
 
         userReadsRef.addValueEventListener(unreadListener);
 
-        // Click listener - removed markAllAnnouncementsAsRead call
         notificationBell.setOnClickListener(v -> {
             Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
             startActivity(intent);
@@ -247,70 +446,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
-    // Keep this method for use in CompanyAnnounce activity or other places where needed
-    private void markAllAnnouncementsAsRead(String userId) {
-        DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
-        DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
-        DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
-
-        // First get all announcements
-        globalRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot globalSnapshot) {
-                Map<String, Object> updates = new HashMap<>();
-
-                // Mark global announcements as read
-                for (DataSnapshot snap : globalSnapshot.getChildren()) {
-                    String key = snap.getKey();
-                    if (key != null) {
-                        updates.put(key, true);
-                    }
-                }
-
-                // Then get role-specific announcements
-                roleRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
-                        // Mark role announcements as read
-                        for (DataSnapshot snap : roleSnapshot.getChildren()) {
-                            String key = snap.getKey();
-                            if (key != null) {
-                                updates.put(key, true);
-                            }
-                        }
-
-                        // Update user_reads with all announcements
-                        if (!updates.isEmpty()) {
-                            userReadsRef.updateChildren(updates)
-                                    .addOnSuccessListener(aVoid -> {
-                                        Log.d("NotificationBell", "All announcements marked as read");
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.e("NotificationBell", "Failed to mark announcements as read", e);
-                                    });
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("NotificationBell", "Failed to read role announcements", error.toException());
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("NotificationBell", "Failed to read global announcements", error.toException());
-            }
-        });
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        // The ValueEventListener will automatically refresh the badge when returning from other activities
-        // No need to call setupNotificationBell() again as it would create duplicate listeners
-
+        // Automatically refresh data when returning to activity
+        if (!isRefreshing) {
+            refreshAllData();
+        }
     }
 
     private void initializeViews() {
@@ -318,8 +460,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         welcomeText = findViewById(R.id.welcome_text);
         notificationBell = findViewById(R.id.notification_bell);
         notificationBadge = findViewById(R.id.notification_badge);
+        loadingIndicator = findViewById(R.id.home_loading_indicator);
+        mainContent = findViewById(R.id.home_main_content);
+        dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
+        companyLogo = findViewById(R.id.companyLogo);
+
+        // ✅ NEW: Initialize RecyclerViews references
+        projectsRecyclerView = findViewById(R.id.projects_recycler_view);
+        applicantsRecyclerView = findViewById(R.id.applicants_recycler_view);
     }
 
+    // ✅ UPDATED: Setup navigation drawer with refresh tracking
     private void setupNavigationDrawer() {
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -346,11 +497,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                         companyMail.setText(email);
                     }
                 }
+                if (isRefreshing) {
+                    onRefreshTaskCompleted();
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(CompanyHomeActivity.this, "Failed to load company info", Toast.LENGTH_SHORT).show();
+                if (isRefreshing) {
+                    onRefreshTaskCompleted();
+                }
             }
         });
     }
@@ -362,6 +519,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         fetchProjectStats();
     }
 
+    // ✅ UPDATED: Fetch project stats with refresh tracking
     private void fetchProjectStats() {
         String companyId = getCurrentCompanyUid();
         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
@@ -391,11 +549,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 }
 
                 updateProjectStats(activeCount, pendingCount, completedCount);
+                if (isRefreshing) {
+                    onRefreshTaskCompleted();
+                }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(CompanyHomeActivity.this, "Failed to load project stats: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                if (isRefreshing) {
+                    onRefreshTaskCompleted();
+                }
             }
         });
     }
@@ -411,21 +575,18 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void setupProjectsRecyclerView() {
-        RecyclerView projectsRecycler = findViewById(R.id.projects_recycler_view);
-        if (projectsRecycler != null) {
-            projectsRecycler.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        if (projectsRecyclerView != null) {
+            projectsRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
             getSampleProjectsFromFirebase(new ProjectsCallback() {
                 @Override
                 public void onProjectsLoaded(List<EmployerProject> projects) {
-                    CompanyProjectsAdapter adapter = new CompanyProjectsAdapter(projects);
-                    projectsRecycler.setAdapter(adapter);
+                    projectsAdapter = new CompanyProjectsAdapter(projects);
+                    projectsRecyclerView.setAdapter(projectsAdapter);
 
-                    // Add dots based on number of projects
                     addDots(projects.size());
 
-                    // Setup RecyclerView scroll listener to update active dot
-                    projectsRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    projectsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                         @Override
                         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                             super.onScrolled(recyclerView, dx, dy);
@@ -437,7 +598,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                         }
                     });
 
-                    // ✅ Show the content and hide the loader
                     loadingIndicator.setVisibility(View.GONE);
                     mainContent.setVisibility(View.VISIBLE);
                 }
@@ -448,13 +608,11 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     private void addDots(int count) {
         if (dotIndicatorLayout == null || count <= 0) return;
 
-        dotIndicatorLayout.removeAllViews(); // Clear any previous dots
+        dotIndicatorLayout.removeAllViews();
 
-        // Convert dp to pixels
         int sizeInPx = (int) (10 * getResources().getDisplayMetrics().density);
         int marginInPx = (int) (4 * getResources().getDisplayMetrics().density);
 
-        // Loop to create 'count' dots
         for (int i = 0; i < count; i++) {
             View dot = new View(this);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizeInPx, sizeInPx);
@@ -464,7 +622,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             dotIndicatorLayout.addView(dot);
         }
 
-        // Set first dot as active initially
         if (dotIndicatorLayout.getChildCount() > 0) {
             dotIndicatorLayout.getChildAt(0).setBackgroundResource(R.drawable.circle_dot_active);
         }
@@ -475,33 +632,29 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             return;
         }
 
-        // Reset all dots
         for (int i = 0; i < dotIndicatorLayout.getChildCount(); i++) {
             View dot = dotIndicatorLayout.getChildAt(i);
             dot.setBackgroundResource(R.drawable.circle_dot);
         }
 
-        // Highlight the active dot
         View activeDot = dotIndicatorLayout.getChildAt(position);
         activeDot.setBackgroundResource(R.drawable.circle_dot_active);
     }
 
     private void setupApplicantsRecyclerView() {
-        RecyclerView applicantsRecycler = findViewById(R.id.applicants_recycler_view);
-        if (applicantsRecycler != null) {
-            applicantsRecycler.setLayoutManager(new LinearLayoutManager(this));
+        if (applicantsRecyclerView != null) {
+            applicantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-            // Fetch real applicants from Firebase
             fetchRecentApplicantsFromFirebase(applicants -> {
-                ApplicantsAdapter adapter = new ApplicantsAdapter(applicants);
-                applicantsRecycler.setAdapter(adapter);
+                applicantsAdapter = new ApplicantsAdapter(applicants);
+                applicantsRecyclerView.setAdapter(applicantsAdapter);
             });
         }
     }
 
-    // ✅ FIXED: Bottom Navigation Setup
     private void setupBottomNavigation() {
         BottomNavigationView bottomNavigation = findViewById(R.id.bottom_navigation);
+        String companyId = getCurrentCompanyUid();
         if (bottomNavigation != null) {
             bottomNavigation.setSelectedItemId(R.id.navigation_home);
 
@@ -509,14 +662,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 int itemId = item.getItemId();
 
                 if (itemId == R.id.navigation_home) {
-                    // Already on home page
                     return true;
-                } else if (itemId == R.id.navigation_Schedule) {
+                } else if (itemId == R.id.navigation_message) {
+                    Intent intent = new Intent(this, CompanyMessagesActivity.class);
+                    startActivity(intent);
+                    return true;
+                }
+                else if (itemId == R.id.navigation_Schedule) {
                     Intent intent = new Intent(CompanyHomeActivity.this, ScheduleActivity.class);
                     startActivity(intent);
                     return true;
                 } else if (itemId == R.id.navigation_profile) {
-                    String companyId = getCurrentCompanyUid();
                     Intent intent = new Intent(CompanyHomeActivity.this, CompanyProfileActivity.class);
                     intent.putExtra("companyId", companyId);
                     startActivity(intent);
@@ -544,21 +700,18 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         List<DataSnapshot> applicationsList = new ArrayList<>();
 
-                        // Collect all applications
                         for (DataSnapshot appSnapshot : snapshot.getChildren()) {
                             applicationsList.add(appSnapshot);
                         }
 
-                        // Sort by appliedDate (most recent first)
                         Collections.sort(applicationsList, (a, b) -> {
                             Long dateA = a.child("appliedDate").getValue(Long.class);
                             Long dateB = b.child("appliedDate").getValue(Long.class);
                             if (dateA == null) dateA = 0L;
                             if (dateB == null) dateB = 0L;
-                            return Long.compare(dateB, dateA); // Descending order
+                            return Long.compare(dateB, dateA);
                         });
 
-                        // Take only first 3 applications
                         int limit = Math.min(3, applicationsList.size());
                         final int[] processedCount = {0};
 
@@ -575,13 +728,11 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             Long appliedDate = appSnapshot.child("appliedDate").getValue(Long.class);
 
                             if (userId != null && projectId != null) {
-                                // Get user details
                                 usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot userSnapshot) {
                                         String userName = userSnapshot.child("name").getValue(String.class);
 
-                                        // Get project title
                                         projectsRef.child(projectId).addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
                                             public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
@@ -590,7 +741,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                                 if (userName != null && projectTitle != null) {
                                                     Applicant applicant = new Applicant(
                                                             userName,
-                                                            projectTitle, // Using project title as position
+                                                            projectTitle,
                                                             status != null ? status : "Pending",
                                                             R.drawable.ic_profile
                                                     );
@@ -657,7 +808,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     String title = projectSnapshot.child("title").getValue(String.class);
                     Long positionsCount = projectSnapshot.child("studentsRequired").getValue(Long.class);
 
-                    // Count actual applications for this project
                     DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
                     applicationsRef.orderByChild("projectId").equalTo(projectId)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -689,7 +839,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                     project.setProjectId(projectId);
                                     projects.add(project);
 
-                                    // Update the adapter after adding each project
                                     callback.onProjectsLoaded(new ArrayList<>(projects));
                                 }
 
@@ -749,7 +898,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             Long appliedDate = appSnapshot.child("appliedDate").getValue(Long.class);
 
                             if (userId != null && projectId != null) {
-                                // Get user and project details
                                 usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot userSnapshot) {
@@ -765,7 +913,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                                 String projectTitle = projectSnapshot.child("title").getValue(String.class);
 
                                                 if (userName != null && projectTitle != null) {
-                                                    // Create or get existing project
                                                     if (!projectsMap.containsKey(projectId)) {
                                                         ProjectWithApplicants project = new ProjectWithApplicants();
                                                         project.setProjectId(projectId);
@@ -774,7 +921,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                                         projectsMap.put(projectId, project);
                                                     }
 
-                                                    // Create applicant with more details
                                                     Applicant applicant = new Applicant(
                                                             userName,
                                                             createApplicantPosition(userBio, userUniversity, userDegree),
@@ -790,7 +936,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
                                                 processedCount[0]++;
                                                 if (processedCount[0] == totalApplications) {
-                                                    // Convert map to list and sort applicants by date
                                                     List<ProjectWithApplicants> result = new ArrayList<>(projectsMap.values());
                                                     for (ProjectWithApplicants project : result) {
                                                         Collections.sort(project.getApplicants(), (a, b) -> {
@@ -798,7 +943,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                                             Long dateB = b.getAppliedDate();
                                                             if (dateA == null) dateA = 0L;
                                                             if (dateB == null) dateB = 0L;
-                                                            return Long.compare(dateB, dateA); // Most recent first
+                                                            return Long.compare(dateB, dateA);
                                                         });
                                                     }
                                                     callback.onProjectsWithApplicantsLoaded(result);
@@ -842,7 +987,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 });
     }
 
-    // Helper method to create meaningful position text
     private String createApplicantPosition(String bio, String university, String degree) {
         StringBuilder position = new StringBuilder();
 
@@ -864,7 +1008,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             position.append(degree.trim());
         }
 
-        // If no details available, return a default
         if (position.length() == 0) {
             return "Student Applicant";
         }
@@ -872,7 +1015,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         return position.toString();
     }
 
-    // Interface definitions
     public interface ProjectsCallback {
         void onProjectsLoaded(List<EmployerProject> projects);
     }
@@ -885,7 +1027,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         void onProjectsWithApplicantsLoaded(List<ProjectWithApplicants> projects);
     }
 
-    // Model class for projects with applicants
     public static class ProjectWithApplicants {
         private String projectId;
         private String projectTitle;
@@ -895,7 +1036,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             this.applicants = new ArrayList<>();
         }
 
-        // Getters and setters
         public String getProjectId() { return projectId; }
         public void setProjectId(String projectId) { this.projectId = projectId; }
 
@@ -927,7 +1067,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             });
         }
 
-        // Add click listeners for view all buttons
         View viewAllProjectsButton = findViewById(R.id.view_all_projects_button);
         if (viewAllProjectsButton != null) {
             viewAllProjectsButton.setOnClickListener(v -> showAllProjectsDialog());
@@ -936,8 +1075,16 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         View viewAllApplicantsButton = findViewById(R.id.view_all_applicants_button);
         if (viewAllApplicantsButton != null) {
             viewAllApplicantsButton.setOnClickListener(v -> {
-                // Updated: Navigate to MyApplicants activity instead of showing dialog
                 Intent intent = new Intent(CompanyHomeActivity.this, MyApplicants.class);
+                startActivity(intent);
+            });
+        }
+
+        // ✅ NEW: Add refresh button click listener
+        TextView viewNotification = findViewById(R.id.view_notification);
+        if (viewNotification != null) {
+            viewNotification.setOnClickListener(v -> {
+                Intent intent = new Intent(CompanyHomeActivity.this, CompanyAnnounce.class);
                 startActivity(intent);
             });
         }
@@ -976,6 +1123,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         dialog.show();
     }
 
+    // ✅ UPDATED: Fetch recent company announcements with refresh tracking
     private void fetchRecentCompanyAnnouncements() {
         DatabaseReference globalRef = FirebaseDatabase.getInstance().getReference("announcements");
         DatabaseReference roleRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company");
@@ -984,6 +1132,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         ValueEventListenerCollector collector = new ValueEventListenerCollector(2, allAnnouncements, () -> {
             processAndDisplayRecentAnnouncements(allAnnouncements);
+            if (isRefreshing) {
+                onRefreshTaskCompleted();
+            }
         });
 
         globalRef.addListenerForSingleValueEvent(collector.getListener());
@@ -1038,10 +1189,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             }
         }
 
-        // Sort by timestamp descending
         Collections.sort(announcementList, (a1, a2) -> Long.compare(a2.timestamp, a1.timestamp));
 
-        // Limit to 3
         List<AnnouncementItem> topThree = announcementList.subList(0, Math.min(3, announcementList.size()));
 
         LinearLayout feedLayout = findViewById(R.id.notification_feed_container);
@@ -1093,7 +1242,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
-    // Implement OnApplicantActionListener methods
     @Override
     public void onViewProfile(Applicant applicant) {
         Intent intent = new Intent(this, ApplicantProfileActivity.class);
@@ -1108,7 +1256,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
     @Override
     public void onChat(Applicant applicant) {
-        // Navigate to chat activity
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("CHAT_WITH_ID", applicant.getUserId());
         intent.putExtra("CHAT_WITH_NAME", applicant.getName());
@@ -1149,7 +1296,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void viewApplicantCV(Applicant applicant) {
-        // Get CV URL from user profile
         DatabaseReference userRef = FirebaseDatabase.getInstance()
                 .getReference("users").child(applicant.getUserId());
 
@@ -1158,7 +1304,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String cvUrl = snapshot.getValue(String.class);
                 if (cvUrl != null && !cvUrl.isEmpty()) {
-                    // Start viewing CV
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(cvUrl));
                     startActivity(intent);
@@ -1179,7 +1324,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     }
 
     private void updateApplicantStatus(Applicant applicant, String newStatus) {
-        // Find the application in Firebase and update its status
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
 
         applicationsRef.orderByChild("userId").equalTo(applicant.getUserId())
@@ -1190,18 +1334,15 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             String projectId = appSnapshot.child("projectId").getValue(String.class);
                             String companyId = appSnapshot.child("companyId").getValue(String.class);
 
-                            // Check if this is the right application
                             if (projectId != null && projectId.equals(applicant.getProjectId()) &&
                                     companyId != null && companyId.equals(getCurrentCompanyUid())) {
 
-                                // Update the status
                                 appSnapshot.getRef().child("status").setValue(newStatus)
                                         .addOnSuccessListener(aVoid -> {
                                             Toast.makeText(CompanyHomeActivity.this,
                                                     applicant.getName() + " " + newStatus.toLowerCase(),
                                                     Toast.LENGTH_SHORT).show();
 
-                                            // Refresh the applicants list
                                             refreshApplicantsList();
                                         })
                                         .addOnFailureListener(e -> {
@@ -1242,7 +1383,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         if (btnSchedule != null) {
             btnSchedule.setOnClickListener(v -> {
-                // Implement scheduling logic here
                 Toast.makeText(this, "Interview scheduled with " + applicant.getName(),
                         Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
@@ -1256,9 +1396,15 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         dialog.show();
     }
 
+    // ✅ UPDATED: Refresh applicants list with new data
     private void refreshApplicantsList() {
-        // Refresh the applicants in the dialog if it's open
-        setupApplicantsRecyclerView();
+        if (applicantsAdapter != null) {
+            fetchRecentApplicantsFromFirebase(applicants -> {
+                applicantsAdapter.updateApplicants(applicants);
+            });
+        } else {
+            setupApplicantsRecyclerView();
+        }
     }
 
     @Override
@@ -1268,7 +1414,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         String companyId = getCurrentCompanyUid();
 
         if (id == R.id.nav_dashboard) {
-            // Dashboard clicked - already here
+            // Already here - refresh data
+            refreshAllData();
         } else if (id == R.id.nav_profile) {
             intent = new Intent(this, CompanyProfileActivity.class);
             intent.putExtra("companyId", companyId);
@@ -1277,7 +1424,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             intent = new Intent(this, MyProjectsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_applicant) {
-            // Updated: Navigate to MyApplicants activity instead of showing dialog
             intent = new Intent(this, MyApplicants.class);
             startActivity(intent);
         } else if (id == R.id.nav_messages) {
@@ -1305,6 +1451,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         return true;
     }
 
+    // ✅ UPDATED: Fetch company stats with refresh tracking
     private void fetchCompanyStats() {
         String companyId = getCurrentCompanyUid();
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -1316,7 +1463,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                         int totalApplicants = (int) snapshot.getChildrenCount();
                         int totalHired = 0;
 
-                        // Count accepted applications as hired
                         for (DataSnapshot appSnapshot : snapshot.getChildren()) {
                             String status = appSnapshot.child("status").getValue(String.class);
                             if ("Accepted".equals(status)) {
@@ -1324,7 +1470,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             }
                         }
 
-                        // Get total projects separately
                         DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
                         int finalTotalHired = totalHired;
                         projectsRef.orderByChild("companyId").equalTo(companyId)
@@ -1333,11 +1478,17 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                     public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
                                         int totalProjects = (int) projectSnapshot.getChildrenCount();
                                         updateCompanyStats(totalProjects, totalApplicants, finalTotalHired);
+                                        if (isRefreshing) {
+                                            onRefreshTaskCompleted();
+                                        }
                                     }
 
                                     @Override
                                     public void onCancelled(@NonNull DatabaseError error) {
                                         updateCompanyStats(0, totalApplicants, finalTotalHired);
+                                        if (isRefreshing) {
+                                            onRefreshTaskCompleted();
+                                        }
                                     }
                                 });
                     }
@@ -1345,6 +1496,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(CompanyHomeActivity.this, "Failed to load company stats", Toast.LENGTH_SHORT).show();
+                        if (isRefreshing) {
+                            onRefreshTaskCompleted();
+                        }
                     }
                 });
     }

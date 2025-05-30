@@ -116,8 +116,12 @@ public class AllCompanies extends AppCompatActivity {
 
                     if ("company".equals(role) && companyIds.contains(uid)) {
                         User company = userSnap.getValue(User.class);
-                        companyList.add(company);
+                        if (company != null) {
+                            company.setUid(uid); // ✅ Add UID from Firebase key
+                            companyList.add(company);
+                        }
                     }
+
                 }
 
                 RecyclerView recyclerView = findViewById(R.id.rv_all_companies);

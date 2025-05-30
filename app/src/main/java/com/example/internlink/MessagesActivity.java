@@ -400,6 +400,26 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                         conversation.setOtherUserName(name != null ? name : "Unknown User");
                         conversation.setOtherUserRole(role != null ? role : "user");
                         conversation.setOtherUserLogoUrl(logoUrl);
+                        // 🔽 ADD THIS inside onDataChange after setting user info
+                        DatabaseReference typingRef = FirebaseDatabase.getInstance()
+                                .getReference("user_status")
+                                .child(conversation.getOtherUserId())
+                                .child("isTyping");
+
+                        typingRef.addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                Boolean typing = snapshot.getValue(Boolean.class);
+                                conversation.setTyping(Boolean.TRUE.equals(typing));
+                                conversationsAdapter.notifyDataSetChanged();
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Log.e(TAG, "Failed to listen to typing status: " + error.getMessage());
+                            }
+                        });
+
 
                         Log.d(TAG, "Loaded user details for: " + name + " (role: " + role + ")");
 
@@ -555,6 +575,9 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                         Log.e(TAG, "Failed to mark notifications as read: " + error.getMessage());
                     }
                 });
+        conversation.setUnreadCount(0);
+        conversationsAdapter.notifyDataSetChanged();
+
 
         Intent intent = new Intent(this, StudentChatActivity.class);
         intent.putExtra("COMPANY_ID", conversation.getOtherUserId());

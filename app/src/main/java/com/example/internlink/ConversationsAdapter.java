@@ -107,8 +107,15 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             if (conversation.isFromCurrentUser(currentUserId)) {
                 displayMessage = "You: " + displayMessage;
             }
-
-            tvLastMessage.setText(displayMessage);
+            if (conversation.isTyping()) {
+                tvLastMessage.setText("typing...");
+                tvLastMessage.setTypeface(null, android.graphics.Typeface.ITALIC);
+                tvLastMessageTime.setVisibility(View.INVISIBLE);
+            } else {
+                tvLastMessage.setText(displayMessage);
+                tvLastMessage.setTypeface(null, android.graphics.Typeface.NORMAL);
+                tvLastMessageTime.setVisibility(View.VISIBLE);
+            }
 
             // Set timestamp
             if (conversation.getLastMessageTime() > 0) {
@@ -123,13 +130,13 @@ public class ConversationsAdapter extends RecyclerView.Adapter<ConversationsAdap
             if (conversation.getOtherUserLogoUrl() != null && !conversation.getOtherUserLogoUrl().trim().isEmpty()) {
                 Glide.with(context)
                         .load(conversation.getOtherUserLogoUrl())
-                        .placeholder(R.drawable.ic_company_placeholder)
-                        .error(R.drawable.ic_company_placeholder)
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
                         .circleCrop()
                         .into(ivCompanyLogo);
             } else {
                 // Set default company logo
-                ivCompanyLogo.setImageResource(R.drawable.ic_company_placeholder);
+                ivCompanyLogo.setImageResource(R.drawable.ic_profile);
             }
 
             // Handle unread count (you can implement this based on your notification system)

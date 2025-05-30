@@ -7,20 +7,23 @@ public class EmployerProject {
     private int positionsCount;
     private int iconResId;
 
+    // Default constructor (needed for Firebase)
+    public EmployerProject() {
+    }
+
+    // Constructor with parameters
     public EmployerProject(String title, int applicantsCount, int positionsCount, int iconResId) {
         this.title = title;
         this.applicantsCount = applicantsCount;
         this.positionsCount = positionsCount;
         this.iconResId = iconResId;
     }
+
+    // ✅ Getters
     public String getProjectId() {
         return projectId;
     }
-    public void setProjectId(String projectId) {
-        this.projectId = projectId;
-    }
 
-    // Getters
     public String getTitle() {
         return title;
     }
@@ -35,5 +38,51 @@ public class EmployerProject {
 
     public int getIconResId() {
         return iconResId;
+    }
+
+    // ✅ Setters (needed for refresh functionality)
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setApplicantsCount(int applicantsCount) {
+        this.applicantsCount = applicantsCount;
+    }
+
+    public void setPositionsCount(int positionsCount) {
+        this.positionsCount = positionsCount;
+    }
+
+    public void setIconResId(int iconResId) {
+        this.iconResId = iconResId;
+    }
+
+    // ✅ Utility methods for better object handling
+    @Override
+    public String toString() {
+        return "EmployerProject{" +
+                "projectId='" + projectId + '\'' +
+                ", title='" + title + '\'' +
+                ", applicantsCount=" + applicantsCount +
+                ", positionsCount=" + positionsCount +
+                ", iconResId=" + iconResId +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        EmployerProject that = (EmployerProject) obj;
+        return projectId != null ? projectId.equals(that.projectId) : that.projectId == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return projectId != null ? projectId.hashCode() : 0;
     }
 }

@@ -35,5 +35,16 @@
             android:textSize="14sp"
             android:textColor="#666"/>
     </LinearLayout>
+    <Button
+        android:id="@+id/btn_start_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Chat"
+        android:textSize="14sp"
+        android:backgroundTint="@color/blue"
+        android:textColor="@android:color/white"
+        android:paddingHorizontal="12dp"
+        android:layout_marginStart="8dp" />
+
 
 </LinearLayout>

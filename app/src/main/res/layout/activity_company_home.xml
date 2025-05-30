@@ -27,108 +27,118 @@
                 android:layout_gravity="center"
                 android:visibility="visible" />
 
-            <!-- Main Content, hidden until data is loaded -->
-            <LinearLayout
-                android:id="@+id/home_main_content"
+            <!-- ✅ NEW: SwipeRefreshLayout wrapper for pull-to-refresh -->
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipe_refresh_layout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:visibility="gone">
+                android:layout_height="match_parent">
 
-                <!-- App Bar -->
-                <com.google.android.material.appbar.MaterialToolbar
-                    android:id="@+id/toolbar"
-                    android:layout_width="match_parent"
-                    android:layout_height="?attr/actionBarSize"
-                    android:background="@color/white"
-                    android:elevation="8dp"
-                    app:titleTextColor="@color/black">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-                        <ImageView
-                            android:id="@+id/logo"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_alignParentStart="true"
-                            android:layout_centerVertical="true"
-                            android:src="@drawable/ic_menu"
-                            android:contentDescription="Menu icon" />
-
-                        <TextView
-                            android:id="@+id/welcome_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_toEndOf="@id/logo"
-                            android:layout_centerVertical="true"
-                            android:layout_marginStart="16dp"
-                            android:text="Welcome back, Company"
-                            android:textColor="@color/black"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/notification_badge"
-                            android:layout_width="16dp"
-                            android:layout_height="16dp"
-                            android:layout_toStartOf="@id/notification_bell"
-                            android:layout_alignTop="@id/notification_bell"
-                            android:background="@drawable/bg_card_blue"
-                            android:gravity="center"
-                            android:textColor="@color/black"
-                            android:textSize="10sp"
-                            android:visibility="gone" />
-
-                        <ImageView
-                            android:id="@+id/notification_bell"
-                            android:layout_width="30dp"
-                            android:layout_height="30dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
-                            android:layout_marginEnd="16dp"
-                            android:src="@drawable/notification"
-                            android:contentDescription="Notifications"
-                            app:tint="@color/black" />
-                    </RelativeLayout>
-                </com.google.android.material.appbar.MaterialToolbar>
-                <com.google.android.material.search.SearchBar
-                    android:id="@+id/search_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="16dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:hint="Search projects, opportunities..."
-                    app:strokeColor="@color/gray_200"
-                    app:strokeWidth="1dp"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.SearchBar.Rounded"
-                    style="@style/Widget.Material3.SearchBar"
-                    app:elevation="2dp"/>
-
-                <!-- Main Scrollable Content -->
-                <androidx.core.widget.NestedScrollView
+                <!-- Main Content, hidden until data is loaded -->
+                <LinearLayout
+                    android:id="@+id/home_main_content"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@color/light_gray_bg"
-                    android:padding="16dp">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                    <LinearLayout
+                    <!-- App Bar -->
+                    <com.google.android.material.appbar.MaterialToolbar
+                        android:id="@+id/toolbar"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:layout_height="?attr/actionBarSize"
+                        android:background="@color/white"
+                        android:elevation="8dp"
+                        app:titleTextColor="@color/black">
 
-                        <!-- Cards -->
-                        <include layout="@layout/card_my_projects" />
-                        <include layout="@layout/card_recent_applicants" />
-                        <include layout="@layout/card_company_stats" />
-                        <include layout="@layout/card_notification_feed" />
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
 
-                    </LinearLayout>
-                </androidx.core.widget.NestedScrollView>
+                            <ImageView
+                                android:id="@+id/logo"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_alignParentStart="true"
+                                android:layout_centerVertical="true"
+                                android:src="@drawable/ic_menu"
+                                android:contentDescription="Menu icon" />
 
-            </LinearLayout>
+                            <TextView
+                                android:id="@+id/welcome_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_toEndOf="@id/logo"
+                                android:layout_centerVertical="true"
+                                android:layout_marginStart="16dp"
+                                android:text="Welcome back, Company"
+                                android:textColor="@color/black"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <!-- ✅ NEW: Refresh button (optional - you can add this for manual refresh) -->
+                            <ImageView
+                                android:id="@+id/refresh_button"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_toStartOf="@id/notification_badge"
+                                android:layout_centerVertical="true"
+                                android:layout_marginEnd="8dp"
+                                android:src="@drawable/ic_refresh"
+                                android:contentDescription="Refresh"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:padding="4dp"
+                                android:onClick="onRefreshButtonClicked"
+                                app:tint="@color/black" />
+
+                            <TextView
+                                android:id="@+id/notification_badge"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_toStartOf="@id/notification_bell"
+                                android:layout_alignTop="@id/notification_bell"
+                                android:background="@drawable/bg_card_blue"
+                                android:gravity="center"
+                                android:textColor="@color/black"
+                                android:textSize="10sp"
+                                android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/notification_bell"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginEnd="16dp"
+                                android:src="@drawable/notification"
+                                android:contentDescription="Notifications"
+                                app:tint="@color/black" />
+                        </RelativeLayout>
+                    </com.google.android.material.appbar.MaterialToolbar>
+
+                    <!-- Main Scrollable Content -->
+                    <androidx.core.widget.NestedScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@color/light_gray_bg"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <!-- Cards -->
+                            <include layout="@layout/card_my_projects" />
+                            <include layout="@layout/card_recent_applicants" />
+                            <include layout="@layout/card_company_stats" />
+                            <include layout="@layout/card_notification_feed" />
+
+                        </LinearLayout>
+                    </androidx.core.widget.NestedScrollView>
+
+                </LinearLayout>
+
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
             <!-- Create Project FAB -->
             <com.google.android.material.floatingactionbutton.FloatingActionButton

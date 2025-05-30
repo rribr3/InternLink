@@ -431,10 +431,12 @@ public class StudentHomeActivity extends AppCompatActivity
                 refreshAllData();
                 return true;
             }  else if (id == R.id.nav_messages) {
-                intent = new Intent(this, MessagesActivity.class);
+                Intent intent = new Intent(this, MessagesActivity.class);
+                intent.putExtra("STUDENT_ID", studentId); // Replace with actual variable name
                 startActivity(intent);
                 return true;
-            } else if (id == R.id.navigation_map) {
+            }
+            else if (id == R.id.navigation_map) {
                 intent = new Intent(this, MapActivity.class);
                 startActivity(intent);
                 return true;

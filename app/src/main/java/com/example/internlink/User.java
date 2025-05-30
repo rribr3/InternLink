@@ -6,6 +6,7 @@ public class User {
     private String role;
     private String industry;
     private String logoUrl;
+    private String userId;
 
     public User() {
         // Default constructor required for Firebase
@@ -24,8 +25,14 @@ public class User {
     public String getIndustry() {
         return industry;
     }
+    public String getUid() {
+        return userId;
+    }
     public String getLogoUrl() {
         return logoUrl;
+    }
+    public void setUid(String userId) {
+        this.userId = userId;
     }
 
     public void setName(String name) {

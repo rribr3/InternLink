@@ -32,6 +32,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".AllStudents"
+            android:exported="false" />
+        <activity
+            android:name=".CompanyMessagesActivity"
+            android:exported="false" />
+        <activity
             android:name=".AllCompanies"
             android:exported="false" />
         <activity

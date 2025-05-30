@@ -1,9 +1,11 @@
 package com.example.internlink;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -27,12 +29,14 @@ public class CompanyAdapter extends RecyclerView.Adapter<CompanyAdapter.CompanyV
     public static class CompanyViewHolder extends RecyclerView.ViewHolder {
         ImageView logo;
         TextView name, industry;
+        Button startChat;
 
         public CompanyViewHolder(@NonNull View itemView) {
             super(itemView);
             logo = itemView.findViewById(R.id.company_logo);
             name = itemView.findViewById(R.id.company_name);
             industry = itemView.findViewById(R.id.company_industry);
+            startChat = itemView.findViewById(R.id.btn_start_chat);
         }
     }
 
@@ -53,6 +57,15 @@ public class CompanyAdapter extends RecyclerView.Adapter<CompanyAdapter.CompanyV
         if (company.getLogoUrl() != null && !company.getLogoUrl().isEmpty()) {
             Glide.with(context).load(company.getLogoUrl()).into(holder.logo);
         }
+        holder.startChat.setOnClickListener(v -> {
+            Intent intent = new Intent(context, StudentChatActivity.class);
+            intent.putExtra("COMPANY_ID", company.getUid());      // ✅ Correct key
+            intent.putExtra("COMPANY_NAME", company.getName());   // ✅ Correct key
+            context.startActivity(intent);
+        });
+
+
+
     }
 
     @Override
