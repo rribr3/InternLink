@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_student_feedback.xml -->
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="12dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Company Info Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/iv_company_logo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_company"
+                app:civ_border_width="2dp"
+                app:civ_border_color="@color/blue_500" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_company_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    tools:text="Tech Innovations Inc." />
+
+                <TextView
+                    android:id="@+id/tv_project_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="Mobile App Development" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_time_ago"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary"
+                tools:text="3 weeks ago" />
+
+        </LinearLayout>
+
+        <!-- Rating -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <RatingBar
+                android:id="@+id/rating_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="4.5"
+                android:stepSize="0.5"
+                android:isIndicator="true"
+                style="?android:attr/ratingBarStyleSmall"
+                android:progressTint="@color/yellow" />
+
+            <TextView
+                android:id="@+id/tv_rating_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="4.5" />
+
+        </LinearLayout>
+
+        <!-- Comment -->
+        <TextView
+            android:id="@+id/tv_comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/text_primary"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="4"
+            android:ellipsize="end"
+            tools:text="Excellent student! Very dedicated, quick learner, and delivered high-quality work throughout the internship. Would definitely work with again." />
+
+        <!-- Performance Badges (Optional) -->
+        <LinearLayout
+            android:id="@+id/performance_badges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="start"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⭐ Outstanding"
+                android:textSize="10sp"
+                android:textColor="@color/blue_500"
+                android:background="@drawable/rounded_background"
+                android:padding="4dp"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🚀 Fast Learner"
+                android:textSize="10sp"
+                android:textColor="@color/blue_500"
+                android:background="@drawable/rounded_background"
+                android:padding="4dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

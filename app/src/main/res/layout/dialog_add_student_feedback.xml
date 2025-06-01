@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dialog_add_student_feedback.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_star"
+            android:layout_marginEnd="12dp"
+            app:tint="@color/blue_500" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Rate Student Performance"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+    </LinearLayout>
+
+    <!-- Student Info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp"
+        android:padding="12dp"
+        android:background="@drawable/rounded_background">
+
+        <ImageView
+            android:id="@+id/iv_student_profile_dialog"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_profile"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_student_name_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="John Doe" />
+
+            <TextView
+                android:id="@+id/tv_project_name_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                tools:text="Mobile App Development Project" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Rating Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="How would you rate this student's performance?"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="12dp"
+            android:gravity="center" />
+
+        <RatingBar
+            android:id="@+id/rating_bar_dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:numStars="5"
+            android:rating="0"
+            android:stepSize="1"
+            android:layout_marginBottom="8dp"
+            android:progressTint="@color/yellow"
+            android:secondaryProgressTint="@color/gray_200" />
+
+        <TextView
+            android:id="@+id/tv_rating_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:text="Tap stars to rate"
+            android:textStyle="italic" />
+
+    </LinearLayout>
+
+    <!-- Performance Categories (Optional) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="20dp"
+        android:visibility="gone"
+        android:id="@+id/performance_categories">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Performance Highlights"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/blue_500"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_performance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_technical_skills"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Technical Skills"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_communication"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Communication"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_teamwork"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Teamwork"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_initiative"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Initiative"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_reliability"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reliability"
+                android:checkable="true"
+                style="@style/Widget.MaterialComponents.Chip.Choice" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </LinearLayout>
+
+    <!-- Comment Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Share your feedback (optional)"
+        android:textSize="16sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:boxStrokeColor="@color/blue_500"
+        app:hintTextColor="@color/blue_500">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Share details about the student's performance, skills, and work quality..."
+            android:minLines="3"
+            android:maxLines="5"
+            android:gravity="top"
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLength="500" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:layout_marginEnd="12dp"
+            android:textColor="@color/text_secondary"
+            android:backgroundTint="@color/transparent"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+        <Button
+            android:id="@+id/btn_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit Review"
+            android:backgroundTint="@color/blue_500"
+            android:textColor="@android:color/white"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+</LinearLayout>

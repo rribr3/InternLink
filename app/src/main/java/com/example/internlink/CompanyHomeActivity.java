@@ -5,16 +5,20 @@ import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -24,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -110,9 +115,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
-    // ✅ NEW: Centralized method to load all data
+    // ✅ NEW: Public method to refresh all data
     private void loadAllData() {
-        refreshTasksCount = 6; // Number of data loading tasks
+        refreshTasksCount = 8; // Increased to include status update
         completedRefreshTasks = 0;
 
         loadCompanyInfo();
@@ -121,35 +126,45 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         setupBottomNavigation();
         setupNotificationBell();
         fetchCompanyStats();
+        updateProjectStatuses(); // ✅ Add this line
+        onRefreshTaskCompleted();
     }
 
-    // ✅ NEW: Public method to refresh all data
+
     public void refreshAllData() {
         if (isRefreshing) {
-            return; // Prevent multiple simultaneous refreshes
+            return;
         }
 
         isRefreshing = true;
-        refreshTasksCount = 6;
+        refreshTasksCount = 8; // Increased to include status update
         completedRefreshTasks = 0;
 
         Log.d("CompanyHomeActivity", "Starting data refresh...");
 
-        // Show refresh indicator if not already visible
         if (swipeRefreshLayout != null && !swipeRefreshLayout.isRefreshing()) {
             swipeRefreshLayout.setRefreshing(true);
         }
 
-        // Clear existing data
         clearExistingData();
 
-        // Reload all data
         loadCompanyInfo();
         refreshDashboardContent();
         refreshCompanyAnnouncements();
         refreshNotificationBell();
         refreshCompanyStats();
         refreshNavigationDrawer();
+        refreshMessagesBadge();
+        updateProjectStatuses(); // ✅ Add this line
+    }
+    public void checkProjectStatusesManually() {
+        updateProjectStatuses();
+        Toast.makeText(this, "Checking project statuses...", Toast.LENGTH_SHORT).show();
+    }
+    // ✅ NEW: Refresh messages badge
+    private void refreshMessagesBadge() {
+        setupUnreadMessagesBadge();
+        onRefreshTaskCompleted();
     }
 
     // ✅ NEW: Clear existing data before refresh
@@ -453,6 +468,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         if (!isRefreshing) {
             refreshAllData();
         }
+        setupUnreadMessagesBadge();
     }
 
     private void initializeViews() {
@@ -519,6 +535,123 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         fetchProjectStats();
     }
 
+    private void updateProjectStatuses() {
+        String companyId = getCurrentCompanyUid();
+        DatabaseReference projectsRef = FirebaseDatabase.getInstance().getReference("projects");
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+
+        // Get all projects for this company
+        projectsRef.orderByChild("companyId").equalTo(companyId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
+                            String projectId = projectSnapshot.getKey();
+                            String currentStatus = projectSnapshot.child("status").getValue(String.class);
+                            Long deadline = projectSnapshot.child("deadline").getValue(Long.class);
+                            Long studentsRequired = projectSnapshot.child("studentsRequired").getValue(Long.class);
+
+                            // Only update if project is currently "approved" (active)
+                            if ("approved".equals(currentStatus) && projectId != null) {
+                                checkAndUpdateProjectStatus(projectId, deadline, studentsRequired, applicationsRef);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("CompanyHomeActivity", "Failed to load projects for status update", error.toException());
+                    }
+                });
+    }
+
+    // ✅ NEW: Check individual project status and update if needed
+    private void checkAndUpdateProjectStatus(String projectId, Long deadline, Long studentsRequired,
+                                             DatabaseReference applicationsRef) {
+        long currentTime = System.currentTimeMillis();
+        boolean shouldComplete = false;
+        String completionReason = "";
+
+        // Check if deadline has passed
+        if (deadline != null && currentTime > deadline) {
+            shouldComplete = true;
+            completionReason = "Deadline reached";
+        }
+
+        // Check if enough students have been accepted
+        if (studentsRequired != null && studentsRequired > 0) {
+            applicationsRef.orderByChild("projectId").equalTo(projectId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            int acceptedCount = 0;
+
+                            // Count accepted applications for this project
+                            for (DataSnapshot appSnapshot : snapshot.getChildren()) {
+                                String status = appSnapshot.child("status").getValue(String.class);
+                                if ("Accepted".equals(status)) {
+                                    acceptedCount++;
+                                }
+                            }
+
+                            // Check if we have enough accepted students
+                            boolean shouldCompleteByAcceptance = acceptedCount >= studentsRequired;
+                            boolean shouldCompleteByDeadline = deadline != null && currentTime > deadline;
+
+                            // Update project status if either condition is met
+                            if (shouldCompleteByDeadline || shouldCompleteByAcceptance) {
+                                String reason = shouldCompleteByDeadline ? "Deadline reached" :
+                                        shouldCompleteByAcceptance ? "Positions filled" : "Auto-completed";
+
+                                updateProjectToCompleted(projectId, reason, acceptedCount, studentsRequired.intValue());
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("CompanyHomeActivity", "Failed to check applications for project: " + projectId, error.toException());
+                        }
+                    });
+        } else {
+            // If no students required info, just check deadline
+            if (shouldComplete) {
+                updateProjectToCompleted(projectId, completionReason, 0, 0);
+            }
+        }
+    }
+
+    // ✅ NEW: Update project status to completed
+    private void updateProjectToCompleted(String projectId, String reason, int acceptedCount, int requiredCount) {
+        DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", "completed");
+        updates.put("completedAt", System.currentTimeMillis());
+        updates.put("completionReason", reason);
+        updates.put("finalAcceptedCount", acceptedCount);
+
+        projectRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("CompanyHomeActivity", "Project " + projectId + " marked as completed. Reason: " + reason);
+
+                    // Optionally show a toast notification
+                    if (reason.equals("Positions filled")) {
+                        Toast.makeText(this, "Project completed - All positions filled (" + acceptedCount + "/" + requiredCount + ")",
+                                Toast.LENGTH_SHORT).show();
+                    } else if (reason.equals("Deadline reached")) {
+                        Toast.makeText(this, "Project completed - Deadline reached", Toast.LENGTH_SHORT).show();
+                    }
+
+                    // Refresh the data to show updated status
+                    refreshAllData();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("CompanyHomeActivity", "Failed to update project status", e);
+                });
+    }
+
+
+
     // ✅ UPDATED: Fetch project stats with refresh tracking
     private void fetchProjectStats() {
         String companyId = getCurrentCompanyUid();
@@ -541,7 +674,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                             case "pending":
                                 pendingCount++;
                                 break;
-                            case "completed":
+                            case "completed":  // ✅ Now properly counts completed projects
                                 completedCount++;
                                 break;
                         }
@@ -610,10 +743,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
         dotIndicatorLayout.removeAllViews();
 
+        // ✅ NEW: Limit maximum dots to 3
+        int maxDots = Math.min(count, 3);
+
         int sizeInPx = (int) (10 * getResources().getDisplayMetrics().density);
         int marginInPx = (int) (4 * getResources().getDisplayMetrics().density);
 
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < maxDots; i++) {
             View dot = new View(this);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(sizeInPx, sizeInPx);
             params.setMargins(marginInPx, 0, marginInPx, 0);
@@ -627,18 +763,26 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         }
     }
 
+
     private void updateActiveDot(int position) {
-        if (dotIndicatorLayout == null || position < 0 || position >= dotIndicatorLayout.getChildCount()) {
+        if (dotIndicatorLayout == null || dotIndicatorLayout.getChildCount() == 0) {
             return;
         }
 
+        // ✅ NEW: Map position to dot index when there are more projects than dots
+        int dotIndex = Math.min(position, dotIndicatorLayout.getChildCount() - 1);
+
+        // Reset all dots to inactive
         for (int i = 0; i < dotIndicatorLayout.getChildCount(); i++) {
             View dot = dotIndicatorLayout.getChildAt(i);
             dot.setBackgroundResource(R.drawable.circle_dot);
         }
 
-        View activeDot = dotIndicatorLayout.getChildAt(position);
-        activeDot.setBackgroundResource(R.drawable.circle_dot_active);
+        // Set the appropriate dot as active
+        if (dotIndex >= 0 && dotIndex < dotIndicatorLayout.getChildCount()) {
+            View activeDot = dotIndicatorLayout.getChildAt(dotIndex);
+            activeDot.setBackgroundResource(R.drawable.circle_dot_active);
+        }
     }
 
     private void setupApplicantsRecyclerView() {
@@ -649,6 +793,107 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 applicantsAdapter = new ApplicantsAdapter(applicants);
                 applicantsRecyclerView.setAdapter(applicantsAdapter);
             });
+        }
+    }
+
+    // Add these methods to your CompanyHomeActivity class
+
+    private void setupUnreadMessagesBadge() {
+        String companyId = getCurrentCompanyUid();
+        DatabaseReference notificationsRef = FirebaseDatabase.getInstance()
+                .getReference("notifications")
+                .child(companyId);
+
+        notificationsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int unreadCount = 0;
+
+                // Count unread chat messages
+                for (DataSnapshot notificationSnap : snapshot.getChildren()) {
+                    String type = notificationSnap.child("type").getValue(String.class);
+                    Boolean isRead = notificationSnap.child("read").getValue(Boolean.class);
+
+                    if ("chat_message".equals(type) && (isRead == null || !isRead)) {
+                        unreadCount++;
+                    }
+                }
+
+                // Update the badge
+                updateMessagesBadge(unreadCount);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("CompanyHomeActivity", "Failed to load message notifications", error.toException());
+                // Handle error - hide badge or show 0
+                updateMessagesBadge(0);
+            }
+        });
+    }
+
+    private void updateMessagesBadge(int count) {
+        runOnUiThread(() -> {
+            // Get the BottomNavigationView
+            BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+
+            if (bottomNav != null) {
+                // Remove any existing badge first
+                bottomNav.removeBadge(R.id.navigation_message);
+
+                if (count > 0) {
+                    // Create and show badge
+                    com.google.android.material.badge.BadgeDrawable badge =
+                            bottomNav.getOrCreateBadge(R.id.navigation_message);
+
+                    badge.setNumber(count);
+                    badge.setBackgroundColor(ContextCompat.getColor(this, R.color.red));
+                    badge.setBadgeTextColor(ContextCompat.getColor(this, android.R.color.white));
+                    badge.setMaxCharacterCount(2); // Show "99+" for numbers > 99
+                    badge.setVisible(true);
+                }
+            }
+        });
+    }
+
+    // Alternative method using custom badge view if Material badges don't work
+    private void updateMessagesBadgeCustom(int count) {
+        // Find the messages menu item view
+        View messagesView = findViewById(R.id.navigation_message);
+
+        if (messagesView != null && messagesView instanceof ViewGroup) {
+            ViewGroup messagesContainer = (ViewGroup) messagesView;
+
+            // Remove existing badge
+            View existingBadge = messagesContainer.findViewWithTag("messages_badge");
+            if (existingBadge != null) {
+                messagesContainer.removeView(existingBadge);
+            }
+
+            if (count > 0) {
+                // Create custom badge
+                TextView badge = new TextView(this);
+                badge.setTag("messages_badge");
+                badge.setText(count > 99 ? "99+" : String.valueOf(count));
+                badge.setTextSize(10f);
+                badge.setTextColor(Color.WHITE);
+                badge.setTypeface(null, Typeface.BOLD);
+                badge.setGravity(Gravity.CENTER);
+
+                // Style the badge
+                int size = (int) (20 * getResources().getDisplayMetrics().density);
+                badge.setWidth(size);
+                badge.setHeight(size);
+                badge.setBackgroundResource(R.drawable.circle_badge_background);
+
+                // Position the badge
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                        size, size, Gravity.TOP | Gravity.END);
+                params.setMargins(0, 5, 5, 0);
+                badge.setLayoutParams(params);
+
+                messagesContainer.addView(badge);
+            }
         }
     }
 
@@ -664,6 +909,9 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                 if (itemId == R.id.navigation_home) {
                     return true;
                 } else if (itemId == R.id.navigation_message) {
+                    // Clear the badge when opening messages
+                    bottomNavigation.removeBadge(R.id.navigation_message);
+
                     Intent intent = new Intent(this, CompanyMessagesActivity.class);
                     startActivity(intent);
                     return true;
@@ -681,6 +929,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
 
                 return false;
             });
+
+            // ✅ NEW: Setup unread messages badge after bottom navigation is ready
+            setupUnreadMessagesBadge();
+
         } else {
             Log.e("CompanyHomeActivity", "Bottom navigation view not found!");
         }
@@ -803,6 +1055,10 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 projects.clear();
+
+                // First, update project statuses automatically
+                updateProjectStatuses();
+
                 for (DataSnapshot projectSnapshot : snapshot.getChildren()) {
                     String projectId = projectSnapshot.getKey();
                     String title = projectSnapshot.child("title").getValue(String.class);
@@ -822,7 +1078,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                     } else if ("pending".equals(status)) {
                                         projectIcon = R.drawable.ic_pending;
                                     } else if ("completed".equals(status)) {
-                                        projectIcon = R.drawable.ic_approve;
+                                        projectIcon = R.drawable.ic_approve; // ✅ Use check/approve icon for completed
                                     } else if ("rejected".equals(status)) {
                                         projectIcon = R.drawable.ic_reject;
                                     } else {
@@ -837,6 +1093,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
                                     );
 
                                     project.setProjectId(projectId);
+                                    project.setStatus(status); // ✅ Make sure to set the status
                                     projects.add(project);
 
                                     callback.onProjectsLoaded(new ArrayList<>(projects));
@@ -865,7 +1122,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             }
         });
     }
-
     private void fetchProjectsWithApplicants(ProjectsWithApplicantsCallback callback) {
         String companyId = getCurrentCompanyUid();
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -1432,7 +1688,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             intent = new Intent(this, CompanyAnnounce.class);
             startActivity(intent);
         } else if (id == R.id.nav_feedback) {
-            Toast.makeText(this, "Feedbacks", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, CompanyFeedbackActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_settings) {
             intent = new Intent(this, CompanySettingsActivity.class);
             startActivity(intent);

@@ -6,6 +6,8 @@ public class EmployerProject {
     private int applicantsCount;
     private int positionsCount;
     private int iconResId;
+    private String status; // ✅ Add this field
+
 
     // Default constructor (needed for Firebase)
     public EmployerProject() {
@@ -85,4 +87,30 @@ public class EmployerProject {
     public int hashCode() {
         return projectId != null ? projectId.hashCode() : 0;
     }
+
+    // ✅ Add getter and setter for status
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    // ✅ Method to check if project is completed
+    public boolean isCompleted() {
+        return "completed".equals(status);
+    }
+
+    // ✅ Method to check if project is active
+    public boolean isActive() {
+        return "approved".equals(status);
+    }
+
+    // ✅ Method to check if project is pending
+    public boolean isPending() {
+        return "pending".equals(status);
+    }
+
+    // Existing getters and setters...
 }

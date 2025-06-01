@@ -24,6 +24,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -100,6 +101,7 @@ public class StudentHomeActivity extends AppCompatActivity
     private List<String> searchHistory = new ArrayList<>();
     private SharedPreferences searchHistoryPrefs;
     private SearchHistoryAdapter searchHistoryAdapter;
+    private int id;
 
     // Public static classes for search functionality
     public static class SearchResult {
@@ -141,6 +143,7 @@ public class StudentHomeActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_student_home);
 
+        // Check if user is logged in
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
@@ -148,8 +151,19 @@ public class StudentHomeActivity extends AppCompatActivity
             return;
         }
 
+        // Get student ID and validate
         studentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+        // ✅ ADDED: Validate studentId is not null or empty
+        if (studentId == null || studentId.isEmpty()) {
+            Toast.makeText(this, "Error: Invalid user ID", Toast.LENGTH_SHORT).show();
+            FirebaseAuth.getInstance().signOut();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // Continue with the rest of your initialization...
         loadingIndicator = findViewById(R.id.home_loading_indicator);
         mainContent = findViewById(R.id.home_main_content);
         dotIndicatorLayout = findViewById(R.id.dotIndicatorLayout);
@@ -179,9 +193,12 @@ public class StudentHomeActivity extends AppCompatActivity
         setupEnhancedSearch();
         setupEnhancedSearchWithHistory();
         setupClickListeners1();
-
+        // In your onCreate method, after setupBottomNavigation(), add:
+        setupUnreadMessagesBadge();
+        updateApplicationCounts();
         // Initialize dynamic tips
         initializeDynamicTips();
+
     }
 
     // DYNAMIC TIPS IMPLEMENTATION
@@ -1190,6 +1207,147 @@ public class StudentHomeActivity extends AppCompatActivity
         closeButton.setOnClickListener(v -> popupWindow.dismiss());
     }
 
+
+    private void updateApplicationCounts() {
+        // Get references to the TextViews in your card
+        TextView interviewCountView = findViewById(R.id.interview_count);
+        TextView acceptedCountView = findViewById(R.id.accepted_count);
+        TextView rejectedCountView = findViewById(R.id.rejected_count);
+
+        // Initialize counters
+        final int[] interviewCount = {0};
+        final int[] acceptedCount = {0};
+        final int[] rejectedCount = {0};
+
+        // Get applications for current student
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+        applicationsRef.orderByChild("userId").equalTo(studentId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        // Reset counters
+                        interviewCount[0] = 0;
+                        acceptedCount[0] = 0;
+                        rejectedCount[0] = 0;
+
+                        // Count applications by status
+                        for (DataSnapshot appSnapshot : snapshot.getChildren()) {
+                            String status = appSnapshot.child("status").getValue(String.class);
+
+                            if (status != null) {
+                                switch (status.toLowerCase()) {
+                                    case "shortlisted":
+                                        interviewCount[0]++;
+                                        break;
+                                    case "accepted":
+                                        acceptedCount[0]++;
+                                        break;
+                                    case "rejected":
+                                        rejectedCount[0]++;
+                                        break;
+                                    // "pending" and other statuses are not counted in these specific categories
+                                }
+                            }
+                        }
+
+                        // Update the UI on main thread
+                        runOnUiThread(() -> {
+                            if (interviewCountView != null) {
+                                interviewCountView.setText(String.valueOf(interviewCount[0]));
+                            }
+                            if (acceptedCountView != null) {
+                                acceptedCountView.setText(String.valueOf(acceptedCount[0]));
+                            }
+                            if (rejectedCountView != null) {
+                                rejectedCountView.setText(String.valueOf(rejectedCount[0]));
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Handle error - set default values
+                        runOnUiThread(() -> {
+                            if (interviewCountView != null) {
+                                interviewCountView.setText("0");
+                            }
+                            if (acceptedCountView != null) {
+                                acceptedCountView.setText("0");
+                            }
+                            if (rejectedCountView != null) {
+                                rejectedCountView.setText("0");
+                            }
+                        });
+
+                        Toast.makeText(StudentHomeActivity.this, "Failed to load application counts", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    // Alternative method with better performance using ValueEventListener for real-time updates
+    private void setupApplicationCountsListener() {
+        TextView interviewCountView = findViewById(R.id.interview_count);
+        TextView acceptedCountView = findViewById(R.id.accepted_count);
+        TextView rejectedCountView = findViewById(R.id.rejected_count);
+
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+
+        // Create a listener that updates counts in real-time
+        ValueEventListener countsListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int interviewCount = 0;
+                int acceptedCount = 0;
+                int rejectedCount = 0;
+
+                // Count applications by status for current student
+                for (DataSnapshot appSnapshot : snapshot.getChildren()) {
+                    String userId = appSnapshot.child("userId").getValue(String.class);
+                    String status = appSnapshot.child("status").getValue(String.class);
+
+                    // Only count applications for current student
+                    if (studentId.equals(userId) && status != null) {
+                        switch (status.toLowerCase()) {
+                            case "shortlisted":
+                                interviewCount++;
+                                break;
+                            case "accepted":
+                                acceptedCount++;
+                                break;
+                            case "rejected":
+                                rejectedCount++;
+                                break;
+                        }
+                    }
+                }
+
+                // Update UI
+                if (interviewCountView != null) {
+                    interviewCountView.setText(String.valueOf(interviewCount));
+                }
+                if (acceptedCountView != null) {
+                    acceptedCountView.setText(String.valueOf(acceptedCount));
+                }
+                if (rejectedCountView != null) {
+                    rejectedCountView.setText(String.valueOf(rejectedCount));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Set default values on error
+                if (interviewCountView != null) interviewCountView.setText("0");
+                if (acceptedCountView != null) acceptedCountView.setText("0");
+                if (rejectedCountView != null) rejectedCountView.setText("0");
+            }
+        };
+
+        // Attach the listener
+        applicationsRef.addValueEventListener(countsListener);
+    }
+
+    // Fix the navigation to messages in your setupBottomNavigation() method
+
     private void setupBottomNavigation() {
         // Set up bottom navigation listener
         bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -1201,10 +1359,19 @@ public class StudentHomeActivity extends AppCompatActivity
                 // We're already on home screen, refresh data
                 refreshAllData();
                 return true;
-            }  else if (id == R.id.nav_messages) {
-                Intent intent = new Intent(this, MessagesActivity.class);
-                intent.putExtra("STUDENT_ID", studentId); // Replace with actual variable name
-                startActivity(intent);
+            } else if (id == R.id.nav_messages) {
+                // Clear the badge when opening messages
+                bottomNavigationView.removeBadge(R.id.nav_messages);
+
+                // ✅ FIXED: Ensure we have a valid student ID before navigating
+                if (studentId != null && !studentId.isEmpty()) {
+                    Intent intent = new Intent(this, MessagesActivity.class); // Changed from StudentChatActivity to MessagesActivity
+                    intent.putExtra("USER_ID", studentId); // Use consistent key name
+                    intent.putExtra("USER_ROLE", "student"); // Add role for clarity
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "User not properly logged in", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
             else if (id == R.id.navigation_map) {
@@ -1299,6 +1466,7 @@ public class StudentHomeActivity extends AppCompatActivity
         setupNotificationBell();
         setupProjectsRecyclerView();
         setupDynamicTips(); // Refresh tips
+        updateApplicationCounts(); // Add this line
 
         // Hide the swipe refresh indicator when all operations are complete
         swipeRefreshLayout.setRefreshing(false);
@@ -1446,8 +1614,10 @@ public class StudentHomeActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        setupNotificationBell(); // Refresh the badge when returning to this screen
-        setupDynamicTips(); // Refresh tips when returning to screen
+        setupNotificationBell();
+        setupDynamicTips();
+        setupUnreadMessagesBadge();
+        updateApplicationCounts(); // Add this line
     }
 
     private void setupProjectsRecyclerView() {
@@ -1962,13 +2132,21 @@ public class StudentHomeActivity extends AppCompatActivity
         } else if (id == R.id.nav_projects) {
             showAllProjectsPopup();
         } else if (id == R.id.nav_messages) {
-            intent = new Intent(this, MessagesActivity.class);
-            startActivity(intent);
+            // ✅ FIXED: Ensure we have a valid student ID before navigating
+            if (studentId != null && !studentId.isEmpty()) {
+                Intent intent = new Intent(this, MessagesActivity.class); // Use MessagesActivity instead of StudentChatActivity
+                intent.putExtra("USER_ID", studentId);
+                intent.putExtra("USER_ROLE", "student");
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "User not properly logged in", Toast.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.nav_notifications) {
             Intent intent = new Intent(StudentHomeActivity.this, StudentAnnounce.class);
             startActivity(intent);
         } else if (id == R.id.nav_feedback) {
-            Toast.makeText(this, "Feedbacks", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, StudentFeedbackActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_settings) {
             intent = new Intent(this, StudentSettingsActivity.class);
             startActivity(intent);
@@ -1982,7 +2160,6 @@ public class StudentHomeActivity extends AppCompatActivity
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
-
     private void updateActiveDot(int position) {
         if (dotIndicatorLayout == null) return;
 
@@ -1992,6 +2169,115 @@ public class StudentHomeActivity extends AppCompatActivity
 
         if (position >= 0 && position < dotIndicatorLayout.getChildCount()) {
             dotIndicatorLayout.getChildAt(position).setBackgroundResource(R.drawable.circle_dot_active);
+        }
+    }
+
+    private void setupUnreadMessagesBadge() {
+        String userId = studentId;
+        DatabaseReference notificationsRef = FirebaseDatabase.getInstance()
+                .getReference("notifications")
+                .child(userId);
+
+        notificationsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int unreadCount = 0;
+
+                // Count unread chat messages
+                for (DataSnapshot notificationSnap : snapshot.getChildren()) {
+                    String type = notificationSnap.child("type").getValue(String.class);
+                    Boolean isRead = notificationSnap.child("read").getValue(Boolean.class);
+
+                    if ("chat_message".equals(type) && (isRead == null || !isRead)) {
+                        unreadCount++;
+                    }
+                }
+
+                // Update the badge
+                updateMessagesBadge(unreadCount);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error - hide badge or show 0
+                updateMessagesBadge(0);
+            }
+        });
+    }
+
+    private void updateMessagesBadge(int count) {
+        runOnUiThread(() -> {
+            // Get the BottomNavigationView
+            BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+
+            if (bottomNav != null) {
+                // Remove any existing badge first
+                bottomNav.removeBadge(R.id.nav_messages);
+
+                if (count > 0) {
+                    // Create and show badge
+                    com.google.android.material.badge.BadgeDrawable badge =
+                            bottomNav.getOrCreateBadge(R.id.nav_messages);
+
+                    badge.setNumber(count);
+                    badge.setBackgroundColor(ContextCompat.getColor(this, R.color.red));
+                    badge.setBadgeTextColor(ContextCompat.getColor(this, android.R.color.white));
+                    badge.setMaxCharacterCount(2); // Show "99+" for numbers > 99
+                    badge.setVisible(true);
+                }
+            }
+        });
+    }
+
+    // Alternative method using custom badge view if Material badges don't work
+    private void updateMessagesBadgeCustom(int count) {
+        // Find the messages menu item view
+        View messagesView = findViewById(R.id.nav_messages);
+
+        if (messagesView != null && messagesView instanceof ViewGroup) {
+            ViewGroup messagesContainer = (ViewGroup) messagesView;
+
+            // Remove existing badge
+            View existingBadge = messagesContainer.findViewWithTag("messages_badge");
+            if (existingBadge != null) {
+                messagesContainer.removeView(existingBadge);
+            }
+
+            if (count > 0) {
+                // Create custom badge
+                TextView badge = new TextView(this);
+                badge.setTag("messages_badge");
+                badge.setText(count > 99 ? "99+" : String.valueOf(count));
+                badge.setTextSize(10f);
+                badge.setTextColor(Color.WHITE);
+                badge.setTypeface(null, Typeface.BOLD);
+                badge.setGravity(Gravity.CENTER);
+
+                // Style the badge
+                int size = (int) (20 * getResources().getDisplayMetrics().density);
+                badge.setWidth(size);
+                badge.setHeight(size);
+                badge.setBackgroundResource(R.drawable.bg_card_blue);
+
+                // Position the badge
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                        size, size, Gravity.TOP | Gravity.END);
+                params.setMargins(0, 5, 5, 0);
+                badge.setLayoutParams(params);
+
+                messagesContainer.addView(badge);
+            }
+        }
+
+
+        // In your setupBottomNavigation method, update the messages case:
+        else if (id == R.id.nav_messages) {
+            // Clear the badge when opening messages
+            bottomNavigationView.removeBadge(R.id.nav_messages);
+
+            Intent intent = new Intent(this, MessagesActivity.class);
+            intent.putExtra("STUDENT_ID", studentId);
+            startActivity(intent);
         }
     }
 

@@ -42,7 +42,7 @@
                         android:layout_gravity="center"
                         android:src="@drawable/ic_download"
                         android:contentDescription="Company logo"
-                        />
+                    />
                 </FrameLayout>
 
                 <LinearLayout
@@ -422,7 +422,13 @@
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-
+        <!-- Agreement -->
+        <CheckBox
+            android:id="@+id/checkAgree"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I agree to the Terms of Use and Privacy Policy"
+            android:layout_marginBottom="16dp"/>
         <!-- Submit Button -->
         <Button
             android:id="@+id/btnSubmit"

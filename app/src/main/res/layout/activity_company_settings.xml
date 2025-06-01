@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA"
@@ -61,9 +62,9 @@
             <ImageView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="@drawable/ic_company"
-                android:padding="12dp"
-                app:tint="#FFFFFF" />
+                android:background="@drawable/ic_company_placeholder"
+                android:tint="@color/black"
+                tools:ignore="UseAppTint" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -90,18 +91,18 @@
                     android:textColor="#757575"
                     android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/nav_profile"
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/edit_profile"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="28dp"
                     android:layout_marginTop="8dp"
+                    android:background="@drawable/chip_background"
+                    android:paddingStart="12dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="4dp"
                     android:text="Edit Profile"
                     android:textAllCaps="false"
-                    android:paddingTop="4dp"
-                    android:paddingBottom="4dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:background="@drawable/gradient_background"
                     android:textColor="#121212"
                     android:textSize="14sp" />
             </LinearLayout>

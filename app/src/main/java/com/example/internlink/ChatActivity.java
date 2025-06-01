@@ -137,6 +137,7 @@ public class ChatActivity extends AppCompatActivity {
         // Set user online status
         setUserOnlineStatus(true);
     }
+
     private void sendImageMessage(String imageUrl, String fileName, long fileSize, String fileType) {
         String messageId = messagesRef.push().getKey();
         if (messageId == null) return;
@@ -334,7 +335,208 @@ public class ChatActivity extends AppCompatActivity {
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
         rvMessages.setAdapter(messagesAdapter);
+
+        messagesAdapter.setOnMessageLongClickListener(new MessagesAdapter.OnMessageLongClickListener() {
+            @Override
+            public void onMessageLongClick(Message message, int position) {
+                showDeleteMessageDialog(message, position);
+            }
+        });
     }
+    private void showDeleteMessageDialog(Message message, int position) {
+        // Check if the message belongs to the current user
+        boolean isMyMessage = message.getSenderId().equals(currentUserId);
+
+        // Create options based on message ownership
+        String[] options;
+        if (isMyMessage) {
+            options = new String[]{
+                    "🗑️ Delete for everyone",
+                    "📝 Copy text",
+                    "ℹ️ Message info"
+            };
+        } else {
+            options = new String[]{
+                    "📝 Copy text",
+                    "ℹ️ Message info"
+            };
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Message Options")
+                .setItems(options, (dialog, which) -> {
+                    if (isMyMessage) {
+                        switch (which) {
+                            case 0:
+                                // Delete for everyone
+                                confirmDeleteMessage(message, position);
+                                break;
+                            case 1:
+                                // Copy text
+                                copyMessageText(message);
+                                break;
+                            case 2:
+                                // Show message info
+                                showMessageInfo(message);
+                                break;
+                        }
+                    } else {
+                        switch (which) {
+                            case 0:
+                                // Copy text
+                                copyMessageText(message);
+                                break;
+                            case 1:
+                                // Show message info
+                                showMessageInfo(message);
+                                break;
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+    private void confirmDeleteMessage(Message message, int position) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Message")
+                .setMessage("Are you sure you want to delete this message for everyone? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteMessage(message, position);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteMessage(Message message, int position) {
+        if (message.getId() == null) {
+            Toast.makeText(this, "Cannot delete message: Invalid message ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Double-check that the user can only delete their own messages
+        if (!message.getSenderId().equals(currentUserId)) {
+            Toast.makeText(this, "You can only delete your own messages", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show progress
+        ProgressDialog deleteProgress = new ProgressDialog(this);
+        deleteProgress.setMessage("Deleting message...");
+        deleteProgress.setCancelable(false);
+        deleteProgress.show();
+
+        // Delete from Firebase
+        messagesRef.child(message.getId()).removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    deleteProgress.dismiss();
+
+                    // Remove from local list
+                    if (position >= 0 && position < messagesList.size()) {
+                        messagesList.remove(position);
+                        messagesAdapter.notifyItemRemoved(position);
+                    }
+
+                    // Update chat metadata if this was the last message
+                    updateChatMetadataAfterDelete();
+
+                    // Send system message to indicate deletion
+                    sendSystemMessage("A message was deleted");
+
+                    Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    deleteProgress.dismiss();
+                    Toast.makeText(this, "Failed to delete message: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+    private void sendSystemMessage(String text) {
+        String messageId = messagesRef.push().getKey();
+        if (messageId == null) return;
+
+        Message systemMessage = new Message();
+        systemMessage.setText(text);
+        systemMessage.setSenderId("system");
+        systemMessage.setReceiverId("system");
+        systemMessage.setTimestamp(System.currentTimeMillis());
+        systemMessage.setMessageType("system");
+        systemMessage.setStatus("sent");
+
+        messagesRef.child(messageId).setValue(systemMessage);
+    }
+
+    // Add this method to update chat metadata after deletion
+    private void updateChatMetadataAfterDelete() {
+        // Find the most recent non-system message
+        String lastMessage = "No messages";
+        long lastMessageTime = System.currentTimeMillis();
+        String lastSenderId = currentUserId;
+
+        for (int i = messagesList.size() - 1; i >= 0; i--) {
+            Message msg = messagesList.get(i);
+            if (!"system".equals(msg.getMessageType())) {
+                if ("image".equals(msg.getMessageType())) {
+                    lastMessage = "📷 Photo";
+                } else if ("file".equals(msg.getMessageType())) {
+                    lastMessage = "📎 " + msg.getFileName();
+                } else {
+                    lastMessage = msg.getText();
+                }
+                lastMessageTime = msg.getTimestamp();
+                lastSenderId = msg.getSenderId();
+                break;
+            }
+        }
+
+        DatabaseReference chatMetaRef = FirebaseDatabase.getInstance()
+                .getReference("chat_metadata").child(chatId);
+
+        Map<String, Object> metaData = new HashMap<>();
+        metaData.put("lastMessage", lastMessage);
+        metaData.put("lastMessageTime", lastMessageTime);
+        metaData.put("lastSenderId", lastSenderId);
+
+        // Participant info
+        Map<String, Object> participants = new HashMap<>();
+        participants.put(currentUserId, true);
+        participants.put(chatWithId, true);
+        metaData.put("participants", participants);
+
+        chatMetaRef.updateChildren(metaData);
+    }
+
+    // Add this method to copy message text
+    private void copyMessageText(Message message) {
+        if (message.getText() != null && !message.getText().isEmpty()) {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+            android.content.ClipData clip = android.content.ClipData.newPlainText("Message", message.getText());
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Message copied to clipboard", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "No text to copy", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Add this method to show message info
+    private void showMessageInfo(Message message) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
+        String sentTime = sdf.format(new Date(message.getTimestamp()));
+
+        String info = "Sent: " + sentTime + "\n" +
+                "Status: " + message.getStatus() + "\n" +
+                "Type: " + message.getMessageType();
+
+        if (message.getFileSize() > 0) {
+            info += "\nFile size: " + FileAttachmentHelper.formatFileSize(message.getFileSize());
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Message Info")
+                .setMessage(info)
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+
 
     private void setupClickListeners() {
         fabSend.setOnClickListener(v -> sendMessage());

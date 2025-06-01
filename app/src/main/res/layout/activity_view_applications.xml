@@ -13,16 +13,17 @@
         <!-- Hero Section with Company Logo -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="231dp">
+            android:layout_height="360dp">
+
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
+                android:layout_height="360dp"
                 android:background="@drawable/header_gradient"
-                android:padding="24dp"
+                android:orientation="vertical"
+                android:padding="30dp"
                 android:paddingTop="48dp"
-                android:paddingBottom="32dp">
+                android:paddingBottom="30dp">
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_company_logo"
@@ -31,42 +32,71 @@
                     android:layout_gravity="center"
                     android:layout_marginBottom="16dp"
                     android:contentDescription="Company Logo"
-                    android:scaleType="centerCrop"
                     android:elevation="4dp"
+                    android:scaleType="centerCrop"
                     app:shapeAppearanceOverlay="@style/RoundedImageView" />
 
                 <TextView
                     android:id="@+id/tv_project_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:letterSpacing="0.03"
+                    android:lineSpacingExtra="4dp"
                     android:textAlignment="center"
                     android:textColor="@android:color/black"
                     android:textSize="26sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.03"
-                    android:lineSpacingExtra="4dp" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_company_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:textAlignment="center"
                     android:textColor="#CCFFFFFF"
-                    android:textSize="15sp"
-                    android:layout_marginTop="4dp" />
+                    android:textSize="15sp" />
             </LinearLayout>
-
-            <!-- 🆕 ImageButton in top-right corner -->
+            <!-- Back Button in top-left corner -->
             <ImageButton
-                android:id="@+id/btn_chat"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="top|end"
+                android:id="@+id/btn_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="top|start"
                 android:layout_margin="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Top Right Action"
-                android:src="@drawable/ic_more_vert"
+                android:contentDescription="Back Button"
+                android:src="@drawable/left_arrow"
                 app:tint="@android:color/white" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_margin="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:spacing="8dp">
+
+                <ImageButton
+                    android:id="@+id/btn_company_profile"
+                    android:layout_width="27dp"
+                    android:layout_height="27dp"
+                    android:background="@drawable/pill_background"
+                    android:contentDescription="View Company Profile"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_profile"
+                    android:layout_marginRight="7dp"
+                    app:tint="@color/white" />
+
+                <ImageView
+                    android:id="@+id/btn_chat"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Top Right Action"
+                    android:src="@drawable/ic_chat"
+                    app:tint="@android:color/white" />
+            </LinearLayout>
+
         </FrameLayout>
 
 
@@ -75,8 +105,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginTop="-24dp">
+            android:padding="20dp"
+            android:layout_marginTop="-45dp">
 
             <!-- Project Info Card -->
             <androidx.cardview.widget.CardView

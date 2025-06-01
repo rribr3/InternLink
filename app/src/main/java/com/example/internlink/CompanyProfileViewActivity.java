@@ -1,9 +1,11 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -23,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -31,7 +34,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CompanyProfileViewActivity extends AppCompatActivity {
 
@@ -49,12 +54,25 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
     private RecyclerView rvRecentProjects;
     private RatingBar ratingBar;
 
+    // Feedback UI Components
+    private Button btnAddFeedback;
+    private LinearLayout feedbackSummary, noReviewsLayout;
+    private TextView tvAverageRating, tvTotalReviews;
+    private TextView tv5StarCount, tv4StarCount, tv3StarCount, tv2StarCount, tv1StarCount;
+    private ProgressBar progress5Star, progress4Star, progress3Star, progress2Star, progress1Star;
+    private RatingBar ratingBarAverage;
+    private RecyclerView rvFeedback;
+
     // Data
     private DatabaseReference databaseReference;
     private String companyId;
     private String currentUserId;
     private ProjectAdapterHome projectAdapter;
     private List<Project> projectsList;
+    private FeedbackExAdapter feedbackAdapter;
+    private List<CompanyFeedback> feedbackList;
+    private boolean canLeaveFeedback = false;
+    private List<String> eligibleProjects = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +80,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_company_profile_view);
 
-        // Now this will work because we added android:id="@+id/main" to the root LinearLayout
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -84,9 +101,10 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
 
         initializeViews();
         setupToolbar();
-        setupRecyclerView();
+        setupRecyclerViews();
         loadCompanyData();
         setupClickListeners();
+        checkFeedbackEligibility();
     }
 
     private void initializeViews() {
@@ -118,6 +136,25 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         btnTwitter = findViewById(R.id.btn_twitter);
 
         rvRecentProjects = findViewById(R.id.rv_recent_projects);
+
+        // Feedback UI Components
+        btnAddFeedback = findViewById(R.id.btn_add_feedback);
+        feedbackSummary = findViewById(R.id.feedback_summary);
+        noReviewsLayout = findViewById(R.id.no_reviews_layout);
+        tvAverageRating = findViewById(R.id.tv_average_rating);
+        tvTotalReviews = findViewById(R.id.tv_total_reviews);
+        tv5StarCount = findViewById(R.id.tv_5_star_count);
+        tv4StarCount = findViewById(R.id.tv_4_star_count);
+        tv3StarCount = findViewById(R.id.tv_3_star_count);
+        tv2StarCount = findViewById(R.id.tv_2_star_count);
+        tv1StarCount = findViewById(R.id.tv_1_star_count);
+        progress5Star = findViewById(R.id.progress_5_star);
+        progress4Star = findViewById(R.id.progress_4_star);
+        progress3Star = findViewById(R.id.progress_3_star);
+        progress2Star = findViewById(R.id.progress_2_star);
+        progress1Star = findViewById(R.id.progress_1_star);
+        ratingBarAverage = findViewById(R.id.rating_bar_average);
+        rvFeedback = findViewById(R.id.rv_feedback);
     }
 
     private void setupToolbar() {
@@ -128,17 +165,26 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
-    private void setupRecyclerView() {
+    private void setupRecyclerViews() {
+        // Projects RecyclerView
         projectsList = new ArrayList<>();
         projectAdapter = new ProjectAdapterHome(projectsList, project -> {
-            // Navigate to project details
             Intent intent = new Intent(this, ProjectDetailsActivity.class);
             intent.putExtra("PROJECT_ID", project.getProjectId());
             startActivity(intent);
-        }, false); // false for company profile view
+        }, false);
 
-        rvRecentProjects.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager projectsLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        rvRecentProjects.setLayoutManager(projectsLayoutManager);
         rvRecentProjects.setAdapter(projectAdapter);
+
+        // Feedback RecyclerView (Horizontal)
+        feedbackList = new ArrayList<>();
+        feedbackAdapter = new FeedbackExAdapter(feedbackList, this);
+
+        LinearLayoutManager feedbackLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        rvFeedback.setLayoutManager(feedbackLayoutManager);
+        rvFeedback.setAdapter(feedbackAdapter);
     }
 
     private void loadCompanyData() {
@@ -151,8 +197,8 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                         if (snapshot.exists()) {
                             populateCompanyData(snapshot);
                             loadCompanyProjects();
-                            // Load approved applicants count
                             loadApprovedApplicantsCount();
+                            loadCompanyFeedback();
                         } else {
                             showLoading(false);
                             Toast.makeText(CompanyProfileViewActivity.this,
@@ -165,6 +211,367 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                         showLoading(false);
                         Toast.makeText(CompanyProfileViewActivity.this,
                                 "Error loading company data: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void loadCompanyFeedback() {
+        databaseReference.child("company_feedback")
+                .orderByChild("companyId")
+                .equalTo(companyId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        feedbackList.clear();
+
+                        for (DataSnapshot feedbackSnapshot : snapshot.getChildren()) {
+                            CompanyFeedback feedback = feedbackSnapshot.getValue(CompanyFeedback.class);
+                            if (feedback != null) {
+                                feedback.setFeedbackId(feedbackSnapshot.getKey());
+                                feedbackList.add(feedback);
+                            }
+                        }
+
+                        // Sort by timestamp (newest first)
+                        feedbackList.sort((f1, f2) -> Long.compare(f2.getTimestamp(), f1.getTimestamp()));
+
+                        feedbackAdapter.updateFeedbackList(feedbackList);
+                        updateFeedbackSummary();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(CompanyProfileViewActivity.this,
+                                "Failed to load feedback: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void updateFeedbackSummary() {
+        if (feedbackList.isEmpty()) {
+            feedbackSummary.setVisibility(View.GONE);
+            noReviewsLayout.setVisibility(View.VISIBLE);
+            rvFeedback.setVisibility(View.GONE);
+
+            // Update header rating to show no reviews
+            ratingBar.setRating(0);
+            tvRating.setText("No reviews yet");
+            return;
+        }
+
+        // Show feedback components
+        feedbackSummary.setVisibility(View.VISIBLE);
+        noReviewsLayout.setVisibility(View.GONE);
+        rvFeedback.setVisibility(View.VISIBLE);
+
+        // Calculate summary statistics
+        FeedbackSummary summary = calculateFeedbackSummary();
+
+        // Update summary UI
+        tvAverageRating.setText(String.format("%.1f", summary.getAverageRating()));
+        tvTotalReviews.setText("Based on " + summary.getTotalReviews() + " reviews");
+        ratingBarAverage.setRating(summary.getAverageRating());
+
+        // Update star counts and progress bars
+        tv5StarCount.setText(String.valueOf(summary.getFiveStarCount()));
+        tv4StarCount.setText(String.valueOf(summary.getFourStarCount()));
+        tv3StarCount.setText(String.valueOf(summary.getThreeStarCount()));
+        tv2StarCount.setText(String.valueOf(summary.getTwoStarCount()));
+        tv1StarCount.setText(String.valueOf(summary.getOneStarCount()));
+
+        int total = summary.getTotalReviews();
+        progress5Star.setProgress(total > 0 ? (summary.getFiveStarCount() * 100) / total : 0);
+        progress4Star.setProgress(total > 0 ? (summary.getFourStarCount() * 100) / total : 0);
+        progress3Star.setProgress(total > 0 ? (summary.getThreeStarCount() * 100) / total : 0);
+        progress2Star.setProgress(total > 0 ? (summary.getTwoStarCount() * 100) / total : 0);
+        progress1Star.setProgress(total > 0 ? (summary.getOneStarCount() * 100) / total : 0);
+
+        // Update header rating
+        ratingBar.setRating(summary.getAverageRating());
+        tvRating.setText(String.format("%.1f (%d reviews)",
+                summary.getAverageRating(), summary.getTotalReviews()));
+    }
+
+    private FeedbackSummary calculateFeedbackSummary() {
+        if (feedbackList.isEmpty()) {
+            return new FeedbackSummary(0, 0, 0, 0, 0, 0, 0);
+        }
+
+        float totalRating = 0;
+        int fiveStar = 0, fourStar = 0, threeStar = 0, twoStar = 0, oneStar = 0;
+
+        for (CompanyFeedback feedback : feedbackList) {
+            totalRating += feedback.getRating();
+
+            int rating = Math.round(feedback.getRating());
+            switch (rating) {
+                case 5: fiveStar++; break;
+                case 4: fourStar++; break;
+                case 3: threeStar++; break;
+                case 2: twoStar++; break;
+                case 1: oneStar++; break;
+            }
+        }
+
+        float averageRating = totalRating / feedbackList.size();
+        return new FeedbackSummary(averageRating, feedbackList.size(),
+                fiveStar, fourStar, threeStar, twoStar, oneStar);
+    }
+
+    private void checkFeedbackEligibility() {
+        if (currentUserId.isEmpty()) {
+            btnAddFeedback.setVisibility(View.GONE);
+            return;
+        }
+
+        // Check if user has completed projects with this company
+        databaseReference.child("applications")
+                .orderByChild("userId")
+                .equalTo(currentUserId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        eligibleProjects.clear();
+                        long currentTime = System.currentTimeMillis();
+
+                        for (DataSnapshot appSnapshot : snapshot.getChildren()) {
+                            String applicationCompanyId = appSnapshot.child("companyId").getValue(String.class);
+                            String status = appSnapshot.child("status").getValue(String.class);
+                            String projectId = appSnapshot.child("projectId").getValue(String.class);
+
+                            if (companyId.equals(applicationCompanyId) && "Accepted".equals(status) && projectId != null) {
+                                // Check if project is completed
+                                checkProjectCompletion(projectId, currentTime);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnAddFeedback.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void checkProjectCompletion(String projectId, long currentTime) {
+        databaseReference.child("projects").child(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            String status = snapshot.child("status").getValue(String.class);
+                            Long startDate = snapshot.child("startDate").getValue(Long.class);
+                            String duration = snapshot.child("duration").getValue(String.class);
+
+                            if ("completed".equals(status) ||
+                                    (startDate != null && isProjectCompleted(startDate, duration, currentTime))) {
+
+                                eligibleProjects.add(projectId);
+
+                                // Check if user already left feedback for this company
+                                checkExistingFeedback();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Handle error
+                    }
+                });
+    }
+
+    private boolean isProjectCompleted(long startDate, String duration, long currentTime) {
+        if (duration == null) return false;
+
+        long durationMs = 0;
+        if (duration.contains("1-2 weeks")) {
+            durationMs = 14 * 24 * 60 * 60 * 1000L; // 2 weeks
+        } else if (duration.contains("3-4 weeks")) {
+            durationMs = 28 * 24 * 60 * 60 * 1000L; // 4 weeks
+        } else if (duration.contains("1-2 months")) {
+            durationMs = 60 * 24 * 60 * 60 * 1000L; // 2 months
+        } else if (duration.contains("3-4 months")) {
+            durationMs = 120 * 24 * 60 * 60 * 1000L; // 4 months
+        } else if (duration.contains("5-6 months")) {
+            durationMs = 180 * 24 * 60 * 60 * 1000L; // 6 months
+        }
+
+        return currentTime > (startDate + durationMs);
+    }
+
+    private void checkExistingFeedback() {
+        databaseReference.child("company_feedback")
+                .orderByChild("studentId")
+                .equalTo(currentUserId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        boolean hasExistingFeedback = false;
+
+                        for (DataSnapshot feedbackSnapshot : snapshot.getChildren()) {
+                            String feedbackCompanyId = feedbackSnapshot.child("companyId").getValue(String.class);
+                            if (companyId.equals(feedbackCompanyId)) {
+                                hasExistingFeedback = true;
+                                break;
+                            }
+                        }
+
+                        canLeaveFeedback = !eligibleProjects.isEmpty() && !hasExistingFeedback;
+                        btnAddFeedback.setVisibility(canLeaveFeedback ? View.VISIBLE : View.GONE);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnAddFeedback.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void showAddFeedbackDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_add_feedback);
+        dialog.getWindow().setLayout(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.9),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        // Initialize dialog views
+        ImageView ivCompanyLogoDialog = dialog.findViewById(R.id.iv_company_logo_dialog);
+        TextView tvCompanyNameDialog = dialog.findViewById(R.id.tv_company_name_dialog);
+        TextView tvProjectNameDialog = dialog.findViewById(R.id.tv_project_name_dialog);
+        RatingBar ratingBarDialog = dialog.findViewById(R.id.rating_bar_dialog);
+        TextView tvRatingDescription = dialog.findViewById(R.id.tv_rating_description);
+        TextInputEditText etComment = dialog.findViewById(R.id.et_comment);
+        Button btnCancel = dialog.findViewById(R.id.btn_cancel);
+        Button btnSubmit = dialog.findViewById(R.id.btn_submit);
+
+        // Set company info
+        tvCompanyNameDialog.setText(tvCompanyName.getText());
+        if (!eligibleProjects.isEmpty()) {
+            loadProjectTitle(eligibleProjects.get(0), tvProjectNameDialog);
+        }
+
+        // Load company logo
+        Glide.with(this)
+                .load(companyLogo.getDrawable())
+                .into(ivCompanyLogoDialog);
+
+        // Rating change listener
+        ratingBarDialog.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
+            if (fromUser) {
+                btnSubmit.setEnabled(rating > 0);
+                String[] descriptions = {
+                        "Tap stars to rate",
+                        "Poor",
+                        "Fair",
+                        "Good",
+                        "Very Good",
+                        "Excellent"
+                };
+                tvRatingDescription.setText(descriptions[(int) rating]);
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSubmit.setOnClickListener(v -> {
+            float rating = ratingBarDialog.getRating();
+            String comment = etComment.getText().toString().trim();
+
+            if (rating > 0) {
+                submitFeedback(rating, comment, eligibleProjects.get(0));
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void loadProjectTitle(String projectId, TextView textView) {
+        databaseReference.child("projects").child(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String title = snapshot.child("title").getValue(String.class);
+                        textView.setText(title != null ? title : "Project");
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        textView.setText("Project");
+                    }
+                });
+    }
+
+    private void submitFeedback(float rating, String comment, String projectId) {
+        showLoading(true);
+
+        // Get current user info
+        databaseReference.child("users").child(currentUserId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot userSnapshot) {
+                        String studentName = userSnapshot.child("name").getValue(String.class);
+                        String studentProfileUrl = userSnapshot.child("logoUrl").getValue(String.class);
+
+                        // Get project title
+                        databaseReference.child("projects").child(projectId)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
+                                        String projectTitle = projectSnapshot.child("title").getValue(String.class);
+
+                                        // Create feedback object
+                                        CompanyFeedback feedback = new CompanyFeedback(
+                                                currentUserId,
+                                                studentName != null ? studentName : "Anonymous",
+                                                companyId,
+                                                projectId,
+                                                projectTitle != null ? projectTitle : "Project",
+                                                rating,
+                                                comment,
+                                                System.currentTimeMillis(),
+                                                studentProfileUrl
+                                        );
+
+                                        // Save to Firebase
+                                        DatabaseReference feedbackRef = databaseReference
+                                                .child("company_feedback").push();
+
+                                        feedbackRef.setValue(feedback)
+                                                .addOnSuccessListener(aVoid -> {
+                                                    showLoading(false);
+                                                    Toast.makeText(CompanyProfileViewActivity.this,
+                                                            "Review submitted successfully!", Toast.LENGTH_SHORT).show();
+
+                                                    // Refresh feedback
+                                                    loadCompanyFeedback();
+                                                    btnAddFeedback.setVisibility(View.GONE);
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    showLoading(false);
+                                                    Toast.makeText(CompanyProfileViewActivity.this,
+                                                            "Failed to submit review: " + e.getMessage(),
+                                                            Toast.LENGTH_SHORT).show();
+                                                });
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        showLoading(false);
+                                        Toast.makeText(CompanyProfileViewActivity.this,
+                                                "Failed to load project info", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        showLoading(false);
+                        Toast.makeText(CompanyProfileViewActivity.this,
+                                "Failed to load user info", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -187,15 +594,10 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                     .into(companyLogo);
         }
 
-        // Rating (you can calculate this based on reviews or set a default)
-        ratingBar.setRating(4.5f);
-        tvRating.setText("4.5 (128 reviews)");
-
-        // Company Information - Get from database
+        // Company Information
         String address = snapshot.child("address").getValue(String.class);
         String location = snapshot.child("location").getValue(String.class);
 
-        // Location - use address if available, otherwise use location
         String displayLocation = "";
         if (address != null && !address.isEmpty()) {
             displayLocation = address;
@@ -206,11 +608,9 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         }
         tvLocation.setText(displayLocation);
 
-        // Work Type - based on location field from database
         String workType = getWorkTypeFromDatabase(location);
         tvWorkType.setText(workType);
 
-        // Company Size will be set in loadApprovedApplicantsCount() method
         tvCompanySize.setText("Loading...");
 
         // About Company
@@ -233,7 +633,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         tvEmail.setText(email != null ? email : "");
         tvPhone.setText(phone != null ? phone : "");
 
-        // Website
         if (website != null && !website.isEmpty()) {
             websiteLayout.setVisibility(View.VISIBLE);
             tvWebsite.setText(website);
@@ -241,12 +640,10 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
             websiteLayout.setVisibility(View.GONE);
         }
 
-        // Social Media setup
         setupSocialMedia(snapshot);
     }
 
     private void loadApprovedApplicantsCount() {
-        // Query applications where companyId matches and status is "Accepted"
         databaseReference.child("applications")
                 .orderByChild("companyId")
                 .equalTo(companyId)
@@ -262,7 +659,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                             }
                         }
 
-                        // Update the company size text with approved applicants count
                         String companySizeText = approvedCount + " Approved Trainees";
                         if (approvedCount == 0) {
                             companySizeText = "No Approved Trainees Yet";
@@ -275,7 +671,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // Set fallback text on error
                         tvCompanySize.setText("Trainees Count Unavailable");
                     }
                 });
@@ -286,7 +681,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
             return "Work Type Not Specified";
         }
 
-        // Convert to lowercase for consistent comparison
         String loc = location.toLowerCase().trim();
 
         switch (loc) {
@@ -301,7 +695,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
             case "flexible":
                 return "Flexible Work";
             default:
-                // If it's a specific location like "beirut", "lebanon", etc.
                 if (loc.contains("beirut") || loc.contains("lebanon")) {
                     return "In Office • " + capitalizeFirstLetter(location);
                 } else if (loc.contains("office")) {
@@ -320,81 +713,37 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
     }
 
     private void loadCompanyProjects() {
-        // Get current user's applied projects to filter them out
-        if (currentUserId.isEmpty()) {
-            loadProjectsWithoutFiltering();
-            return;
-        }
-
-        DatabaseReference appliedRef = databaseReference.child("users")
-                .child(currentUserId).child("appliedProjects");
-
-        appliedRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference projectsRef = databaseReference.child("projects");
+        projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot appliedSnapshot) {
-                List<String> appliedProjectIds = new ArrayList<>();
-                for (DataSnapshot snap : appliedSnapshot.getChildren()) {
-                    appliedProjectIds.add(snap.getKey());
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                projectsList.clear();
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    Project project = snap.getValue(Project.class);
+                    String projectId = snap.getKey();
+
+                    if (project == null || projectId == null) continue;
+
+                    // Only filter by company ID - show ALL projects belonging to this company
+                    if (companyId.equals(project.getCompanyId())) {
+                        project.setProjectId(projectId);
+                        projectsList.add(project);
+                    }
                 }
 
-                DatabaseReference projectsRef = databaseReference.child("projects");
-                projectsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        projectsList.clear();
-                        long currentTime = System.currentTimeMillis();
+                // Sort projects by creation date (newest first) - optional
+                projectsList.sort((p1, p2) -> Long.compare(p2.getCreatedAt(), p1.getCreatedAt()));
 
-                        for (DataSnapshot snap : snapshot.getChildren()) {
-                            Project project = snap.getValue(Project.class);
-                            String projectId = snap.getKey();
-
-                            if (project == null || projectId == null) continue;
-
-                            // Only show projects from this company
-                            if (!companyId.equals(project.getCompanyId())) continue;
-
-                            // Only show approved projects
-                            if (!"approved".equals(project.getStatus())) continue;
-
-                            int applicants = project.getApplicants();
-                            int needed = project.getStudentsRequired();
-                            long startDate = project.getStartDate();
-
-                            boolean hasStarted = startDate <= currentTime;
-                            boolean isFull = applicants >= needed;
-                            boolean alreadyApplied = appliedProjectIds.contains(projectId);
-
-                            // For company profile, show all projects regardless of application status
-                            // but still filter out started and full projects
-                            if (hasStarted || isFull) continue;
-
-                            project.setProjectId(projectId);
-                            projectsList.add(project);
-                        }
-
-                        // Limit to max 5 projects for company profile
-                        if (projectsList.size() > 5) {
-                            projectsList = projectsList.subList(0, 5);
-                        }
-
-                        projectAdapter.notifyDataSetChanged();
-                        showLoading(false);
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        showLoading(false);
-                        Toast.makeText(CompanyProfileViewActivity.this,
-                                "Failed to load projects: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+                projectAdapter.notifyDataSetChanged();
+                showLoading(false);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 showLoading(false);
                 Toast.makeText(CompanyProfileViewActivity.this,
-                        "Failed to load applied projects: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        "Failed to load projects: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -413,10 +762,8 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
 
                     if (project == null || projectId == null) continue;
 
-                    // Only show projects from this company
                     if (!companyId.equals(project.getCompanyId())) continue;
 
-                    // Only show approved projects
                     if (!"approved".equals(project.getStatus())) continue;
 
                     int applicants = project.getApplicants();
@@ -432,7 +779,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                     projectsList.add(project);
                 }
 
-                // Limit to max 5 projects
                 if (projectsList.size() > 5) {
                     projectsList = projectsList.subList(0, 5);
                 }
@@ -454,7 +800,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         String linkedin = snapshot.child("linkedin").getValue(String.class);
         String twitter = snapshot.child("twitter").getValue(String.class);
 
-        // LinkedIn
         if (linkedin != null && !linkedin.isEmpty()) {
             btnLinkedin.setOnClickListener(v -> openUrl(linkedin));
             btnLinkedin.setAlpha(1.0f);
@@ -464,7 +809,6 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
             btnLinkedin.setEnabled(false);
         }
 
-        // Twitter
         if (twitter != null && !twitter.isEmpty()) {
             btnTwitter.setOnClickListener(v -> openUrl(twitter));
             btnTwitter.setAlpha(1.0f);
@@ -510,21 +854,13 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
                 openUrl(website);
             }
         });
-    }
 
-    private String getWorkType(String location) {
-        if (location == null) return "Remote / In Office";
-
-        switch (location.toLowerCase()) {
-            case "remote":
-                return "Remote";
-            case "in office":
-                return "In Office";
-            case "office (lebanon)":
-                return "In Office • Lebanon";
-            default:
-                return "Remote / In Office";
-        }
+        // Add feedback button
+        btnAddFeedback.setOnClickListener(v -> {
+            if (canLeaveFeedback) {
+                showAddFeedbackDialog();
+            }
+        });
     }
 
     private void openUrl(String url) {

@@ -27,6 +27,17 @@
                 android:layout_marginBottom="16dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
+                <!-- Back Button -->
+                <ImageButton
+                    android:id="@+id/btn_back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/left_arrow"
+                    app:tint="@android:color/white" />
 
                 <!-- Project Title -->
                 <TextView

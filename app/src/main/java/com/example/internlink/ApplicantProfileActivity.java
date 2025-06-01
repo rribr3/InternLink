@@ -1,14 +1,18 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,15 +21,21 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApplicantProfileActivity extends AppCompatActivity {
 
@@ -40,6 +50,16 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     private Toolbar toolbar;
     private CardView personalInfoCard, academicInfoCard, contactInfoCard;
 
+    // Feedback UI Components
+    private Button btnAddFeedback;
+    private LinearLayout feedbackSummary, noReviewsLayout;
+    private TextView tvAverageRating, tvTotalReviews;
+    private TextView tv5StarCount, tv4StarCount, tv3StarCount, tv2StarCount, tv1StarCount;
+    private ProgressBar progress5Star, progress4Star, progress3Star, progress2Star, progress1Star;
+    private RatingBar ratingBarAverage, ratingBarHeader;
+    private TextView tvRatingHeader;
+    private RecyclerView rvFeedback;
+
     // Data variables
     private String applicantId;
     private String cvUrl;
@@ -47,16 +67,22 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     private String applicantPhone;
     private String applicantName;
     private String currentCompanyName;
+    private String currentCompanyId;
+
+    // Feedback data
+    private DatabaseReference databaseReference;
+    private StudentFeedbackAdapter feedbackAdapter;
+    private List<StudentFeedback> feedbackList;
+    private boolean canLeaveFeedback = false;
+    private List<String> eligibleProjects = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // === PROFESSIONAL DEBUGGING ===
         Log.d(TAG, "=== ApplicantProfileActivity Started ===");
-        Log.d(TAG, "Activity: " + this.getClass().getSimpleName());
 
-        // Check intent extras with detailed logging
+        // Check intent extras
         Intent receivedIntent = getIntent();
         if (receivedIntent != null) {
             applicantId = receivedIntent.getStringExtra("APPLICANT_ID");
@@ -68,7 +94,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
             Log.d(TAG, "  → Applicant Name: " + applicantName);
             Log.d(TAG, "  → Source: " + debugSource);
 
-            // Professional confirmation toast
             if (applicantName != null) {
                 Toast.makeText(this, "Loading " + applicantName + "'s profile...",
                         Toast.LENGTH_SHORT).show();
@@ -77,26 +102,27 @@ public class ApplicantProfileActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_applicant_profile);
 
+        // Initialize Firebase
+        databaseReference = FirebaseDatabase.getInstance().getReference();
+        currentCompanyId = FirebaseAuth.getInstance().getCurrentUser() != null ?
+                FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+
         initializeViews();
         setupToolbar();
         validateIntentData();
+        setupRecyclerView();
         loadCurrentCompanyInfo();
         loadApplicantProfile();
+        checkFeedbackEligibility();
     }
 
     private void initializeViews() {
         Log.d(TAG, "Initializing views...");
 
-        // Toolbar
+        // Existing views
         toolbar = findViewById(R.id.toolbar);
-
-        // Progress bar
         progressBar = findViewById(R.id.progress_bar);
-
-        // Profile image
         profileImage = findViewById(R.id.profile_image);
-
-        // TextViews
         tvName = findViewById(R.id.tv_name);
         tvEmail = findViewById(R.id.tv_email);
         tvDegree = findViewById(R.id.tv_degree);
@@ -106,22 +132,34 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         tvSkills = findViewById(R.id.tv_skills);
         tvPhone = findViewById(R.id.tv_phone);
         tvUniversity = findViewById(R.id.tv_university);
-
-        // Buttons
         btnViewCV = findViewById(R.id.btn_view_cv);
         btnContactEmail = findViewById(R.id.btn_contact_email);
         btnContactPhone = findViewById(R.id.btn_contact_phone);
-        btnMessage = findViewById(R.id.btn_contact); // Changed from Contact to Message
-
-        // Cards
+        btnMessage = findViewById(R.id.btn_contact);
         personalInfoCard = findViewById(R.id.personal_info_card);
         academicInfoCard = findViewById(R.id.academic_info_card);
         contactInfoCard = findViewById(R.id.contact_info_card);
 
-        // Verify critical views
-        if (toolbar == null) Log.e(TAG, "❌ Toolbar not found!");
-        if (progressBar == null) Log.e(TAG, "❌ Progress bar not found!");
-        if (profileImage == null) Log.e(TAG, "❌ Profile image not found!");
+        // Feedback UI Components
+        btnAddFeedback = findViewById(R.id.btn_add_feedback);
+        feedbackSummary = findViewById(R.id.feedback_summary);
+        noReviewsLayout = findViewById(R.id.no_reviews_layout);
+        tvAverageRating = findViewById(R.id.tv_average_rating);
+        tvTotalReviews = findViewById(R.id.tv_total_reviews);
+        tv5StarCount = findViewById(R.id.tv_5_star_count);
+        tv4StarCount = findViewById(R.id.tv_4_star_count);
+        tv3StarCount = findViewById(R.id.tv_3_star_count);
+        tv2StarCount = findViewById(R.id.tv_2_star_count);
+        tv1StarCount = findViewById(R.id.tv_1_star_count);
+        progress5Star = findViewById(R.id.progress_5_star);
+        progress4Star = findViewById(R.id.progress_4_star);
+        progress3Star = findViewById(R.id.progress_3_star);
+        progress2Star = findViewById(R.id.progress_2_star);
+        progress1Star = findViewById(R.id.progress_1_star);
+        ratingBarAverage = findViewById(R.id.rating_bar_average);
+        ratingBarHeader = findViewById(R.id.rating_bar_header);
+        tvRatingHeader = findViewById(R.id.tv_rating_header);
+        rvFeedback = findViewById(R.id.rv_feedback);
 
         Log.d(TAG, "✅ Views initialized successfully");
     }
@@ -136,6 +174,15 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         }
     }
 
+    private void setupRecyclerView() {
+        feedbackList = new ArrayList<>();
+        feedbackAdapter = new StudentFeedbackAdapter(feedbackList, this);
+
+        LinearLayoutManager feedbackLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        rvFeedback.setLayoutManager(feedbackLayoutManager);
+        rvFeedback.setAdapter(feedbackAdapter);
+    }
+
     private void validateIntentData() {
         if (applicantId == null || applicantId.isEmpty()) {
             Log.e(TAG, "❌ No applicant ID provided");
@@ -146,10 +193,12 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     }
 
     private void loadCurrentCompanyInfo() {
-        String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference companyRef = FirebaseDatabase.getInstance()
-                .getReference("users").child(companyId);
+        if (currentCompanyId.isEmpty()) {
+            currentCompanyName = "Our Company";
+            return;
+        }
 
+        DatabaseReference companyRef = databaseReference.child("users").child(currentCompanyId);
         companyRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -172,16 +221,14 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         Log.d(TAG, "Loading applicant profile for ID: " + applicantId);
         showLoading(true);
 
-        // Try users node first (most common)
-        DatabaseReference usersRef = FirebaseDatabase.getInstance()
-                .getReference("users").child(applicantId);
-
+        DatabaseReference usersRef = databaseReference.child("users").child(applicantId);
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists() && snapshot.hasChildren()) {
                     Log.d(TAG, "✅ Profile found in 'users' node");
                     displayApplicantData(snapshot);
+                    loadStudentFeedback();
                 } else {
                     Log.d(TAG, "Profile not found in 'users', trying 'students' node");
                     loadFromStudentsNode();
@@ -197,9 +244,7 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     }
 
     private void loadFromStudentsNode() {
-        DatabaseReference studentsRef = FirebaseDatabase.getInstance()
-                .getReference("students").child(applicantId);
-
+        DatabaseReference studentsRef = databaseReference.child("students").child(applicantId);
         studentsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -208,6 +253,7 @@ public class ApplicantProfileActivity extends AppCompatActivity {
                 if (snapshot.exists() && snapshot.hasChildren()) {
                     Log.d(TAG, "✅ Profile found in 'students' node");
                     displayApplicantData(snapshot);
+                    loadStudentFeedback();
                 } else {
                     Log.e(TAG, "❌ Profile not found in any node");
                     showErrorAndFinish("Applicant profile not found");
@@ -221,6 +267,220 @@ public class ApplicantProfileActivity extends AppCompatActivity {
                 showErrorAndFinish("Failed to load profile: " + error.getMessage());
             }
         });
+    }
+
+    private void loadStudentFeedback() {
+        databaseReference.child("student_feedback")
+                .orderByChild("studentId")
+                .equalTo(applicantId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        feedbackList.clear();
+
+                        for (DataSnapshot feedbackSnapshot : snapshot.getChildren()) {
+                            StudentFeedback feedback = feedbackSnapshot.getValue(StudentFeedback.class);
+                            if (feedback != null) {
+                                feedback.setFeedbackId(feedbackSnapshot.getKey());
+                                feedbackList.add(feedback);
+                            }
+                        }
+
+                        // Sort by timestamp (newest first)
+                        feedbackList.sort((f1, f2) -> Long.compare(f2.getTimestamp(), f1.getTimestamp()));
+
+                        feedbackAdapter.updateFeedbackList(feedbackList);
+                        updateFeedbackSummary();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to load feedback: " + error.getMessage());
+                        Toast.makeText(ApplicantProfileActivity.this,
+                                "Failed to load reviews: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void updateFeedbackSummary() {
+        if (feedbackList.isEmpty()) {
+            feedbackSummary.setVisibility(View.GONE);
+            noReviewsLayout.setVisibility(View.VISIBLE);
+            rvFeedback.setVisibility(View.GONE);
+
+            // Update header rating to show no reviews
+            ratingBarHeader.setRating(0);
+            tvRatingHeader.setText("No reviews yet");
+            return;
+        }
+
+        // Show feedback components
+        feedbackSummary.setVisibility(View.VISIBLE);
+        noReviewsLayout.setVisibility(View.GONE);
+        rvFeedback.setVisibility(View.VISIBLE);
+
+        // Calculate summary statistics
+        FeedbackSummary summary = calculateFeedbackSummary();
+
+        // Update summary UI
+        tvAverageRating.setText(String.format("%.1f", summary.getAverageRating()));
+        tvTotalReviews.setText("Based on " + summary.getTotalReviews() + " reviews");
+        ratingBarAverage.setRating(summary.getAverageRating());
+
+        // Update star counts and progress bars
+        tv5StarCount.setText(String.valueOf(summary.getFiveStarCount()));
+        tv4StarCount.setText(String.valueOf(summary.getFourStarCount()));
+        tv3StarCount.setText(String.valueOf(summary.getThreeStarCount()));
+        tv2StarCount.setText(String.valueOf(summary.getTwoStarCount()));
+        tv1StarCount.setText(String.valueOf(summary.getOneStarCount()));
+
+        int total = summary.getTotalReviews();
+        progress5Star.setProgress(total > 0 ? (summary.getFiveStarCount() * 100) / total : 0);
+        progress4Star.setProgress(total > 0 ? (summary.getFourStarCount() * 100) / total : 0);
+        progress3Star.setProgress(total > 0 ? (summary.getThreeStarCount() * 100) / total : 0);
+        progress2Star.setProgress(total > 0 ? (summary.getTwoStarCount() * 100) / total : 0);
+        progress1Star.setProgress(total > 0 ? (summary.getOneStarCount() * 100) / total : 0);
+
+        // Update header rating
+        ratingBarHeader.setRating(summary.getAverageRating());
+        tvRatingHeader.setText(String.format("%.1f (%d reviews)",
+                summary.getAverageRating(), summary.getTotalReviews()));
+    }
+
+    private FeedbackSummary calculateFeedbackSummary() {
+        if (feedbackList.isEmpty()) {
+            return new FeedbackSummary(0, 0, 0, 0, 0, 0, 0);
+        }
+
+        float totalRating = 0;
+        int fiveStar = 0, fourStar = 0, threeStar = 0, twoStar = 0, oneStar = 0;
+
+        for (StudentFeedback feedback : feedbackList) {
+            totalRating += feedback.getRating();
+
+            int rating = Math.round(feedback.getRating());
+            switch (rating) {
+                case 5: fiveStar++; break;
+                case 4: fourStar++; break;
+                case 3: threeStar++; break;
+                case 2: twoStar++; break;
+                case 1: oneStar++; break;
+            }
+        }
+
+        float averageRating = totalRating / feedbackList.size();
+        return new FeedbackSummary(averageRating, feedbackList.size(),
+                fiveStar, fourStar, threeStar, twoStar, oneStar);
+    }
+
+    private void checkFeedbackEligibility() {
+        if (currentCompanyId.isEmpty()) {
+            btnAddFeedback.setVisibility(View.GONE);
+            return;
+        }
+
+        // Check if company has accepted this student and project is completed
+        databaseReference.child("applications")
+                .orderByChild("companyId")
+                .equalTo(currentCompanyId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        eligibleProjects.clear();
+                        long currentTime = System.currentTimeMillis();
+
+                        for (DataSnapshot appSnapshot : snapshot.getChildren()) {
+                            String studentId = appSnapshot.child("userId").getValue(String.class);
+                            String status = appSnapshot.child("status").getValue(String.class);
+                            String projectId = appSnapshot.child("projectId").getValue(String.class);
+
+                            if (applicantId.equals(studentId) && "Accepted".equals(status) && projectId != null) {
+                                // Check if project is completed
+                                checkProjectCompletion(projectId, currentTime);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnAddFeedback.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void checkProjectCompletion(String projectId, long currentTime) {
+        databaseReference.child("projects").child(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            String status = snapshot.child("status").getValue(String.class);
+                            Long startDate = snapshot.child("startDate").getValue(Long.class);
+                            String duration = snapshot.child("duration").getValue(String.class);
+
+                            if ("completed".equals(status) ||
+                                    (startDate != null && isProjectCompleted(startDate, duration, currentTime))) {
+
+                                eligibleProjects.add(projectId);
+
+                                // Check if company already left feedback for this student
+                                checkExistingFeedback();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Handle error silently
+                    }
+                });
+    }
+
+    private boolean isProjectCompleted(long startDate, String duration, long currentTime) {
+        if (duration == null) return false;
+
+        long durationMs = 0;
+        if (duration.contains("1-2 weeks")) {
+            durationMs = 14 * 24 * 60 * 60 * 1000L; // 2 weeks
+        } else if (duration.contains("3-4 weeks")) {
+            durationMs = 28 * 24 * 60 * 60 * 1000L; // 4 weeks
+        } else if (duration.contains("1-2 months")) {
+            durationMs = 60 * 24 * 60 * 60 * 1000L; // 2 months
+        } else if (duration.contains("3-4 months")) {
+            durationMs = 120 * 24 * 60 * 60 * 1000L; // 4 months
+        } else if (duration.contains("5-6 months")) {
+            durationMs = 180 * 24 * 60 * 60 * 1000L; // 6 months
+        }
+
+        return currentTime > (startDate + durationMs);
+    }
+
+    private void checkExistingFeedback() {
+        databaseReference.child("student_feedback")
+                .orderByChild("companyId")
+                .equalTo(currentCompanyId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        boolean hasExistingFeedback = false;
+
+                        for (DataSnapshot feedbackSnapshot : snapshot.getChildren()) {
+                            String feedbackStudentId = feedbackSnapshot.child("studentId").getValue(String.class);
+                            if (applicantId.equals(feedbackStudentId)) {
+                                hasExistingFeedback = true;
+                                break;
+                            }
+                        }
+
+                        canLeaveFeedback = !eligibleProjects.isEmpty() && !hasExistingFeedback;
+                        btnAddFeedback.setVisibility(canLeaveFeedback ? View.VISIBLE : View.GONE);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        btnAddFeedback.setVisibility(View.GONE);
+                    }
+                });
     }
 
     private void displayApplicantData(DataSnapshot snapshot) {
@@ -242,7 +502,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         cvUrl = snapshot.child("cvUrl").getValue(String.class);
         String profileImageUrl = getProfileImageUrl(snapshot);
 
-        // Log loaded data
         Log.d(TAG, "Profile data loaded:");
         Log.d(TAG, "  → Name: " + applicantName);
         Log.d(TAG, "  → Email: " + (applicantEmail != null ? "Available" : "Not provided"));
@@ -266,7 +525,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     }
 
     private String getProfileImageUrl(DataSnapshot snapshot) {
-        // Try multiple possible keys for profile image
         String[] imageKeys = {"profileImageUrl", "logoUrl", "imageUrl", "profilePicture"};
 
         for (String key : imageKeys) {
@@ -358,23 +616,180 @@ public class ApplicantProfileActivity extends AppCompatActivity {
             btnViewCV.setOnClickListener(v -> handleViewCV());
         }
 
-        // ✅ PROFESSIONAL EMAIL BUTTON - Opens email app with pre-filled content
+        // Professional Email Button
         if (btnContactEmail != null) {
             btnContactEmail.setOnClickListener(v -> handleProfessionalEmail());
         }
 
-        // ✅ PROFESSIONAL CALL BUTTON - Opens phone dialer
+        // Professional Call Button
         if (btnContactPhone != null) {
             btnContactPhone.setOnClickListener(v -> handleProfessionalCall());
         }
 
-        // ✅ MESSAGE BUTTON - Opens chat between company and student
+        // Message Button
         if (btnMessage != null) {
-            btnMessage.setText("Message"); // Change button text
+            btnMessage.setText("Message");
             btnMessage.setOnClickListener(v -> handleOpenChat());
         }
 
+        // Add Feedback Button
+        if (btnAddFeedback != null) {
+            btnAddFeedback.setOnClickListener(v -> {
+                if (canLeaveFeedback) {
+                    showAddFeedbackDialog();
+                }
+            });
+        }
+
         Log.d(TAG, "✅ Button listeners configured");
+    }
+
+    private void showAddFeedbackDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_add_student_feedback);
+        dialog.getWindow().setLayout(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.9),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+
+        // Initialize dialog views
+        ImageView ivStudentProfileDialog = dialog.findViewById(R.id.iv_student_profile_dialog);
+        TextView tvStudentNameDialog = dialog.findViewById(R.id.tv_student_name_dialog);
+        TextView tvProjectNameDialog = dialog.findViewById(R.id.tv_project_name_dialog);
+        RatingBar ratingBarDialog = dialog.findViewById(R.id.rating_bar_dialog);
+        TextView tvRatingDescription = dialog.findViewById(R.id.tv_rating_description);
+        TextInputEditText etComment = dialog.findViewById(R.id.et_comment);
+        Button btnCancel = dialog.findViewById(R.id.btn_cancel);
+        Button btnSubmit = dialog.findViewById(R.id.btn_submit);
+
+        // Set student info
+        tvStudentNameDialog.setText(applicantName);
+        if (!eligibleProjects.isEmpty()) {
+            loadProjectTitle(eligibleProjects.get(0), tvProjectNameDialog);
+        }
+
+        // Load student profile image
+        Glide.with(this)
+                .load(profileImage.getDrawable())
+                .into(ivStudentProfileDialog);
+
+        // Rating change listener
+        ratingBarDialog.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
+            if (fromUser) {
+                btnSubmit.setEnabled(rating > 0);
+                String[] descriptions = {
+                        "Tap stars to rate",
+                        "Poor Performance",
+                        "Below Average",
+                        "Average Performance",
+                        "Good Performance",
+                        "Excellent Performance"
+                };
+                tvRatingDescription.setText(descriptions[(int) rating]);
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSubmit.setOnClickListener(v -> {
+            float rating = ratingBarDialog.getRating();
+            String comment = etComment.getText().toString().trim();
+
+            if (rating > 0) {
+                submitStudentFeedback(rating, comment, eligibleProjects.get(0));
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void loadProjectTitle(String projectId, TextView textView) {
+        databaseReference.child("projects").child(projectId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String title = snapshot.child("title").getValue(String.class);
+                        textView.setText(title != null ? title : "Project");
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        textView.setText("Project");
+                    }
+                });
+    }
+
+    private void submitStudentFeedback(float rating, String comment, String projectId) {
+        showLoading(true);
+
+        // Get current company info
+        databaseReference.child("users").child(currentCompanyId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot companySnapshot) {
+                        String companyName = companySnapshot.child("name").getValue(String.class);
+                        String companyLogoUrl = companySnapshot.child("logoUrl").getValue(String.class);
+
+                        // Get project title
+                        databaseReference.child("projects").child(projectId)
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
+                                        String projectTitle = projectSnapshot.child("title").getValue(String.class);
+
+                                        // Create feedback object
+                                        StudentFeedback feedback = new StudentFeedback(
+                                                currentCompanyId,
+                                                companyName != null ? companyName : "Company",
+                                                applicantId,
+                                                projectId,
+                                                projectTitle != null ? projectTitle : "Project",
+                                                rating,
+                                                comment,
+                                                System.currentTimeMillis(),
+                                                companyLogoUrl
+                                        );
+
+                                        // Save to Firebase
+                                        DatabaseReference feedbackRef = databaseReference
+                                                .child("student_feedback").push();
+
+                                        feedbackRef.setValue(feedback)
+                                                .addOnSuccessListener(aVoid -> {
+                                                    showLoading(false);
+                                                    Toast.makeText(ApplicantProfileActivity.this,
+                                                            "Review submitted successfully!", Toast.LENGTH_SHORT).show();
+
+                                                    // Refresh feedback
+                                                    loadStudentFeedback();
+                                                    btnAddFeedback.setVisibility(View.GONE);
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    showLoading(false);
+                                                    Toast.makeText(ApplicantProfileActivity.this,
+                                                            "Failed to submit review: " + e.getMessage(),
+                                                            Toast.LENGTH_SHORT).show();
+                                                });
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        showLoading(false);
+                                        Toast.makeText(ApplicantProfileActivity.this,
+                                                "Failed to load project info", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        showLoading(false);
+                        Toast.makeText(ApplicantProfileActivity.this,
+                                "Failed to load company info", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void handleViewCV() {
@@ -396,7 +811,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ PROFESSIONAL EMAIL HANDLER
     private void handleProfessionalEmail() {
         Log.d(TAG, "Professional email contact initiated");
 
@@ -409,7 +823,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
             Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
             emailIntent.setData(Uri.parse("mailto:" + applicantEmail));
 
-            // Professional email template
             String subject = "Internship Opportunity - " + (currentCompanyName != null ? currentCompanyName : "Our Company");
             String body = "Dear " + applicantName + ",\n\n"
                     + "Thank you for your interest in our internship program. "
@@ -432,7 +845,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ PROFESSIONAL CALL HANDLER
     private void handleProfessionalCall() {
         Log.d(TAG, "Professional call initiated");
 
@@ -441,7 +853,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
             return;
         }
 
-        // Show confirmation dialog for professional calling
         new AlertDialog.Builder(this)
                 .setTitle("Call " + applicantName + "?")
                 .setMessage("You're about to call " + applicantName + " at:\n" + applicantPhone)
@@ -464,7 +875,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ✅ CHAT MESSAGE HANDLER - Opens chat between company and student
     private void handleOpenChat() {
         Log.d(TAG, "Opening chat with applicant: " + applicantName);
 

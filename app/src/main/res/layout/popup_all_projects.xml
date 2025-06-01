@@ -34,6 +34,7 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
+
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="wrap_content"
@@ -47,7 +48,7 @@
             android:layout_height="match_parent"
             android:layout_below="@id/tv_popup_title"
             android:clipToPadding="false"
-            android:padding="8dp" />
+            android:paddingStart="30dp" />
 
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

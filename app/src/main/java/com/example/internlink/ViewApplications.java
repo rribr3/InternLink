@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -26,10 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import javax.annotation.Nullable;
@@ -42,7 +38,9 @@ public class ViewApplications extends AppCompatActivity {
             tvPaymentInfo, tvPostedDate, tvContact,
             tvStatus, tvSubmissionDate, tvQuizScore, tvCompanyMessage;
     private Button btnWithdraw, btnView, btnReapply;
-    private ImageButton btnChat;
+    private ImageButton btnBack; // Added btnBack
+    private ImageView btnChat;
+    private ImageButton btnCompanyProfile;
 
     private String applicationId;
     private TextView tvReapplicationLabel;
@@ -58,102 +56,15 @@ public class ViewApplications extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_applications);
 
-        // Check if we have a specific application ID from announcement
-        String targetApplicationId = getIntent().getStringExtra("APPLICATION_ID");
+        applicationId = getIntent().getStringExtra("APPLICATION_ID");
 
-        // Debug logging
-        Log.d("ViewApplications", "onCreate called");
-        Log.d("ViewApplications", "APPLICATION_ID from intent: " + targetApplicationId);
-
-        if (targetApplicationId != null && !targetApplicationId.trim().isEmpty()) {
-            // We have a specific application ID from announcement - use it directly
-            applicationId = targetApplicationId;
-            Log.d("ViewApplications", "Using specific applicationId: " + applicationId);
-            Toast.makeText(this, "Loading application: " + applicationId.substring(0, Math.min(8, applicationId.length())) + "...", Toast.LENGTH_SHORT).show();
-            initializeViews();
-            loadApplicationData();
-        } else {
-            // No specific application ID - we need to find the user's applications
-            // This is for cases where ViewApplications is opened normally (not from announcement)
-            Log.d("ViewApplications", "No specific applicationId, finding user applications");
-            findUserApplications();
+        if (applicationId == null || applicationId.isEmpty()) {
+            Toast.makeText(this, "Application ID not provided", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
-    }
 
-    private void findUserApplications() {
-        // Check if we're coming from a specific project context
-        String projectIdFromIntent = getIntent().getStringExtra("PROJECT_ID");
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference appsRef = FirebaseDatabase.getInstance().getReference("applications");
-
-        appsRef.orderByChild("userId").equalTo(userId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!snapshot.exists() || !snapshot.hasChildren()) {
-                            Toast.makeText(ViewApplications.this, "No applications found", Toast.LENGTH_SHORT).show();
-                            finish();
-                            return;
-                        }
-
-                        // If we have a project ID from intent, find the application for that specific project
-                        if (projectIdFromIntent != null && !projectIdFromIntent.trim().isEmpty()) {
-                            boolean found = false;
-                            for (DataSnapshot appSnap : snapshot.getChildren()) {
-                                String appProjectId = appSnap.child("projectId").getValue(String.class);
-                                if (projectIdFromIntent.equals(appProjectId)) {
-                                    applicationId = appSnap.getKey();
-                                    found = true;
-                                    break;
-                                }
-                            }
-
-                            if (!found) {
-                                Toast.makeText(ViewApplications.this, "No application found for this project", Toast.LENGTH_SHORT).show();
-                                finish();
-                                return;
-                            }
-                        } else {
-                            // No specific project - show a list or the most recent application
-                            List<DataSnapshot> applicationsList = new ArrayList<>();
-                            for (DataSnapshot appSnap : snapshot.getChildren()) {
-                                applicationsList.add(appSnap);
-                            }
-
-                            // Sort by applied date (most recent first)
-                            Collections.sort(applicationsList, (a, b) -> {
-                                Long dateA = a.child("appliedDate").getValue(Long.class);
-                                Long dateB = b.child("appliedDate").getValue(Long.class);
-                                if (dateA == null) dateA = 0L;
-                                if (dateB == null) dateB = 0L;
-                                return dateB.compareTo(dateA);
-                            });
-
-                            // Take the most recent application
-                            if (!applicationsList.isEmpty()) {
-                                applicationId = applicationsList.get(0).getKey();
-                                Toast.makeText(ViewApplications.this, "Showing your most recent application", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                        if (applicationId != null) {
-                            initializeViews();
-                            loadApplicationData();
-                        } else {
-                            Toast.makeText(ViewApplications.this, "No valid applications found", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(ViewApplications.this, "Error loading applications", Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-                });
-    }
-    private void initializeViews() {
+        // Initialize views
         ivCompanyLogo = findViewById(R.id.iv_company_logo);
         tvProjectTitle = findViewById(R.id.tv_project_title);
         tvCompanyName = findViewById(R.id.tv_company_name);
@@ -165,6 +76,7 @@ public class ViewApplications extends AppCompatActivity {
         tvPaymentInfo = findViewById(R.id.tv_payment_info);
         tvPostedDate = findViewById(R.id.tv_posted_date);
         tvContact = findViewById(R.id.tv_contact);
+        btnCompanyProfile = findViewById(R.id.btn_company_profile);
 
         tvStatus = findViewById(R.id.tv_status);
         tvSubmissionDate = findViewById(R.id.tv_submission_date);
@@ -174,11 +86,20 @@ public class ViewApplications extends AppCompatActivity {
         btnWithdraw = findViewById(R.id.btn_withdraw);
         btnView = findViewById(R.id.btn_view);
         btnReapply = findViewById(R.id.btn_reapply);
+        btnBack = findViewById(R.id.btn_back); // Initialize back button
 
-        setupButtonListeners();
-    }
+        // Set up back button click listener
+        btnBack.setOnClickListener(v -> finish());
+        btnCompanyProfile.setOnClickListener(v -> {
+            if (currentProject != null && currentProject.getCompanyId() != null && !currentProject.getCompanyId().isEmpty()) {
+                openCompanyProfile();
+            } else {
+                Toast.makeText(this, "Company information not available", Toast.LENGTH_SHORT).show();
+            }
+        });
 
-    private void setupButtonListeners() {
+        loadApplicationData();
+
         btnWithdraw.setOnClickListener(v -> {
             View dialogView = getLayoutInflater().inflate(R.layout.dialog_withdraw_confirm, null);
 
@@ -228,6 +149,11 @@ public class ViewApplications extends AppCompatActivity {
                 submitReapplication(null); // no resume, no quiz
             }
         });
+    }
+    private void openCompanyProfile() {
+        Intent intent = new Intent(this, CompanyProfileViewActivity.class);
+        intent.putExtra("COMPANY_ID", currentProject.getCompanyId());
+        startActivity(intent);
     }
 
     private void uploadResume() {
@@ -473,7 +399,7 @@ public class ViewApplications extends AppCompatActivity {
                 Button btnAction = view.findViewById(R.id.btn_action);
                 Button btnClose = view.findViewById(R.id.btn_close);
 
-// Set action button text based on method
+                // Set action button text based on method
                 if ("Zoom".equalsIgnoreCase(method)) {
                     btnAction.setText("Join");
                     btnAction.setOnClickListener(v -> {
@@ -510,7 +436,7 @@ public class ViewApplications extends AppCompatActivity {
                     });
                 }
 
-// Handle close
+                // Handle close
                 btnClose.setOnClickListener(close -> dialog.dismiss());
                 dialog.show();
             }
@@ -584,7 +510,6 @@ public class ViewApplications extends AppCompatActivity {
         switch (status) {
             case "Accepted": return "🟢 Accepted";
             case "Rejected": return "🔴 Rejected";
-            case "Shortlisted": return "🟡 Shortlisted";
             default: return "🟡 Pending";
         }
     }

@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,6 +44,7 @@ public class ApplyNowActivity extends AppCompatActivity {
     private TextView quizTitle, quizInstructions, quizTime, quizScore;
     private Button applyButton;
     private ImageButton btnCompanyProfile; // Add company profile button
+    private ImageButton btnBack; // Add back button
 
     private String projectId;
     private Project currentProject;
@@ -92,9 +94,30 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         applyButton = findViewById(R.id.btn_submit_application);
         btnCompanyProfile = findViewById(R.id.btn_company_profile); // Initialize company profile button
+        btnBack = findViewById(R.id.btn_back); // Initialize back button
+    }
+    private boolean hasProjectEnded() {
+        if (currentProject == null) return false;
+
+        long currentTime = System.currentTimeMillis();
+        long endDate = currentProject.getDeadline();
+
+        // If endDate is 0 or not set, project hasn't ended
+        if (endDate <= 0) return false;
+
+        return currentTime > endDate;
     }
 
     private void setupClickListeners() {
+        // Back button click listener
+        btnBack.setOnClickListener(v -> {
+            // Navigate back to StudentHomeActivity
+            Intent intent = new Intent(ApplyNowActivity.this, StudentHomeActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
+
         // Apply button click listener
         applyButton.setOnClickListener(v -> {
             // Check if user is logged in
@@ -124,6 +147,17 @@ public class ApplyNowActivity extends AppCompatActivity {
         });
     }
 
+    // Override the back button behavior
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+        // Navigate back to StudentHomeActivity instead of just finishing
+        Intent intent = new Intent(ApplyNowActivity.this, StudentHomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
+    }
+
     private void openCompanyProfile() {
         Intent intent = new Intent(this, CompanyProfileViewActivity.class);
         intent.putExtra("COMPANY_ID", currentProject.getCompanyId());
@@ -150,6 +184,15 @@ public class ApplyNowActivity extends AppCompatActivity {
                 }
 
                 isReapplying = "Rejected".equalsIgnoreCase(latestStatus);
+                if (hasProjectEnded()) {
+                    applyButton.setText("Deadline Passed");
+                    applyButton.setEnabled(false);
+                    applyButton.setAlpha(0.5f);
+                    if (isFromButtonClick) {
+                        Toast.makeText(ApplyNowActivity.this, "This project's deadline has passed", Toast.LENGTH_SHORT).show();
+                    }
+                    return;
+                }
 
                 if (latestStatus != null && !"Rejected".equalsIgnoreCase(latestStatus)) {
                     applyButton.setText("Already Applied");
@@ -481,23 +524,18 @@ public class ApplyNowActivity extends AppCompatActivity {
         ImageView icon = dialogView.findViewById(R.id.success_icon);
         TextView title = dialogView.findViewById(R.id.dialog_title);
         TextView message = dialogView.findViewById(R.id.dialog_message);
-        Button primaryBtn = dialogView.findViewById(R.id.primary_button);
         Button secondaryBtn = dialogView.findViewById(R.id.secondary_button);
 
         // Set content
         title.setText("Application Submitted!");
         message.setText("Congratulations!\nYour application has been successfully submitted.\n\nYou can track its status in the 'My Applications' section.");
 
-        // Set button actions
-        primaryBtn.setOnClickListener(v -> {
-            dialog.dismiss();
-            Intent intent = new Intent(this, StudentHomeActivity.class);
-            startActivity(intent);
-            finish();
-        });
 
         secondaryBtn.setOnClickListener(v -> {
             dialog.dismiss();
+            Intent intent = new Intent(this, StudentHomeActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
             finish();
         });
 

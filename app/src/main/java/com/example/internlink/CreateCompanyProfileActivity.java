@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -44,6 +45,7 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
 
     private String userId, name, email, password;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
+    private CheckBox checkAgree;
 
     private EditText editCompanyName, editIndustry, editLocation, editLinkedIn, editTwitter,
             editWebsite, editDescription, editMission, editVision,
@@ -104,6 +106,7 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
         editAddress = findViewById(R.id.editAddress);
         uploadLogo = findViewById(R.id.uploadLogo);
         btnSubmit = findViewById(R.id.btnSubmit);
+        checkAgree = findViewById(R.id.checkAgree);
     }
 
     private void prefillFields() {
@@ -222,6 +225,6 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Failed to save profile", Toast.LENGTH_SHORT).show();
             }
-        });
-    }
+});
+}
 }

@@ -1,4 +1,4 @@
-// MessagesAdapter.java - Complete version with all ViewHolders
+// MessagesAdapter.java - Updated with long press delete functionality
 package com.example.internlink;
 
 import android.content.Intent;
@@ -33,10 +33,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     private List<Message> messages;
     private String currentUserId;
+    private OnMessageLongClickListener longClickListener;
+
+    // Interface for handling long click events
+    public interface OnMessageLongClickListener {
+        void onMessageLongClick(Message message, int position);
+    }
 
     public MessagesAdapter(List<Message> messages, String currentUserId) {
         this.messages = messages;
         this.currentUserId = currentUserId;
+    }
+
+    public void setOnMessageLongClickListener(OnMessageLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     @Override
@@ -116,19 +126,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         if (holder instanceof DateHeaderViewHolder) {
             ((DateHeaderViewHolder) holder).bind(message);
         } else if (holder instanceof SentMessageViewHolder) {
-            ((SentMessageViewHolder) holder).bind(message);
+            ((SentMessageViewHolder) holder).bind(message, position);
         } else if (holder instanceof ReceivedMessageViewHolder) {
-            ((ReceivedMessageViewHolder) holder).bind(message);
+            ((ReceivedMessageViewHolder) holder).bind(message, position);
         } else if (holder instanceof SystemMessageViewHolder) {
             ((SystemMessageViewHolder) holder).bind(message);
         } else if (holder instanceof FileSentViewHolder) {
-            ((FileSentViewHolder) holder).bind(message);
+            ((FileSentViewHolder) holder).bind(message, position);
         } else if (holder instanceof FileReceivedViewHolder) {
-            ((FileReceivedViewHolder) holder).bind(message);
+            ((FileReceivedViewHolder) holder).bind(message, position);
         } else if (holder instanceof ImageSentViewHolder) {
-            ((ImageSentViewHolder) holder).bind(message);
+            ((ImageSentViewHolder) holder).bind(message, position);
         } else if (holder instanceof ImageReceivedViewHolder) {
-            ((ImageReceivedViewHolder) holder).bind(message);
+            ((ImageReceivedViewHolder) holder).bind(message, position);
         }
     }
 
@@ -153,6 +163,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 currentCal.get(Calendar.YEAR) != previousCal.get(Calendar.YEAR);
     }
 
+    // Helper method to set up long click listener for message containers
+    private void setupLongClickListener(View container, Message message, int position) {
+        container.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onMessageLongClick(message, position);
+            }
+            return true; // Consume the long click event
+        });
+    }
+
     // Date Header ViewHolder
     static class DateHeaderViewHolder extends RecyclerView.ViewHolder {
         TextView tvDate;
@@ -168,7 +188,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     // Sent Message ViewHolder
-    static class SentMessageViewHolder extends RecyclerView.ViewHolder {
+    class SentMessageViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime, tvStatus;
         LinearLayout messageContainer;
 
@@ -180,7 +200,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             messageContainer = itemView.findViewById(R.id.message_container);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             tvMessage.setText(message.getText());
             tvTime.setText(message.getFormattedTime());
 
@@ -196,11 +216,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 tvStatus.setText("✓✓");
                 tvStatus.setTextColor(itemView.getContext().getColor(R.color.primary_color));
             }
+
+            // Set up long click listener
+            setupLongClickListener(messageContainer, message, position);
         }
     }
 
     // Received Message ViewHolder
-    static class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
+    class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime;
         LinearLayout messageContainer;
 
@@ -211,9 +234,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             messageContainer = itemView.findViewById(R.id.message_container);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             tvMessage.setText(message.getText());
             tvTime.setText(message.getFormattedTime());
+
+            // Set up long click listener
+            setupLongClickListener(messageContainer, message, position);
         }
     }
 
@@ -228,11 +254,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         void bind(Message message) {
             tvSystemMessage.setText(message.getText());
+            // System messages typically shouldn't be deletable
         }
     }
 
     // File Sent ViewHolder
-    static class FileSentViewHolder extends RecyclerView.ViewHolder {
+    class FileSentViewHolder extends RecyclerView.ViewHolder {
         TextView tvFileName, tvFileSize, tvTime, tvStatus;
         ImageView ivFileIcon;
         LinearLayout messageContainer;
@@ -247,7 +274,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             messageContainer = itemView.findViewById(R.id.message_container);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             tvFileName.setText(message.getFileName());
             tvFileSize.setText(FileAttachmentHelper.formatFileSize(message.getFileSize()));
             tvTime.setText(message.getFormattedTime());
@@ -264,6 +291,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 intent.setData(Uri.parse(message.getFileUrl()));
                 v.getContext().startActivity(intent);
             });
+
+            // Set up long click listener
+            setupLongClickListener(messageContainer, message, position);
         }
 
         private void setFileIcon(String fileName) {
@@ -291,7 +321,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     // File Received ViewHolder
-    static class FileReceivedViewHolder extends RecyclerView.ViewHolder {
+    class FileReceivedViewHolder extends RecyclerView.ViewHolder {
         TextView tvFileName, tvFileSize, tvTime;
         ImageView ivFileIcon, ivDownload;
         LinearLayout messageContainer;
@@ -306,7 +336,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             messageContainer = itemView.findViewById(R.id.message_container);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             tvFileName.setText(message.getFileName());
             tvFileSize.setText(FileAttachmentHelper.formatFileSize(message.getFileSize()));
             tvTime.setText(message.getFormattedTime());
@@ -323,6 +353,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             messageContainer.setOnClickListener(downloadListener);
             ivDownload.setOnClickListener(downloadListener);
+
+            // Set up long click listener
+            setupLongClickListener(messageContainer, message, position);
         }
 
         private void setFileIcon(String fileName) {
@@ -337,7 +370,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     // Image Sent ViewHolder
-    static class ImageSentViewHolder extends RecyclerView.ViewHolder {
+    class ImageSentViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
         TextView tvTime, tvStatus;
 
@@ -348,7 +381,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvStatus = itemView.findViewById(R.id.tv_status);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             // Load image with Glide
             Glide.with(itemView.getContext())
                     .load(message.getFileUrl())
@@ -367,6 +400,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 intent.putExtra("image_url", message.getFileUrl());
                 v.getContext().startActivity(intent);
             });
+
+            // Set up long click listener for the image
+            setupLongClickListener(ivImage, message, position);
         }
 
         private void updateStatus(String status) {
@@ -384,7 +420,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     // Image Received ViewHolder
-    static class ImageReceivedViewHolder extends RecyclerView.ViewHolder {
+    class ImageReceivedViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
         TextView tvTime;
 
@@ -394,7 +430,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvTime = itemView.findViewById(R.id.tv_time);
         }
 
-        void bind(Message message) {
+        void bind(Message message, int position) {
             // Load image with Glide
             Glide.with(itemView.getContext())
                     .load(message.getFileUrl())
@@ -410,6 +446,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 intent.putExtra("image_url", message.getFileUrl());
                 v.getContext().startActivity(intent);
             });
+
+            // Set up long click listener for the image
+            setupLongClickListener(ivImage, message, position);
         }
     }
 }

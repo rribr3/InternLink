@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,407 +8,440 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:orientation="vertical"
-        >
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <!-- Header Card with Rounded Corners -->
+        <!-- Modern Toolbar with Back Button -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
-            style="@style/Widget.Material3.Toolbar"
-            android:layout_width="426dp"
+            android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/blue_500"
             android:elevation="4dp"
             app:navigationIcon="@drawable/left_arrow"
             app:navigationIconTint="@android:color/white"
-            app:title="My Profile"
+            app:title="Company Profile"
             app:titleTextColor="@android:color/white" />
 
-        <com.google.android.material.card.MaterialCardView
+        <!-- Hero Profile Section -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="6dp"
-            app:strokeColor="@color/white"
-            app:strokeWidth="1dp">
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="24dp"
-                android:background="@color/white">
-
-                <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:background="@drawable/rounded_background">
-
-                    <ImageView
-                        android:id="@+id/companyLogo"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="Company Logo"
-                        android:src="@drawable/ic_company" />
-                </FrameLayout>
+                app:cardCornerRadius="20dp"
+                app:cardElevation="12dp"
+                app:strokeColor="#E5E7EB"
+                app:strokeWidth="1dp"
+                android:backgroundTint="@android:color/white">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:padding="28dp">
 
-                    <EditText
-                        android:id="@+id/companyName"
+                    <!-- Company Logo -->
+                    <FrameLayout
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="24dp"
+                        android:background="@drawable/rounded_background"
+                        android:elevation="6dp">
+
+                        <ImageView
+                            android:id="@+id/companyLogo"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Company Logo"
+                            android:src="@drawable/ic_company"
+                            app:tint="@android:color/black" />
+                    </FrameLayout>
+
+                    <!-- Company Name -->
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/blue_500"
+                        app:hintTextColor="@color/blue_500"
+                        app:startIconDrawable="@drawable/ic_business"
+                        app:startIconTint="@color/blue_500">
+
+                        <EditText
+                            android:id="@+id/companyName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Company Name"
+                            android:textColor="@color/primary_text"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            tools:text="Tech Innovators Inc." />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Industry -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/industry"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Industry"
+                            android:textColor="@color/primary_text"
+                            android:textSize="16sp"
+                            tools:text="Technology &amp; Software" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Location -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/blue_500">
+
+                        <EditText
+                            android:id="@+id/location"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Location"
+                            android:textColor="@color/primary_text"
+                            android:textSize="16sp"
+                            tools:text="Remote /In Office" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- About Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="20dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:strokeColor="#E5E7EB"
+                app:strokeWidth="1dp"
+                android:backgroundTint="@android:color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <!-- Section Title -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="20dp"
+                        android:text="Company Overview"
+                        android:textColor="@color/primary_text"
                         android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <!-- Description -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="20dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/blue_500"
+                        app:hintTextColor="@color/blue_500">
+
+                        <EditText
+                            android:id="@+id/description"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="top"
+                            android:hint="Company Description"
+                            android:inputType="textMultiLine"
+                            android:lines="4"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Mission -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="Our Mission"
+                        android:textColor="@color/primary_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="20dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="#FF9800"
+                        app:hintTextColor="#FF9800">
+
+                        <EditText
+                            android:id="@+id/mission"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="top"
+                            android:hint="Mission Statement"
+                            android:inputType="textMultiLine"
+                            android:lines="3"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Vision -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="Our Vision"
+                        android:textColor="@color/primary_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="#9C27B0"
+                        app:hintTextColor="#9C27B0">
+
+                        <EditText
+                            android:id="@+id/vision"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="top"
+                            android:hint="Vision Statement"
+                            android:inputType="textMultiLine"
+                            android:lines="3"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Contact Information -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:strokeColor="#E5E7EB"
+                app:strokeWidth="1dp"
+                android:backgroundTint="@android:color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <!-- Section Title -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="20dp"
+                        android:text="Contact Information"
+                        android:textColor="@color/primary_text"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <!-- Email -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/email"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Email Address"
+                            android:inputType="textEmailAddress"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="contact@company.com" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Phone -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/phone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Phone Number"
+                            android:inputType="phone"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="+961 1 123456" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Address -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/address"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Physical Address"
+                            android:inputType="textPostalAddress"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="Beirut, Lebanon" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Website -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/website"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Website URL"
+                            android:inputType="textUri"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="https://company.com" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- LinkedIn -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                     >
+
+                        <EditText
+                            android:id="@+id/linkedin"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="LinkedIn URL"
+                            android:inputType="textUri"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="https://linkedin.com/company/techcompany" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Twitter -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        app:boxBackgroundMode="outline"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp">
+
+                        <EditText
+                            android:id="@+id/twitter"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="Twitter URL"
+                            android:inputType="textUri"
+                            android:textColor="@color/primary_text"
+                            android:textSize="14sp"
+                            tools:text="https://twitter.com/techcompany" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Save Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSave"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:backgroundTint="@color/blue_500"
+                        android:elevation="6dp"
+                        android:letterSpacing="0.02"
+                        android:text="Save Changes"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="@color/primary_text"
-                        tools:text="Tech Company" />
-
-                    <EditText
-                        android:id="@+id/industry"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:minHeight="48dp"
-                        android:textColor="@color/secondary_text"
-                        tools:text="Technology" />
-
-                    <EditText
-                        android:id="@+id/location"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:minHeight="48dp"
-                        android:textColor="@color/secondary_text"
-                        tools:text="Beirut, Lebanon" />
+                        app:cornerRadius="12dp"
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconSize="20dp"
+                        app:iconTint="@android:color/white" />
                 </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Social Links with Colored Icons -->
-
-        <!-- About Company Card with Gradient Dividers -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="6dp"
-            app:strokeColor="@color/blue_500"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:background="@color/white">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="About"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_text"/>
-
-                <EditText
-                    android:id="@+id/description"
-                    android:layout_width="match_parent"
-                    android:layout_height="74dp"
-                    android:layout_marginTop="8dp"
-                    android:gravity="top"
-                    android:hint="Company description"
-                    android:inputType="textMultiLine"
-                    android:textColor="@color/primary_text" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="@drawable/header_gradient"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Our Mission"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_text"/>
-
-                <EditText
-                    android:id="@+id/mission"
-                    android:layout_width="match_parent"
-                    android:layout_height="74dp"
-                    android:layout_marginTop="8dp"
-                    android:gravity="top"
-                    android:hint="Mission statement"
-                    android:inputType="textMultiLine"
-                    android:textColor="@color/primary_text" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="@drawable/gradient"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Our Vision"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_text"/>
-
-                <EditText
-                    android:id="@+id/vision"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/primary_text"
-                    android:hint="Vision statement"
-                    android:inputType="textMultiLine"
-                    android:gravity="top"/>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Contact Information Card with Interactive Elements -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="6dp"
-            app:strokeColor="@color/blue"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:background="@color/white">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Contact Information"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_text"/>
-
-                <!-- Email -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="12dp"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_email"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/email"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="Email address"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="contact@company.com"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="@drawable/rounded_background"/>
-
-                <!-- Phone -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_phone"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/phone"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="Phone number"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="+961 1 123456"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="@drawable/rounded_background"/>
-
-                <!-- Address -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_location"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/address"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="Physical address"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="Beirut, Lebanon"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="@drawable/rounded_background"/>
-
-                <!-- Website -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_website"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/website"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="Website URL"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="https://company.com"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="@drawable/rounded_background"/>
-
-                <!-- LinkedIn -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="?attr/selectableItemBackground">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_linkedin"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/linkedin"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="LinkedIn URL"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="https://linkedin.com/in/techcompany"/>
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="12dp"
-                    android:background="@drawable/rounded_background"/>
-
-                <!-- Twitter -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="?attr/selectableItemBackground"
-                    android:layout_marginBottom="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="12dp"
-                        android:src="@drawable/ic_twitter"
-                        app:tint="@color/colorPrimaryDark" />
-
-                    <EditText
-                        android:id="@+id/twitter"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/primary_text"
-                        android:hint="Twitter URL"
-                        android:drawablePadding="8dp"
-                        android:drawableTint="@color/colorPrimary"
-                        tools:text="https://twitter.com/techcompany"/>
-                </LinearLayout>
-
-                <!-- Save Button with Icon -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSave"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:text="Save Changes"
-                    android:textColor="@android:color/white"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.02"
-                    android:elevation="4dp"
-                    app:iconTint="@android:color/white"
-                    app:iconPadding="8dp"
-                    app:cornerRadius="12dp"
-                    android:backgroundTint="@color/blue_500"/>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

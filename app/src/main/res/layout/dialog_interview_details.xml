@@ -53,6 +53,7 @@
             android:id="@+id/btn_action"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/black"
             android:text="Action" />
 
         <Button
@@ -60,6 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Close"
+            android:backgroundTint="@color/blue_500"
             android:layout_marginStart="16dp"/>
     </LinearLayout>
 

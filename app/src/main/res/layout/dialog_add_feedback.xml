@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dialog_add_feedback.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_star"
+            android:layout_marginEnd="12dp"
+            app:tint="@color/blue_500" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Rate Your Experience"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+    </LinearLayout>
+
+    <!-- Company Info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="20dp"
+        android:padding="12dp"
+        android:background="@drawable/rounded_background">
+
+        <ImageView
+            android:id="@+id/iv_company_logo_dialog"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_company"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_company_name_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="Tech Innovations" />
+
+            <TextView
+                android:id="@+id/tv_project_name_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                tools:text="Web Development Project" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Rating Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="How would you rate this company?"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="12dp" />
+
+        <RatingBar
+            android:id="@+id/rating_bar_dialog"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:numStars="5"
+            android:rating="0"
+            android:stepSize="1"
+            android:layout_marginBottom="8dp"
+            android:progressTint="@color/yellow"
+            android:secondaryProgressTint="@color/gray_200" />
+
+        <TextView
+            android:id="@+id/tv_rating_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:text="Tap stars to rate"
+            android:textStyle="italic" />
+
+    </LinearLayout>
+
+    <!-- Comment Section -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Share your experience (optional)"
+        android:textSize="16sp"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:boxStrokeColor="@color/blue_500"
+        app:hintTextColor="@color/blue_500">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tell other students about your experience..."
+            android:minLines="3"
+            android:maxLines="5"
+            android:gravity="top"
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLength="500" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:layout_marginEnd="12dp"
+            android:textColor="@color/text_secondary"
+            android:backgroundTint="@color/transparent"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+        <Button
+            android:id="@+id/btn_submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Submit Review"
+            android:backgroundTint="@color/blue_500"
+            android:textColor="@android:color/white"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+</LinearLayout>

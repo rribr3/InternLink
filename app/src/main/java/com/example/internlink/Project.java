@@ -242,4 +242,7 @@ public class Project {
         if (deadline <= currentTime) return 0;
         return (int) ((deadline - currentTime) / (1000 * 60 * 60 * 24));
     }
+    public boolean hasEnded() {
+        return deadline > 0 && deadline < System.currentTimeMillis();
+    }
 }
