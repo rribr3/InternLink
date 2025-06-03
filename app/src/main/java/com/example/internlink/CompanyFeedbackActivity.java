@@ -1,6 +1,7 @@
 package com.example.internlink;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
@@ -23,8 +24,11 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CompanyFeedbackActivity extends AppCompatActivity {
+
+    private static final String TAG = "CompanyFeedbackActivity";
 
     private MaterialToolbar toolbar;
     private TextView tvOverallRating, tvTotalReviews, tvNoFeedback;
@@ -55,6 +59,7 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
 
         // Get company ID
         companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        Log.d(TAG, "Company ID: " + companyId);
 
         if (companyId == null || companyId.isEmpty()) {
             Toast.makeText(this, "Error: User not logged in", Toast.LENGTH_SHORT).show();
@@ -126,38 +131,50 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
         DatabaseReference feedbackRef = FirebaseDatabase.getInstance()
                 .getReference("company_feedback");
 
+        Log.d(TAG, "Loading feedback for company: " + companyId);
+
         feedbackRef.orderByChild("companyId").equalTo(companyId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Log.d(TAG, "Feedback snapshot received. Children count: " + snapshot.getChildrenCount());
+
                         feedbackList.clear();
+                        List<CompanyFeedback> tempFeedbackList = new ArrayList<>();
+
+                        if (!snapshot.exists()) {
+                            Log.d(TAG, "No feedback found for company");
+                            progressBar.setVisibility(View.GONE);
+                            showNoFeedbackState();
+                            return;
+                        }
+
+                        AtomicInteger pendingLoads = new AtomicInteger(0);
 
                         for (DataSnapshot feedbackSnapshot : snapshot.getChildren()) {
                             CompanyFeedback feedback = feedbackSnapshot.getValue(CompanyFeedback.class);
                             if (feedback != null) {
                                 feedback.setFeedbackId(feedbackSnapshot.getKey());
+                                Log.d(TAG, "Found feedback: " + feedback.getComment() + ", Rating: " + feedback.getRating());
+
+                                pendingLoads.incrementAndGet();
+                                tempFeedbackList.add(feedback);
 
                                 // Load additional student data
-                                loadStudentDataForFeedback(feedback);
+                                loadStudentDataForFeedback(feedback, tempFeedbackList, pendingLoads);
                             }
                         }
 
-                        progressBar.setVisibility(View.GONE);
-
-                        if (feedbackList.isEmpty()) {
+                        // If no feedback items were found
+                        if (tempFeedbackList.isEmpty()) {
+                            progressBar.setVisibility(View.GONE);
                             showNoFeedbackState();
-                        } else {
-                            // Sort feedback by timestamp (newest first)
-                            Collections.sort(feedbackList, (f1, f2) ->
-                                    Long.compare(f2.getTimestamp(), f1.getTimestamp()));
-
-                            showFeedbackData();
-                            calculateAndDisplayStats();
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e(TAG, "Failed to load feedback: " + error.getMessage());
                         progressBar.setVisibility(View.GONE);
                         Toast.makeText(CompanyFeedbackActivity.this,
                                 "Failed to load feedback: " + error.getMessage(),
@@ -167,7 +184,7 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
                 });
     }
 
-    private void loadStudentDataForFeedback(CompanyFeedback feedback) {
+    private void loadStudentDataForFeedback(CompanyFeedback feedback, List<CompanyFeedback> tempList, AtomicInteger pendingLoads) {
         DatabaseReference userRef = FirebaseDatabase.getInstance()
                 .getReference("users").child(feedback.getStudentId());
 
@@ -179,28 +196,45 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
 
                 if (studentName != null) {
                     feedback.setStudentName(studentName);
+                    Log.d(TAG, "Loaded student name: " + studentName);
                 }
                 if (profileUrl != null) {
                     feedback.setStudentProfileUrl(profileUrl);
                 }
 
-                feedbackList.add(feedback);
+                // Check if all data has been loaded
+                if (pendingLoads.decrementAndGet() == 0) {
+                    // All student data loaded, update UI
+                    feedbackList.clear();
+                    feedbackList.addAll(tempList);
 
-                // Update adapter when all data is loaded
-                if (feedbackAdapter != null) {
-                    feedbackAdapter.updateFeedbackList(feedbackList);
+                    // Sort feedback by timestamp (newest first)
+                    Collections.sort(feedbackList, (f1, f2) ->
+                            Long.compare(f2.getTimestamp(), f1.getTimestamp()));
+
+                    progressBar.setVisibility(View.GONE);
+                    showFeedbackData();
+                    calculateAndDisplayStats();
+
+                    Log.d(TAG, "All feedback loaded. Total: " + feedbackList.size());
                 }
-
-                // Recalculate stats
-                calculateAndDisplayStats();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Add feedback without student details
-                feedbackList.add(feedback);
-                if (feedbackAdapter != null) {
-                    feedbackAdapter.updateFeedbackList(feedbackList);
+                Log.e(TAG, "Failed to load student data: " + error.getMessage());
+
+                // Check if all data has been loaded (even with this failure)
+                if (pendingLoads.decrementAndGet() == 0) {
+                    feedbackList.clear();
+                    feedbackList.addAll(tempList);
+
+                    Collections.sort(feedbackList, (f1, f2) ->
+                            Long.compare(f2.getTimestamp(), f1.getTimestamp()));
+
+                    progressBar.setVisibility(View.GONE);
+                    showFeedbackData();
+                    calculateAndDisplayStats();
                 }
             }
         });
@@ -210,6 +244,7 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
         layoutNoFeedback.setVisibility(View.VISIBLE);
         layoutOverallStats.setVisibility(View.GONE);
         rvFeedback.setVisibility(View.GONE);
+        Log.d(TAG, "Showing no feedback state");
     }
 
     private void showFeedbackData() {
@@ -218,10 +253,14 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
         rvFeedback.setVisibility(View.VISIBLE);
 
         feedbackAdapter.updateFeedbackList(feedbackList);
+        Log.d(TAG, "Showing feedback data. Count: " + feedbackList.size());
     }
 
     private void calculateAndDisplayStats() {
-        if (feedbackList.isEmpty()) return;
+        if (feedbackList.isEmpty()) {
+            Log.d(TAG, "No feedback to calculate stats");
+            return;
+        }
 
         int totalReviews = feedbackList.size();
         float totalRating = 0;
@@ -238,6 +277,7 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
         }
 
         float averageRating = totalRating / totalReviews;
+        Log.d(TAG, "Stats - Total: " + totalReviews + ", Average: " + averageRating);
 
         // Update overall stats
         tvOverallRating.setText(String.format("%.1f", averageRating));
@@ -260,7 +300,7 @@ public class CompanyFeedbackActivity extends AppCompatActivity {
                                      ProgressBar progressBar, TextView countTextView, TextView percentTextView) {
         int percentage = totalReviews > 0 ? (count * 100) / totalReviews : 0;
 
-        progressBar.setMax(totalReviews);
+        progressBar.setMax(totalReviews > 0 ? totalReviews : 1);
         progressBar.setProgress(count);
 
         countTextView.setText(String.valueOf(count));

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--popup_all_projects-->
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -34,6 +35,65 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
+        <!-- Add this chip to your ChipGroup in popup_all_projects.xml -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/project_filter_chips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_popup_title"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_all_projects"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="All Projects"
+                android:textColor="@color/black"
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/blue_500"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_ongoing_projects"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ongoing"
+                android:textColor="@color/black"
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/green"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_acceptable_projects"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Active"
+                android:textColor="@color/black"
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/orange"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_completed_projects"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Completed"
+                android:textColor="@color/black"
+                app:chipBackgroundColor="@color/chip_background_selector"
+                app:chipStrokeColor="@color/gray_800"
+                app:chipStrokeWidth="1dp" />
+
+        </com.google.android.material.chip.ChipGroup>
 
         <ProgressBar
             android:id="@+id/progress_bar"
@@ -42,13 +102,64 @@
             android:layout_centerInParent="true"
             android:visibility="gone" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_all_projects"
+        <!-- Container for RecyclerView with centered content -->
+        <FrameLayout
+            android:id="@+id/recycler_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/tv_popup_title"
-            android:clipToPadding="false"
-            android:paddingStart="30dp" />
+            android:layout_below="@id/project_filter_chips">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_all_projects"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp" />
+
+            <!-- Empty state for when no projects match filter -->
+            <LinearLayout
+                android:id="@+id/empty_state_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginBottom="16dp"
+                    android:alpha="0.3"
+                    android:src="@drawable/ic_folder_open"
+                    app:tint="@color/gray_800" />
+
+                <TextView
+                    android:id="@+id/tv_empty_state_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="No projects found"
+                    android:textColor="@color/gray_800"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_empty_state_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Try adjusting your filter to see more projects"
+                    android:textColor="@color/gray_800"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
 
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

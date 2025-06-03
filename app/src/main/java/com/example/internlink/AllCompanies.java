@@ -1,7 +1,14 @@
 package com.example.internlink;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -19,8 +26,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class AllCompanies extends AppCompatActivity {
@@ -29,6 +38,15 @@ public class AllCompanies extends AppCompatActivity {
     private DatabaseReference applicationsRef;
     private DatabaseReference chatsRef;
     private DatabaseReference usersRef;
+
+    // Search related variables
+    private EditText etSearch;
+    private RecyclerView recyclerView;
+    private LinearLayout emptyStateLayout;
+    private CompanyAdapter companyAdapter;
+    private List<User> allCompaniesList = new ArrayList<>();
+    private List<User> originalCompaniesList = new ArrayList<>();
+    private ImageView btnClearSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +62,223 @@ public class AllCompanies extends AppCompatActivity {
 
         studentId = getIntent().getStringExtra("STUDENT_ID");
 
+        // Initialize views
+        initializeViews();
+
+        // Initialize Firebase references
         applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
         chatsRef = FirebaseDatabase.getInstance().getReference("chats");
         usersRef = FirebaseDatabase.getInstance().getReference("users");
 
         loadAcceptedCompaniesWithoutChat();
+    }
+
+    private void initializeViews() {
+        etSearch = findViewById(R.id.message_search);
+        recyclerView = findViewById(R.id.rv_all_companies);
+        emptyStateLayout = findViewById(R.id.empty_state_layout);
+        btnClearSearch = findViewById(R.id.btn_clear_search);
+
+        // Setup RecyclerView
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Setup search functionality
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterCompanies(s.toString());
+                // Show/hide clear button based on search text
+                btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Setup clear search button
+        btnClearSearch.setOnClickListener(v -> {
+            etSearch.setText("");
+            etSearch.clearFocus();
+            // Hide keyboard
+            InputMethodManager imm =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+        });
+
+        // Setup back navigation
+        findViewById(R.id.topAppBar).setOnClickListener(v -> onBackPressed());
+    }
+
+    /**
+     * Enhanced search function with comprehensive character-level matching
+     */
+    private void filterCompanies(String query) {
+        List<User> filteredList = new ArrayList<>();
+
+        // If query is empty, show all companies
+        if (query.trim().isEmpty()) {
+            filteredList.addAll(originalCompaniesList);
+        } else {
+            // Enhanced search - search through multiple fields with character-level matching
+            String searchQuery = query.toLowerCase().trim();
+
+            for (User company : originalCompaniesList) {
+                boolean matches = false;
+
+                // Search in company name - character by character matching
+                String name = company.getName() != null ? company.getName().toLowerCase() : "";
+                if (containsAllCharacters(name, searchQuery)) {
+                    matches = true;
+                }
+
+                // Search in company email
+                if (!matches) {
+                    String email = company.getEmail() != null ? company.getEmail().toLowerCase() : "";
+                    if (containsAllCharacters(email, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Search in company location/address
+                if (!matches) {
+                    String location = company.getLocation() != null ? company.getLocation().toLowerCase() : "";
+                    if (containsAllCharacters(location, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Search in company description
+                if (!matches) {
+                    String description = company.getDescription() != null ? company.getDescription().toLowerCase() : "";
+                    if (containsAllCharacters(description, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Search in company industry/category
+                if (!matches) {
+                    String industry = company.getIndustry() != null ? company.getIndustry().toLowerCase() : "";
+                    if (containsAllCharacters(industry, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Combined search - search across all fields
+                if (!matches) {
+                    String combinedText = (name + " " +
+                            (company.getEmail() != null ? company.getEmail() : "") + " " +
+                            (company.getLocation() != null ? company.getLocation() : "") + " " +
+                            (company.getDescription() != null ? company.getDescription() : "") + " " +
+                            (company.getIndustry() != null ? company.getIndustry() : "")).toLowerCase();
+                    if (containsAllCharacters(combinedText, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                if (matches) {
+                    filteredList.add(company);
+                }
+            }
+        }
+
+        // Update adapter with filtered results
+        if (companyAdapter != null) {
+            companyAdapter.updateList(filteredList);
+        }
+
+        // Update empty state
+        updateEmptyState(filteredList.isEmpty(), !query.trim().isEmpty());
+    }
+
+    /**
+     * Enhanced character-level search that matches all characters in the query
+     * against the target string, allowing for non-consecutive matches
+     */
+    private boolean containsAllCharacters(String target, String query) {
+        if (target == null || query == null || query.isEmpty()) {
+            return query == null || query.isEmpty();
+        }
+
+        // First check for direct substring match (fastest)
+        if (target.contains(query)) {
+            return true;
+        }
+
+        // Then check for character sequence matching (allows for gaps)
+        return containsCharacterSequence(target, query);
+    }
+
+    /**
+     * Checks if target contains all characters from query in the same order,
+     * but not necessarily consecutive (fuzzy matching)
+     */
+    private boolean containsCharacterSequence(String target, String query) {
+        if (target == null || query == null) {
+            return false;
+        }
+
+        int targetIndex = 0;
+        int queryIndex = 0;
+
+        while (targetIndex < target.length() && queryIndex < query.length()) {
+            if (target.charAt(targetIndex) == query.charAt(queryIndex)) {
+                queryIndex++;
+            }
+            targetIndex++;
+        }
+
+        // Return true if we've matched all characters in the query
+        return queryIndex == query.length();
+    }
+
+    /**
+     * Alternative method for exact character matching (every character must be present)
+     */
+    private boolean containsAllCharactersExact(String target, String query) {
+        if (target == null || query == null) {
+            return false;
+        }
+
+        // Convert to char arrays for faster processing
+        char[] targetChars = target.toCharArray();
+        char[] queryChars = query.toCharArray();
+
+        // Count character frequencies in target
+        Map<Character, Integer> targetCharCount = new HashMap<>();
+        for (char c : targetChars) {
+            targetCharCount.put(c, targetCharCount.getOrDefault(c, 0) + 1);
+        }
+
+        // Check if target contains enough of each character from query
+        Map<Character, Integer> queryCharCount = new HashMap<>();
+        for (char c : queryChars) {
+            queryCharCount.put(c, queryCharCount.getOrDefault(c, 0) + 1);
+        }
+
+        for (Map.Entry<Character, Integer> entry : queryCharCount.entrySet()) {
+            char queryChar = entry.getKey();
+            int requiredCount = entry.getValue();
+            int availableCount = targetCharCount.getOrDefault(queryChar, 0);
+
+            if (availableCount < requiredCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void updateEmptyState(boolean isEmpty, boolean isSearching) {
+        if (isEmpty) {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyStateLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void loadAcceptedCompaniesWithoutChat() {
@@ -121,14 +351,21 @@ public class AllCompanies extends AppCompatActivity {
                             companyList.add(company);
                         }
                     }
-
                 }
 
-                RecyclerView recyclerView = findViewById(R.id.rv_all_companies);
-                recyclerView.setLayoutManager(new LinearLayoutManager(AllCompanies.this));
-                recyclerView.setAdapter(new CompanyAdapter(AllCompanies.this, companyList));
+                // Store original list for search functionality
+                allCompaniesList.clear();
+                allCompaniesList.addAll(companyList);
 
-                findViewById(R.id.empty_state_layout).setVisibility(companyList.isEmpty() ? View.VISIBLE : View.GONE);
+                originalCompaniesList.clear();
+                originalCompaniesList.addAll(companyList);
+
+                // Setup adapter
+                companyAdapter = new CompanyAdapter(AllCompanies.this, allCompaniesList);
+                recyclerView.setAdapter(companyAdapter);
+
+                // Update empty state
+                updateEmptyState(companyList.isEmpty(), false);
             }
 
             @Override

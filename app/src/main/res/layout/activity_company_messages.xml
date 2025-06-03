@@ -43,23 +43,8 @@
                 android:gravity="center" />
 
             <!-- Archive Icon -->
-            <ImageView
-                android:id="@+id/archive_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_archive"
-                app:tint="@color/blue"
-                android:contentDescription="Archive"
-                android:layout_marginEnd="8dp" />
 
             <!-- Menu/Options Icon -->
-            <ImageView
-                android:id="@+id/menu_options"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_more_vert"
-                app:tint="@color/blue"
-                android:contentDescription="More options" />
 
         </LinearLayout>
 

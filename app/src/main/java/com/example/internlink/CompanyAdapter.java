@@ -25,6 +25,17 @@ public class CompanyAdapter extends RecyclerView.Adapter<CompanyAdapter.CompanyV
         this.context = context;
         this.companyList = companyList;
     }
+    // Add the updateList method here
+    public void updateList(List<User> filteredList) {
+        // Clear the current list
+        this.companyList.clear();
+
+        // Add all filtered items
+        this.companyList.addAll(filteredList);
+
+        // Notify adapter that data has changed
+        notifyDataSetChanged();
+    }
 
     public static class CompanyViewHolder extends RecyclerView.ViewHolder {
         ImageView logo;

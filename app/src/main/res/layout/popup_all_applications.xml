@@ -23,8 +23,8 @@
             <!-- Close Button -->
             <ImageView
                 android:id="@+id/btn_close_popup"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
                 android:layout_gravity="end"
                 android:contentDescription="Close"
                 android:src="@drawable/ic_close" />
@@ -39,7 +39,7 @@
                 android:gravity="center"
                 android:text="My Applications"
                 android:textColor="@color/black"
-                android:textSize="20sp"
+                android:textSize="25sp"
                 android:textStyle="bold" />
             <HorizontalScrollView
                 android:layout_width="match_parent"

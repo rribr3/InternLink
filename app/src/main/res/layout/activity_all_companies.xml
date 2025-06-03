@@ -32,7 +32,6 @@
         </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-
     <!-- Content below App Bar -->
     <LinearLayout
         android:orientation="vertical"
@@ -40,33 +39,58 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!-- Search Bar -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="56dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="16dp">
+            android:paddingHorizontal="16dp"
+            android:background="@android:color/white"
+            android:elevation="2dp">
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_search"
                 app:tint="@color/blue"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="12dp" />
 
             <EditText
                 android:id="@+id/message_search"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Search messages"
+                android:hint="Search companies by name, location, industry..."
                 android:textSize="14sp"
                 android:textColor="#000000"
+                android:textColorHint="#808080"
                 android:background="@android:color/transparent"
-                android:inputType="text" />
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:maxLines="1" />
 
+            <!-- Clear search button (optional) -->
+            <ImageView
+                android:id="@+id/btn_clear_search"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_close"
+                app:tint="#808080"
+                android:layout_marginStart="8dp"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="2dp" />
 
         </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0" />
 
         <!-- RecyclerView for listing companies -->
         <androidx.recyclerview.widget.RecyclerView
@@ -75,13 +99,15 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="8dp"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
 
         <!-- Empty State -->
         <LinearLayout
             android:id="@+id/empty_state_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="gone"
@@ -91,15 +117,29 @@
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:src="@drawable/ic_empty_box"
-                app:tint="#B0B0B0" />
+                app:tint="#B0B0B0"
+                android:layout_marginBottom="16dp" />
 
             <TextView
+                android:id="@+id/empty_state_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No companies to show."
-                android:textSize="16sp"
+                android:text="No companies found"
+                android:textSize="18sp"
+                android:textColor="#666666"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/empty_state_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Try adjusting your search terms or check back later for new companies."
+                android:textSize="14sp"
                 android:textColor="#808080"
-                android:paddingTop="12dp" />
+                android:textAlignment="center"
+                android:gravity="center" />
+
         </LinearLayout>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -43,23 +43,8 @@
                 android:gravity="center" />
 
             <!-- Archive Icon -->
-            <ImageView
-                android:id="@+id/archive_icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_archive"
-                app:tint="@color/blue"
-                android:contentDescription="Archive"
-                android:layout_marginEnd="8dp" />
 
             <!-- Menu/Options Icon -->
-            <ImageView
-                android:id="@+id/menu_options"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_more_vert"
-                app:tint="@color/blue"
-                android:contentDescription="More options" />
 
         </LinearLayout>
 
@@ -181,11 +166,11 @@
             <ImageView
                 android:id="@+id/ic_filter"
                 android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_filter"
+                android:layout_height="18dp"
+                android:layout_marginStart="12dp"
                 android:layout_marginTop="10dp"
-                app:tint="@color/blue"
-                android:layout_marginStart="12dp" />
+                android:src="@drawable/ic_filter"
+                app:tint="@color/blue" />
 
         </LinearLayout>
 

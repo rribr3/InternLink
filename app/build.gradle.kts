@@ -31,8 +31,8 @@ android {
                 "proguard-rules.pro"
             )
             // Add Google Maps API key from local.properties
-            val apiKey = project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
-            resValue("string", "google_maps_key", apiKey.toString())
+            //val apiKey = project.findProperty("GOOGLE_MAPS_API_KEY") ?: ""
+            //resValue("string", "google_maps_key", apiKey.toString())
 
         }
     }
@@ -79,10 +79,15 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.gms:play-services-base:18.2.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("org.json:json:20231013")
+    implementation ("androidx.webkit:webkit:1.9.0")
+    implementation ("androidx.core:core:1.12.0")
+
+
 
 }

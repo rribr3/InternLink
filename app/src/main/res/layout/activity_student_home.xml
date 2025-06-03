@@ -148,7 +148,6 @@
                             <!-- Cards -->
                             <include layout="@layout/card_suggested_projects"/>
                             <include layout="@layout/card_my_applications"/>
-                            <include layout="@layout/card_activity_overview"/>
                             <include layout="@layout/card_quick_tips"/>
                         </LinearLayout>
                     </androidx.core.widget.NestedScrollView>

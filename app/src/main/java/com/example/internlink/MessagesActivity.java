@@ -32,18 +32,30 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MessagesActivity extends AppCompatActivity implements ConversationsAdapter.OnConversationClickListener {
 
     private static final String TAG = "MessagesActivity";
 
+    // Filter options enum
+    private enum SortOrder {
+        NEWEST_FIRST,
+        OLDEST_FIRST,
+        NAME_ASC,
+        NAME_DESC,
+        UNREAD_FIRST
+    }
+
     private RecyclerView rvConversations;
     private LinearLayout tvEmptyState;
     private ConversationsAdapter conversationsAdapter;
     private List<Conversation> conversationsList = new ArrayList<>();
+    private List<Conversation> originalConversationsList = new ArrayList<>(); // Keep original order
 
     private String currentUserId;
     private DatabaseReference chatMetadataRef;
@@ -59,7 +71,12 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     private LinearLayout tvEmptyStateArchived;
     private ConversationsAdapter archivedConversationsAdapter;
     private List<Conversation> archivedConversationsList = new ArrayList<>();
+    private List<Conversation> originalArchivedConversationsList = new ArrayList<>(); // Keep original order
     private boolean isShowingActiveTab = true;
+
+    // Filter related variables
+    private ImageView filterIcon;
+    private SortOrder currentSortOrder = SortOrder.NEWEST_FIRST;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +116,7 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
         tabArchive.setOnClickListener(v -> showArchiveTab());
 
         ImageView menuIcon = findViewById(R.id.menu_icon);
-        ImageView filterIcon = findViewById(R.id.ic_filter);
+        filterIcon = findViewById(R.id.ic_filter);
         FloatingActionButton fabNewMessage = findViewById(R.id.fab_new_message);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(() -> {
@@ -121,12 +138,170 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
         });
 
         menuIcon.setOnClickListener(v -> onBackPressed());
+
+        // Setup filter icon click listener
+        filterIcon.setOnClickListener(v -> showFilterDialog());
+
         fabNewMessage.setVisibility(View.VISIBLE);
         fabNewMessage.setOnClickListener(v -> {
             Intent intent = new Intent(MessagesActivity.this, AllCompanies.class);
             intent.putExtra("STUDENT_ID", FirebaseAuth.getInstance().getCurrentUser().getUid());
             startActivity(intent);
         });
+    }
+
+    private void showFilterDialog() {
+        // Create a custom menu-style popup
+        android.widget.PopupMenu popupMenu = new android.widget.PopupMenu(this, filterIcon);
+
+        // Add menu items
+        popupMenu.getMenu().add(0, 1, 0, " Newest First");
+        popupMenu.getMenu().add(0, 2, 1, " Oldest First");
+        popupMenu.getMenu().add(0, 3, 2, " Name A-Z");
+        popupMenu.getMenu().add(0, 4, 3, " Name Z-A");
+        popupMenu.getMenu().add(0, 5, 4, " Unread First");
+        // Mark current selection with checkmark
+        android.view.Menu menu = popupMenu.getMenu();
+        switch (currentSortOrder) {
+            case NEWEST_FIRST:
+                menu.findItem(1).setTitle("✓ Newest First");
+                break;
+            case OLDEST_FIRST:
+                menu.findItem(2).setTitle("✓ Oldest First");
+                break;
+            case NAME_ASC:
+                menu.findItem(3).setTitle("✓ Name A-Z");
+                break;
+            case NAME_DESC:
+                menu.findItem(4).setTitle("✓ Name Z-A");
+                break;
+            case UNREAD_FIRST:
+                menu.findItem(5).setTitle("✓ Unread First");
+                break;
+        }
+
+        // Handle menu item clicks
+        popupMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1:
+                    if (currentSortOrder != SortOrder.NEWEST_FIRST) {
+                        currentSortOrder = SortOrder.NEWEST_FIRST;
+                        applySortOrder();
+                        Toast.makeText(this, "Sorted by newest first", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case 2:
+                    if (currentSortOrder != SortOrder.OLDEST_FIRST) {
+                        currentSortOrder = SortOrder.OLDEST_FIRST;
+                        applySortOrder();
+                        Toast.makeText(this, "Sorted by oldest first", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case 3:
+                    if (currentSortOrder != SortOrder.NAME_ASC) {
+                        currentSortOrder = SortOrder.NAME_ASC;
+                        applySortOrder();
+                        Toast.makeText(this, "Sorted by name A-Z", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case 4:
+                    if (currentSortOrder != SortOrder.NAME_DESC) {
+                        currentSortOrder = SortOrder.NAME_DESC;
+                        applySortOrder();
+                        Toast.makeText(this, "Sorted by name Z-A", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case 5:
+                    if (currentSortOrder != SortOrder.UNREAD_FIRST) {
+                        currentSortOrder = SortOrder.UNREAD_FIRST;
+                        applySortOrder();
+                        Toast.makeText(this, "Sorted by unread first", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case 6:
+                    // Clear search
+                    etSearch.setText("");
+                    etSearch.clearFocus();
+                    // Hide keyboard
+                    android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+                    Toast.makeText(this, "Search cleared", Toast.LENGTH_SHORT).show();
+                    return true;
+                default:
+                    return false;
+            }
+        });
+
+        // Show the popup menu
+        popupMenu.show();
+    }
+
+    private void applySortOrder() {
+        // Sort active conversations
+        switch (currentSortOrder) {
+            case NEWEST_FIRST:
+                Collections.sort(conversationsList, (c1, c2) ->
+                        Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+                Collections.sort(archivedConversationsList, (c1, c2) ->
+                        Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+                break;
+            case OLDEST_FIRST:
+                Collections.sort(conversationsList, (c1, c2) ->
+                        Long.compare(c1.getLastMessageTime(), c2.getLastMessageTime()));
+                Collections.sort(archivedConversationsList, (c1, c2) ->
+                        Long.compare(c1.getLastMessageTime(), c2.getLastMessageTime()));
+                break;
+            case NAME_ASC:
+                Collections.sort(conversationsList, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name1.compareToIgnoreCase(name2);
+                });
+                Collections.sort(archivedConversationsList, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name1.compareToIgnoreCase(name2);
+                });
+                break;
+            case NAME_DESC:
+                Collections.sort(conversationsList, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name2.compareToIgnoreCase(name1);
+                });
+                Collections.sort(archivedConversationsList, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name2.compareToIgnoreCase(name1);
+                });
+                break;
+            case UNREAD_FIRST:
+                Collections.sort(conversationsList, (c1, c2) -> {
+                    // First sort by unread count (higher first), then by time (newer first)
+                    int unreadCompare = Integer.compare(c2.getUnreadCount(), c1.getUnreadCount());
+                    if (unreadCompare != 0) return unreadCompare;
+                    return Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime());
+                });
+                Collections.sort(archivedConversationsList, (c1, c2) -> {
+                    int unreadCompare = Integer.compare(c2.getUnreadCount(), c1.getUnreadCount());
+                    if (unreadCompare != 0) return unreadCompare;
+                    return Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime());
+                });
+                break;
+        }
+
+        // Update adapters
+        runOnUiThread(() -> {
+            conversationsAdapter.notifyDataSetChanged();
+            archivedConversationsAdapter.notifyDataSetChanged();
+        });
+
+        // Apply search filter if there's text in search box
+        String searchQuery = etSearch.getText().toString();
+        if (!searchQuery.isEmpty()) {
+            filterConversations(searchQuery);
+        }
     }
 
     private void setupRecyclerViews() {
@@ -234,15 +409,27 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     // Update local state
                     conversation.setArchived(true);
 
+                    // Update original lists
+                    originalConversationsList.remove(conversation);
+                    originalArchivedConversationsList.add(conversation);
+
                     // Move from active to archived list
                     conversationsList.remove(position);
-                    archivedConversationsList.add(0, conversation); // Add to beginning
+
+                    // Insert into archived list based on current sort order
+                    insertIntoSortedList(archivedConversationsList, conversation);
 
                     // Update UI
                     conversationsAdapter.notifyItemRemoved(position);
-                    archivedConversationsAdapter.notifyItemInserted(0);
+                    archivedConversationsAdapter.notifyDataSetChanged();
 
                     updateEmptyStates();
+
+                    // Re-apply search if there's an active search
+                    String searchQuery = etSearch.getText().toString();
+                    if (!searchQuery.isEmpty()) {
+                        filterConversations(searchQuery);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to archive", Toast.LENGTH_SHORT).show();
@@ -262,18 +449,27 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     // Update local state
                     conversation.setArchived(false);
 
+                    // Update original lists
+                    originalArchivedConversationsList.remove(conversation);
+                    originalConversationsList.add(conversation);
+
                     // Move from archived to active list
                     archivedConversationsList.remove(position);
 
-                    // Insert into active list in correct position based on timestamp
-                    int insertPosition = findInsertPosition(conversation);
-                    conversationsList.add(insertPosition, conversation);
+                    // Insert into active list based on current sort order
+                    insertIntoSortedList(conversationsList, conversation);
 
                     // Update UI
                     archivedConversationsAdapter.notifyItemRemoved(position);
-                    conversationsAdapter.notifyItemInserted(insertPosition);
+                    conversationsAdapter.notifyDataSetChanged();
 
                     updateEmptyStates();
+
+                    // Re-apply search if there's an active search
+                    String searchQuery = etSearch.getText().toString();
+                    if (!searchQuery.isEmpty()) {
+                        filterConversations(searchQuery);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to unarchive", Toast.LENGTH_SHORT).show();
@@ -281,14 +477,68 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 });
     }
 
-    private int findInsertPosition(Conversation conversation) {
-        // Find the correct position to insert based on timestamp (most recent first)
-        for (int i = 0; i < conversationsList.size(); i++) {
-            if (conversation.getLastMessageTime() > conversationsList.get(i).getLastMessageTime()) {
-                return i;
-            }
+    private void insertIntoSortedList(List<Conversation> list, Conversation conversation) {
+        int insertPosition = 0;
+
+        switch (currentSortOrder) {
+            case NEWEST_FIRST:
+                // Find position where this conversation should go (newest first)
+                for (int i = 0; i < list.size(); i++) {
+                    if (conversation.getLastMessageTime() > list.get(i).getLastMessageTime()) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                }
+                break;
+            case OLDEST_FIRST:
+                // Find position where this conversation should go (oldest first)
+                for (int i = 0; i < list.size(); i++) {
+                    if (conversation.getLastMessageTime() < list.get(i).getLastMessageTime()) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                }
+                break;
+            case NAME_ASC:
+                String convName = conversation.getOtherUserName() != null ? conversation.getOtherUserName() : "";
+                for (int i = 0; i < list.size(); i++) {
+                    String listName = list.get(i).getOtherUserName() != null ? list.get(i).getOtherUserName() : "";
+                    if (convName.compareToIgnoreCase(listName) < 0) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                }
+                break;
+            case NAME_DESC:
+                String convNameDesc = conversation.getOtherUserName() != null ? conversation.getOtherUserName() : "";
+                for (int i = 0; i < list.size(); i++) {
+                    String listNameDesc = list.get(i).getOtherUserName() != null ? list.get(i).getOtherUserName() : "";
+                    if (convNameDesc.compareToIgnoreCase(listNameDesc) > 0) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                }
+                break;
+            case UNREAD_FIRST:
+                for (int i = 0; i < list.size(); i++) {
+                    int unreadCompare = Integer.compare(conversation.getUnreadCount(), list.get(i).getUnreadCount());
+                    if (unreadCompare > 0) {
+                        insertPosition = i;
+                        break;
+                    } else if (unreadCompare == 0 && conversation.getLastMessageTime() > list.get(i).getLastMessageTime()) {
+                        insertPosition = i;
+                        break;
+                    }
+                    insertPosition = i + 1;
+                }
+                break;
         }
-        return conversationsList.size(); // Insert at end if oldest
+
+        list.add(insertPosition, conversation);
     }
 
     private void deleteConversation(Conversation conversation, int position, boolean isFromArchived) {
@@ -300,15 +550,24 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 .addOnSuccessListener(unused -> {
                     Toast.makeText(this, "Conversation deleted", Toast.LENGTH_SHORT).show();
 
+                    // Update original lists
                     if (isFromArchived) {
+                        originalArchivedConversationsList.remove(conversation);
                         archivedConversationsList.remove(position);
                         archivedConversationsAdapter.notifyItemRemoved(position);
                     } else {
+                        originalConversationsList.remove(conversation);
                         conversationsList.remove(position);
                         conversationsAdapter.notifyItemRemoved(position);
                     }
 
                     updateEmptyStates();
+
+                    // Re-apply search if there's an active search
+                    String searchQuery = etSearch.getText().toString();
+                    if (!searchQuery.isEmpty()) {
+                        filterConversations(searchQuery);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
@@ -356,23 +615,224 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
         });
     }
 
+    /**
+     * Enhanced search function with comprehensive character-level matching
+     */
     private void filterConversations(String query) {
         List<Conversation> filteredList = new ArrayList<>();
         List<Conversation> sourceList = isShowingActiveTab ? conversationsList : archivedConversationsList;
 
-        for (Conversation convo : sourceList) {
-            String name = convo.getOtherUserName() != null ? convo.getOtherUserName().toLowerCase() : "";
-            String project = convo.getProjectTitle() != null ? convo.getProjectTitle().toLowerCase() : "";
-            if (name.contains(query.toLowerCase()) || project.contains(query.toLowerCase())) {
-                filteredList.add(convo);
+        // If query is empty, show all conversations with current sort order
+        if (query.trim().isEmpty()) {
+            filteredList.addAll(sourceList);
+        } else {
+            // Enhanced search - search through multiple fields with character-level matching
+            String searchQuery = query.toLowerCase().trim();
+
+            for (Conversation convo : sourceList) {
+                boolean matches = false;
+
+                // Search in user name - character by character matching
+                String name = convo.getOtherUserName() != null ? convo.getOtherUserName().toLowerCase() : "";
+                if (containsAllCharacters(name, searchQuery)) {
+                    matches = true;
+                }
+
+                // Search in project title - character by character matching
+                if (!matches) {
+                    String project = convo.getProjectTitle() != null ? convo.getProjectTitle().toLowerCase() : "";
+                    if (containsAllCharacters(project, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Search in last message content - character by character matching
+                if (!matches) {
+                    String lastMessage = convo.getLastMessage() != null ? convo.getLastMessage().toLowerCase() : "";
+                    if (containsAllCharacters(lastMessage, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Search in user role - character by character matching
+                if (!matches) {
+                    String role = convo.getOtherUserRole() != null ? convo.getOtherUserRole().toLowerCase() : "";
+                    if (containsAllCharacters(role, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                // Add special search terms (exact matches for these)
+                if (!matches) {
+                    if (searchQuery.equals("unread") && convo.getUnreadCount() > 0) {
+                        matches = true;
+                    } else if (searchQuery.equals("company") && "company".equals(convo.getOtherUserRole())) {
+                        matches = true;
+                    } else if (searchQuery.equals("student") && "student".equals(convo.getOtherUserRole())) {
+                        matches = true;
+                    } else if (searchQuery.equals("typing") && convo.isTyping()) {
+                        matches = true;
+                    }
+                }
+
+                // Additional character-based search for any combination
+                if (!matches) {
+                    // Create a combined searchable string with all conversation data
+                    String combinedText = (name + " " +
+                            (convo.getProjectTitle() != null ? convo.getProjectTitle() : "") + " " +
+                            (convo.getLastMessage() != null ? convo.getLastMessage() : "") + " " +
+                            (convo.getOtherUserRole() != null ? convo.getOtherUserRole() : "")).toLowerCase();
+                    if (containsAllCharacters(combinedText, searchQuery)) {
+                        matches = true;
+                    }
+                }
+
+                if (matches) {
+                    filteredList.add(convo);
+                }
             }
         }
 
+        // Apply current sort order to filtered list
+        applySortOrderToList(filteredList);
+
+        // Update the appropriate adapter
         if (isShowingActiveTab) {
             conversationsAdapter.updateList(filteredList);
         } else {
             archivedConversationsAdapter.updateList(filteredList);
         }
+
+        // Update empty state visibility based on filtered results
+        updateEmptyStatesForSearch(filteredList.isEmpty() && !query.trim().isEmpty());
+    }
+
+    /**
+     * Enhanced character-level search that matches all characters in the query
+     * against the target string, allowing for non-consecutive matches
+     */
+    private boolean containsAllCharacters(String target, String query) {
+        if (target == null || query == null || query.isEmpty()) {
+            return query == null || query.isEmpty();
+        }
+
+        // First check for direct substring match (fastest)
+        if (target.contains(query)) {
+            return true;
+        }
+
+        // Then check for character sequence matching (allows for gaps)
+        return containsCharacterSequence(target, query);
+    }
+
+    /**
+     * Checks if target contains all characters from query in the same order,
+     * but not necessarily consecutive (fuzzy matching)
+     */
+    private boolean containsCharacterSequence(String target, String query) {
+        if (target == null || query == null) {
+            return false;
+        }
+
+        int targetIndex = 0;
+        int queryIndex = 0;
+
+        while (targetIndex < target.length() && queryIndex < query.length()) {
+            if (target.charAt(targetIndex) == query.charAt(queryIndex)) {
+                queryIndex++;
+            }
+            targetIndex++;
+        }
+
+        // Return true if we've matched all characters in the query
+        return queryIndex == query.length();
+    }
+
+    /**
+     * Alternative method for exact character matching (every character must be present)
+     */
+    private boolean containsAllCharactersExact(String target, String query) {
+        if (target == null || query == null) {
+            return false;
+        }
+
+        // Convert to char arrays for faster processing
+        char[] targetChars = target.toCharArray();
+        char[] queryChars = query.toCharArray();
+
+        // Count character frequencies in target
+        Map<Character, Integer> targetCharCount = new HashMap<>();
+        for (char c : targetChars) {
+            targetCharCount.put(c, targetCharCount.getOrDefault(c, 0) + 1);
+        }
+
+        // Check if target contains enough of each character from query
+        Map<Character, Integer> queryCharCount = new HashMap<>();
+        for (char c : queryChars) {
+            queryCharCount.put(c, queryCharCount.getOrDefault(c, 0) + 1);
+        }
+
+        for (Map.Entry<Character, Integer> entry : queryCharCount.entrySet()) {
+            char queryChar = entry.getKey();
+            int requiredCount = entry.getValue();
+            int availableCount = targetCharCount.getOrDefault(queryChar, 0);
+
+            if (availableCount < requiredCount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void applySortOrderToList(List<Conversation> list) {
+        switch (currentSortOrder) {
+            case NEWEST_FIRST:
+                Collections.sort(list, (c1, c2) ->
+                        Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+                break;
+            case OLDEST_FIRST:
+                Collections.sort(list, (c1, c2) ->
+                        Long.compare(c1.getLastMessageTime(), c2.getLastMessageTime()));
+                break;
+            case NAME_ASC:
+                Collections.sort(list, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name1.compareToIgnoreCase(name2);
+                });
+                break;
+            case NAME_DESC:
+                Collections.sort(list, (c1, c2) -> {
+                    String name1 = c1.getOtherUserName() != null ? c1.getOtherUserName() : "";
+                    String name2 = c2.getOtherUserName() != null ? c2.getOtherUserName() : "";
+                    return name2.compareToIgnoreCase(name1);
+                });
+                break;
+            case UNREAD_FIRST:
+                Collections.sort(list, (c1, c2) -> {
+                    int unreadCompare = Integer.compare(c2.getUnreadCount(), c1.getUnreadCount());
+                    if (unreadCompare != 0) return unreadCompare;
+                    return Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime());
+                });
+                break;
+        }
+    }
+
+    private void updateEmptyStatesForSearch(boolean noSearchResults) {
+        runOnUiThread(() -> {
+            if (noSearchResults) {
+                // Show "No search results" message
+                if (isShowingActiveTab) {
+                    tvEmptyState.setVisibility(View.VISIBLE);
+                    // You might want to change the empty state text temporarily for search
+                } else {
+                    tvEmptyStateArchived.setVisibility(View.VISIBLE);
+                }
+            } else {
+                updateEmptyStates(); // Use normal empty state logic
+            }
+        });
     }
 
     private void setupFirebaseReferences() {
@@ -625,12 +1085,15 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
     private void finishLoadingConversations() {
         Log.d(TAG, "Finishing loading conversations, active: " + conversationsList.size() + ", archived: " + archivedConversationsList.size());
 
-        // Sort conversations by last message time (most recent first)
-        Collections.sort(conversationsList, (c1, c2) ->
-                Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+        // Store original lists before applying any filters or sorts
+        originalConversationsList.clear();
+        originalConversationsList.addAll(conversationsList);
 
-        Collections.sort(archivedConversationsList, (c1, c2) ->
-                Long.compare(c2.getLastMessageTime(), c1.getLastMessageTime()));
+        originalArchivedConversationsList.clear();
+        originalArchivedConversationsList.addAll(archivedConversationsList);
+
+        // Apply current sort order
+        applySortOrder();
 
         // Load user details for each conversation
         loadUserDetailsForConversations();
@@ -721,6 +1184,13 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                         // All user details loaded, update UI
                         Log.d(TAG, "All user details loaded, updating UI");
                         runOnUiThread(() -> {
+                            // Update original lists after user details are loaded
+                            originalConversationsList.clear();
+                            originalConversationsList.addAll(conversationsList);
+
+                            originalArchivedConversationsList.clear();
+                            originalArchivedConversationsList.addAll(archivedConversationsList);
+
                             updateEmptyStates();
                             conversationsAdapter.notifyDataSetChanged();
                             archivedConversationsAdapter.notifyDataSetChanged();
@@ -739,6 +1209,13 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                     loadedCount[0]++;
                     if (loadedCount[0] == totalConversations) {
                         runOnUiThread(() -> {
+                            // Update original lists after user details are loaded
+                            originalConversationsList.clear();
+                            originalConversationsList.addAll(conversationsList);
+
+                            originalArchivedConversationsList.clear();
+                            originalArchivedConversationsList.addAll(archivedConversationsList);
+
                             updateEmptyStates();
                             conversationsAdapter.notifyDataSetChanged();
                             archivedConversationsAdapter.notifyDataSetChanged();

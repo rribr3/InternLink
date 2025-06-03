@@ -8,7 +8,7 @@
     android:background="#FAFAFA"
     tools:context=".MyProjectsActivity">
 
-    <!-- Enhanced App Bar with Menu -->
+    <!-- Enhanced App Bar with Filter Button -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topAppBar"
         style="@style/Widget.Material3.Toolbar"
@@ -19,7 +19,27 @@
         app:titleTextColor="@color/white"
         app:title="My Projects"
         app:navigationIconTint="@android:color/white"
-        app:navigationIcon="@drawable/left_arrow" />
+        app:navigationIcon="@drawable/left_arrow">
+
+        <!-- Filter Button in TopAppBar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_filter"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="35dp"
+            android:layout_height="30dp"
+            android:layout_gravity="end"
+            android:layout_marginEnd="15dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="10dp"
+            android:insetRight="0dp"
+            app:icon="@drawable/ic_filter"
+            app:iconGravity="textTop"
+            app:iconTint="@color/white"
+            app:strokeColor="@color/white"
+            app:strokeWidth="1dp"/>
+
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <!-- Content Container -->
     <LinearLayout
@@ -29,56 +49,24 @@
         android:padding="16dp"
         android:layout_marginTop="?attr/actionBarSize">
 
-        <!-- Search with Filter Button -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <androidx.appcompat.widget.SearchView
-                android:id="@+id/search_view"
-                android:layout_width="0dp"
-                android:layout_height="50sp"
-                android:layout_weight="1"
-                android:queryHint="Search projects..."
-                android:iconifiedByDefault="false"
-                android:background="@drawable/search_bg_rounded"
-                app:queryBackground="@android:color/transparent"
-                app:searchHintIcon="@drawable/ic_search"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="70dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="5dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                app:icon="@drawable/ic_filter"
-                app:iconTint="@color/blue"
-                app:strokeColor="@color/blue"/>
-        </LinearLayout>
-
         <!-- Selected Filters Chips -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/selected_filters_chip_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             app:singleLine="true"
             app:singleSelection="false">
 
             <!-- Chips will be added programmatically when filters are selected -->
         </com.google.android.material.chip.ChipGroup>
 
-
         <!-- Projects Count -->
         <TextView
             android:id="@+id/txt_projects_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             android:text="12 projects found"
             android:textColor="#808080"
             android:textSize="12sp"/>
@@ -89,7 +77,6 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="12dp"
             android:clipToPadding="false"
             android:paddingBottom="88dp"/>
 

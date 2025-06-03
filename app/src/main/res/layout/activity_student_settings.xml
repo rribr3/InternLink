@@ -101,7 +101,7 @@
                     android:paddingBottom="4dp"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
-                    android:background="@drawable/gradient_background"
+                    android:background="@drawable/chip_background"
                     android:textColor="#121212"
                     android:textSize="14sp" />
             </LinearLayout>

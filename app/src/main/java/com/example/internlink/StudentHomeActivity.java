@@ -1717,7 +1717,7 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private List<Project> getSampleProjects() {
-        return java.util.Collections.emptyList();
+        return Collections.emptyList();
     }
 
     private void setupClickListeners1() {
@@ -1738,14 +1738,24 @@ public class StudentHomeActivity extends AppCompatActivity
         });
     }
 
+    // Replace the existing project categorization logic in showAllProjectsPopup() method
+
+    // Replace the existing project categorization logic in showAllProjectsPopup() method
+
+    // Replace the existing project categorization logic in showAllProjectsPopup() method
+
     private void showAllProjectsPopup() {
         // Inflate the popup layout
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_projects, null);
 
         // Setup RecyclerView
         RecyclerView rvAllProjects = popupView.findViewById(R.id.rv_all_projects);
+        ChipGroup filterChips = popupView.findViewById(R.id.project_filter_chips);
+        LinearLayout emptyStateLayout = popupView.findViewById(R.id.empty_state_layout);
+        TextView emptyStateTitle = popupView.findViewById(R.id.tv_empty_state_title);
+        TextView emptyStateMessage = popupView.findViewById(R.id.tv_empty_state_message);
 
-        // Use LinearLayoutManager with vertical orientation
+        // Use LinearLayoutManager with vertical orientation and center items
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         rvAllProjects.setLayoutManager(layoutManager);
 
@@ -1753,44 +1763,119 @@ public class StudentHomeActivity extends AppCompatActivity
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.project_item_spacing);
         rvAllProjects.addItemDecoration(new SpacesItemDecoration(spacingInPixels));
 
-        List<Project> fetchedProjects = new ArrayList<>();
+        // Lists to hold different types of projects
+        List<Project> allProjects = new ArrayList<>();
+        List<Project> ongoingProjects = new ArrayList<>();
+        List<Project> acceptableProjects = new ArrayList<>();
+        List<Project> completedProjects = new ArrayList<>();
+        List<Project> filteredProjects = new ArrayList<>();
+
         DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects");
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
 
         // Show loading indicator
         ProgressBar progressBar = popupView.findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
+        rvAllProjects.setVisibility(View.GONE);
 
-        projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                fetchedProjects.clear();
-                for (DataSnapshot projectSnap : snapshot.getChildren()) {
-                    Project project = projectSnap.getValue(Project.class);
-                    if (project != null && "approved".equals(project.getStatus())) {
-                        project.setProjectId(projectSnap.getKey());
-                        fetchedProjects.add(project);
+        // First, get student's applications
+        applicationsRef.orderByChild("userId").equalTo(studentId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot applicationsSnapshot) {
+                        // Store student's applications for quick lookup
+                        Map<String, String> studentApplications = new HashMap<>(); // projectId -> status
+
+                        for (DataSnapshot appSnap : applicationsSnapshot.getChildren()) {
+                            String projectId = appSnap.child("projectId").getValue(String.class);
+                            String status = appSnap.child("status").getValue(String.class);
+                            if (projectId != null && status != null) {
+                                studentApplications.put(projectId, status);
+                            }
+                        }
+
+                        // Now get all projects and categorize them
+                        projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                allProjects.clear();
+                                ongoingProjects.clear();
+                                acceptableProjects.clear();
+                                completedProjects.clear();
+
+                                long currentTime = System.currentTimeMillis();
+
+                                for (DataSnapshot projectSnap : snapshot.getChildren()) {
+                                    Project project = projectSnap.getValue(Project.class);
+                                    if (project != null && "approved".equals(project.getStatus())) {
+                                        project.setProjectId(projectSnap.getKey());
+                                        allProjects.add(project);
+
+                                        String projectId = projectSnap.getKey();
+                                        long startDate = project.getStartDate();
+                                        long deadline = project.getDeadline();
+
+                                        // Check if student has applied to this project and get status
+                                        String applicationStatus = studentApplications.get(projectId);
+                                        boolean hasApplied = applicationStatus != null;
+                                        boolean isAccepted = "Accepted".equalsIgnoreCase(applicationStatus);
+
+                                        // Categorization logic:
+                                        // ONGOING: Projects that haven't started yet (can still apply)
+                                        if (startDate > currentTime) {
+                                            ongoingProjects.add(project);
+                                        }
+                                        // ACCEPTABLE/ACTIVE: Projects currently running AND student is accepted
+                                        else if (startDate <= currentTime && deadline > currentTime && isAccepted) {
+                                            acceptableProjects.add(project);
+                                        }
+                                        // COMPLETED: Projects student applied to AND deadline has passed
+                                        else if (hasApplied && deadline <= currentTime) {
+                                            completedProjects.add(project);
+                                        }
+                                        // Projects that are running but student not accepted, or projects ended
+                                        // without student participation are not categorized (only appear in "All Projects")
+                                    }
+                                }
+
+                                // Set up adapter with all projects initially
+                                filteredProjects.addAll(allProjects);
+                                ProjectAdapterHome adapter = new ProjectAdapterHome(filteredProjects, project -> {
+                                    // Handle project click - open project details
+                                    Intent intent = new Intent(StudentHomeActivity.this, ProjectDetailsActivity.class);
+                                    intent.putExtra("PROJECT_ID", project.getProjectId());
+                                    startActivity(intent);
+                                }, false);
+
+                                rvAllProjects.setAdapter(adapter);
+
+                                // Set up filter chips with updated logic
+                                setupProjectFilterChips(filterChips, allProjects, ongoingProjects, acceptableProjects, completedProjects,
+                                        adapter, filteredProjects, emptyStateLayout, emptyStateTitle, emptyStateMessage);
+
+                                progressBar.setVisibility(View.GONE);
+                                rvAllProjects.setVisibility(View.VISIBLE);
+                                updateEmptyState(filteredProjects, emptyStateLayout, emptyStateTitle, emptyStateMessage, "All Projects");
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                progressBar.setVisibility(View.GONE);
+                                rvAllProjects.setVisibility(View.VISIBLE);
+                                Toast.makeText(getApplicationContext(), "Failed to load projects", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
-                }
 
-                ProjectAdapterHome adapter = new ProjectAdapterHome(fetchedProjects, project -> {
-                    // Handle project click - open project details
-                    Intent intent = new Intent(StudentHomeActivity.this, ProjectDetailsActivity.class);
-                    intent.putExtra("PROJECT_ID", project.getProjectId());
-                    startActivity(intent);
-                }, false);
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressBar.setVisibility(View.GONE);
+                        rvAllProjects.setVisibility(View.VISIBLE);
+                        Toast.makeText(getApplicationContext(), "Failed to load applications", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
-                rvAllProjects.setAdapter(adapter);
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                progressBar.setVisibility(View.GONE);
-                Toast.makeText(getApplicationContext(), "Failed to load projects", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Create and show the popup
+        // Create and show the popup (rest of the method remains the same)
         PopupWindow popupWindow = new PopupWindow(
                 popupView,
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1820,6 +1905,150 @@ public class StudentHomeActivity extends AppCompatActivity
                 10
         );
     }
+
+    // Update the updateEmptyState method to provide better messages
+    private void updateEmptyState(List<Project> projects,
+                                  LinearLayout emptyStateLayout,
+                                  TextView emptyStateTitle,
+                                  TextView emptyStateMessage,
+                                  String filterType) {
+        if (projects.isEmpty()) {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+
+            switch (filterType.toLowerCase()) {
+                case "ongoing":
+                    emptyStateTitle.setText("No Ongoing Projects");
+                    emptyStateMessage.setText("There are no projects available to apply for at the moment.\nProjects that haven't started yet will appear here!");
+                    break;
+                case "acceptable":
+                    emptyStateTitle.setText("No Active Projects");
+                    emptyStateMessage.setText("You don't have any accepted projects currently running.\nProjects you're accepted for (between start date and deadline) will appear here!");
+                    break;
+                case "completed":
+                    emptyStateTitle.setText("No Completed Projects");
+                    emptyStateMessage.setText("You haven't applied to any projects that have reached their deadlines yet.\nYour completed applications will appear here!");
+                    break;
+                default:
+                    emptyStateTitle.setText("No Projects Available");
+                    emptyStateMessage.setText("There are currently no approved projects.\nCheck back later for new opportunities!");
+                    break;
+            }
+        } else {
+            emptyStateLayout.setVisibility(View.GONE);
+        }
+    }
+    private void checkApplicationStatusAndCategorize(Project project, List<Project> ongoingProjects, List<Project> completedProjects) {
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+
+        applicationsRef.orderByChild("userId").equalTo(studentId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            String projectId = appSnap.child("projectId").getValue(String.class);
+                            String status = appSnap.child("status").getValue(String.class);
+
+                            if (project.getProjectId().equals(projectId)) {
+                                long currentTime = System.currentTimeMillis();
+                                long deadline = project.getDeadline();
+
+                                if ("Accepted".equalsIgnoreCase(status)) {
+                                    // If accepted and deadline not passed, it's ongoing
+                                    // If accepted and deadline passed, it's completed
+                                    if (deadline <= currentTime) {
+                                        if (!completedProjects.contains(project)) {
+                                            completedProjects.add(project);
+                                        }
+                                    } else {
+                                        if (!ongoingProjects.contains(project)) {
+                                            ongoingProjects.add(project);
+                                        }
+                                    }
+                                } else if ("Shortlisted".equalsIgnoreCase(status) || "Pending".equalsIgnoreCase(status)) {
+                                    // Still in process, consider as ongoing if not past deadline
+                                    if (deadline > currentTime && !ongoingProjects.contains(project)) {
+                                        ongoingProjects.add(project);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Handle error silently or log
+                    }
+                });
+    }
+
+    // Helper method to set up filter chips
+    // Replace your existing setupProjectFilterChips method with this updated version
+    // Replace your existing setupProjectFilterChips method with this updated version
+    private void setupProjectFilterChips(ChipGroup filterChips,
+                                         List<Project> allProjects,
+                                         List<Project> ongoingProjects,
+                                         List<Project> acceptableProjects,
+                                         List<Project> completedProjects,
+                                         ProjectAdapterHome adapter,
+                                         List<Project> filteredProjects,
+                                         LinearLayout emptyStateLayout,
+                                         TextView emptyStateTitle,
+                                         TextView emptyStateMessage) {
+
+        Chip chipAll = filterChips.findViewById(R.id.chip_all_projects);
+        Chip chipOngoing = filterChips.findViewById(R.id.chip_ongoing_projects);
+        Chip chipAcceptable = filterChips.findViewById(R.id.chip_acceptable_projects); // Add this to your XML
+        Chip chipCompleted = filterChips.findViewById(R.id.chip_completed_projects);
+
+        // Update chip texts with counts
+        chipAll.setText("All Projects (" + allProjects.size() + ")");
+        chipOngoing.setText("Ongoing (" + ongoingProjects.size() + ")");
+        chipAcceptable.setText("My Active (" + acceptableProjects.size() + ")");
+        chipCompleted.setText("Completed (" + completedProjects.size() + ")");
+
+        filterChips.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                // If no chip is selected, default to "All Projects"
+                chipAll.setChecked(true);
+                return;
+            }
+
+            int checkedId = checkedIds.get(0);
+            String filterType = "";
+            List<Project> projectsToShow = new ArrayList<>();
+
+            if (checkedId == R.id.chip_all_projects) {
+                filterType = "All Projects";
+                projectsToShow.addAll(allProjects);
+            } else if (checkedId == R.id.chip_ongoing_projects) {
+                filterType = "Ongoing";
+                projectsToShow.addAll(ongoingProjects);
+            } else if (checkedId == R.id.chip_acceptable_projects) {
+                filterType = "My Active";
+                projectsToShow.addAll(acceptableProjects);
+            } else if (checkedId == R.id.chip_completed_projects) {
+                filterType = "Completed";
+                projectsToShow.addAll(completedProjects);
+            }
+
+            // Update filtered projects and refresh adapter
+            filteredProjects.clear();
+            filteredProjects.addAll(projectsToShow);
+            adapter.notifyDataSetChanged();
+
+            // Update empty state
+            updateEmptyState(filteredProjects, emptyStateLayout, emptyStateTitle, emptyStateMessage, filterType);
+
+            // Show a toast with the filter result
+            String message = "Showing " + filteredProjects.size() + " " + filterType.toLowerCase();
+            if (filteredProjects.size() == 1) {
+                message = message.replace("projects", "project");
+            }
+            Toast.makeText(StudentHomeActivity.this, message, Toast.LENGTH_SHORT).show();
+        });
+    }
+
 
     // Item decoration class for adding space between items
     public class SpacesItemDecoration extends RecyclerView.ItemDecoration {

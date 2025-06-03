@@ -21,4 +21,8 @@
     <item name="unread_badge" type="id" />
     <item name="unread_count_text" type="id" />
     <item name="message_status_icon" type="id" />
+    <item name="project_filter_chips" type="id" />
+    <item name="chip_ongoing_projects" type="id" />
+    <item name="chip_completed_projects" type="id" />
+    <item name="chip_all_projects" type="id" />
 </resources>

@@ -3,15 +3,13 @@ package com.example.internlink;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
-import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,19 +31,18 @@ import java.util.List;
 public class MyProjectsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private SearchView searchInput;
     private MaterialButton filterButton;
     private FloatingActionButton fabAddProject;
     private MyProjectsAdapter adapter;
     private List<Project> allProjects = new ArrayList<>();
     private List<Project> filteredProjects = new ArrayList<>();
     private ChipGroup selectedFiltersChipGroup;
+    private LinearLayout emptyStateView;
 
     private final List<String> selectedFilters = new ArrayList<>();
 
     private MaterialToolbar toolbar;
     private TextView txtProjectsCount;
-
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -53,16 +50,23 @@ public class MyProjectsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_projects);
 
+        initViews();
+        setupRecyclerView();
+        setupClickListeners();
+        loadProjects();
+    }
+
+    private void initViews() {
         recyclerView = findViewById(R.id.recycler_projects);
-        searchInput = findViewById(R.id.search_view);
         filterButton = findViewById(R.id.btn_filter);
         fabAddProject = findViewById(R.id.fab_add_project);
         selectedFiltersChipGroup = findViewById(R.id.selected_filters_chip_group);
         toolbar = findViewById(R.id.topAppBar);
         txtProjectsCount = findViewById(R.id.txt_projects_count);
+        emptyStateView = findViewById(R.id.empty_state);
+    }
 
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
+    private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new MyProjectsAdapter(filteredProjects, project -> {
             Intent intent = new Intent(MyProjectsActivity.this, ProjectDetailsActivity.class);
@@ -70,26 +74,14 @@ public class MyProjectsActivity extends AppCompatActivity {
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
+    }
+
+    private void setupClickListeners() {
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         fabAddProject.setOnClickListener(v -> {
             Intent intent = new Intent(MyProjectsActivity.this, CreateProject.class);
             startActivity(intent);
-        });
-
-        loadProjects();
-
-        searchInput.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                filterAndSearchProjects(query);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                filterAndSearchProjects(newText);
-                return true;
-            }
         });
 
         filterButton.setOnClickListener(v -> showFilterPopup());
@@ -119,16 +111,15 @@ public class MyProjectsActivity extends AppCompatActivity {
                     for (String filter : selectedFilters) {
                         addFilterChip(filter);
                     }
-                    filterAndSearchProjects(searchInput.getQuery().toString());
+                    applyFilters();
                 })
                 .setNegativeButton("Clear All", (dialog, which) -> {
                     selectedFilters.clear();
                     selectedFiltersChipGroup.removeAllViews();
-                    filterAndSearchProjects(searchInput.getQuery().toString());
+                    applyFilters();
                 })
                 .show();
     }
-
 
     private void addFilterChip(String filterText) {
         Chip chip = new Chip(this);
@@ -137,15 +128,15 @@ public class MyProjectsActivity extends AppCompatActivity {
         chip.setOnCloseIconClickListener(v -> {
             selectedFilters.remove(filterText);
             selectedFiltersChipGroup.removeView(chip);
-            filterAndSearchProjects(searchInput.getQuery().toString());
+            applyFilters();
         });
         selectedFiltersChipGroup.addView(chip);
     }
+
     private String capitalize(String input) {
         if (input == null || input.length() == 0) return input;
         return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
-
 
     private void loadProjects() {
         String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -165,13 +156,8 @@ public class MyProjectsActivity extends AppCompatActivity {
                             }
                         }
 
-                        // Set project count text
-                        int projectCount = allProjects.size();
-                        txtProjectsCount.setText(projectCount + " projects found");
-
-                        // Apply filters & search
-                        String currentQuery = searchInput.getQuery() != null ? searchInput.getQuery().toString() : "";
-                        filterAndSearchProjects(currentQuery);
+                        // Apply current filters
+                        applyFilters();
                     }
 
                     @Override
@@ -181,102 +167,42 @@ public class MyProjectsActivity extends AppCompatActivity {
                 });
     }
 
-
-    private void filterAndSearchProjects(String query) {
-        txtProjectsCount.setText("Loading...");
-        query = query.toLowerCase().trim();
+    private void applyFilters() {
         filteredProjects.clear();
 
-        String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects");
-
+        // If no filters selected, show all projects
         if (selectedFilters.isEmpty()) {
-            // No filter selected, load all company projects
-            String finalQuery = query;
-            ref.orderByChild("companyId").equalTo(companyId)
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            for (DataSnapshot snap : snapshot.getChildren()) {
-                                Project project = snap.getValue(Project.class);
-                                if (project != null && project.getTitle().toLowerCase().contains(finalQuery)) {
-                                    project.setProjectId(snap.getKey());
-                                    project.setApplicants((int) snap.child("applicants").getChildrenCount());
-                                    filteredProjects.add(project);
-                                }
-                            }
-                            updateUIAfterFilter();
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            Toast.makeText(MyProjectsActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
+            filteredProjects.addAll(allProjects);
         } else {
-            // Filter selected: we need to query each status separately
-            List<Project> tempList = new ArrayList<>();
-            List<String> filters = new ArrayList<>(selectedFilters);
-            final int[] completedQueries = {0};
-
-            for (String status : filters) {
-                String finalQuery1 = query;
-                ref.orderByChild("status").equalTo(status)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                for (DataSnapshot snap : snapshot.getChildren()) {
-                                    Project project = snap.getValue(Project.class);
-                                    if (project != null &&
-                                            companyId.equals(project.getCompanyId()) &&
-                                            project.getTitle().toLowerCase().contains(finalQuery1)) {
-                                        project.setProjectId(snap.getKey());
-                                        project.setApplicants((int) snap.child("applicants").getChildrenCount());
-
-                                        // Prevent duplicates
-                                        boolean alreadyExists = false;
-                                        for (Project p : tempList) {
-                                            if (p.getProjectId().equals(project.getProjectId())) {
-                                                alreadyExists = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!alreadyExists) {
-                                            tempList.add(project);
-                                        }
-                                    }
-                                }
-
-                                // When all queries are done
-                                completedQueries[0]++;
-                                if (completedQueries[0] == filters.size()) {
-                                    filteredProjects.clear();
-                                    filteredProjects.addAll(tempList);
-                                    updateUIAfterFilter();
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                Toast.makeText(MyProjectsActivity.this, "Failed to filter by " + status, Toast.LENGTH_SHORT).show();
-                                completedQueries[0]++;
-                                if (completedQueries[0] == filters.size()) {
-                                    filteredProjects.clear();
-                                    filteredProjects.addAll(tempList);
-                                    updateUIAfterFilter();
-                                }
-                            }
-                        });
+            // Filter projects based on selected status filters
+            for (Project project : allProjects) {
+                if (selectedFilters.contains(project.getStatus())) {
+                    filteredProjects.add(project);
+                }
             }
+        }
+
+        updateUI();
+    }
+
+    private void updateUI() {
+        adapter.notifyDataSetChanged();
+        txtProjectsCount.setText(filteredProjects.size() + " projects found");
+
+        // Show/hide empty state
+        if (filteredProjects.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            emptyStateView.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyStateView.setVisibility(View.GONE);
         }
     }
 
-    private void updateUIAfterFilter() {
-        adapter.notifyDataSetChanged();
-        txtProjectsCount.setText(filteredProjects.size() + " projects found");
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reload projects when returning to this activity
+        loadProjects();
     }
-
-
-
 }
