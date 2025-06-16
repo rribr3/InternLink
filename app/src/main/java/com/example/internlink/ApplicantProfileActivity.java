@@ -797,8 +797,10 @@ public class ApplicantProfileActivity extends AppCompatActivity {
 
         if (cvUrl != null && !cvUrl.isEmpty()) {
             try {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(cvUrl));
-                startActivity(browserIntent);
+                // Use PdfViewerActivity instead of browser intent
+                Intent pdfIntent = new Intent(this, PdfViewerActivity.class);
+                pdfIntent.putExtra("pdf_url", cvUrl);
+                startActivity(pdfIntent);
                 Toast.makeText(this, "Opening " + applicantName + "'s CV...", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "✅ CV opened successfully");
             } catch (Exception e) {

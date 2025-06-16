@@ -67,7 +67,7 @@ public class StudentProfileActivity extends AppCompatActivity {
     private ImageView studentPfp;
     private Uri selectedLogoUri = null;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFxapFOs9lo5oG1JwYMDV2uxqrOLQzUsnfvMzZounsNpaQbzgiBksTKvELr0DBeFaJv3e5lBOqKYxESTmMYOXZgsxVaXjzCJLad3c2FMRGob2bJxuu-5Pk6p6yvAGCIRWbcC0TUBTqg2rmRolUhkP9frkzdKKBBSMamKF-6km0q8FCzlZdNWkqj-M6VbaHkMe8xVyyKaO04h86oCgt1lI9-nBrYPpN6P6ty3EmT5wrDTfGVhIOGUWbQNKbIQEtOFqQtxl1QbclmTqyPLxX5La7TtmKnUWBC6VF199p5nbpdD4DEpU0CNe7AC514c6P970C2uwxf-VtPbxR42ICHhIuLPhL-kX0DWp7foLORlsJVaKUNm88ZtwHD677cnv80rQL19-mZeCCcvsH5RuDZx_1CLy8FfmaPa8JbwK3YYljfyen-kOrCC88zTtiYDrQOb2MQrhDRtCwNCMQp_L2oKrWNrwMRqbB6JuAjuGUbPYYl6jcQVk6u8iljnznP-X59_x5AkUciuMjqgYs1KqG_4TOVRr3-UzOhnRz9m2nkbqZ49mCnHpeGLTRyWtqMF2X5q6rrZyHc3u51B86b6RLXb-VPH1caioBFicioO-fzohVDreh31V2PA7U_OEuybCHyJotPgTwU7jwo2wlWddeAaW5gCPYVTBwmMB87Y7zPsIiUbuMGySUs54zjI-6p77MN11eGbqm45gD1urjRXClEK26BH3qr5LuGc6Kcdk2q_3CZ3q9safqr64HX9oHODKDer2z4P52faUyECsvI37pB5EtZyHVxPqV_mozj0GMX-tpbBVz2nr_OKP6Nex3E0lh2aD5XnEUKj81WzfGzujmUl5XBDUyROrMcaSeJAjPr36s-qqHfL3n93hHhjNFzTGHlXbbv-fH9iFS5q3YIMFGGfxWdumAMnvby-qhKhD934-lU6HsYGPngAtoVTY7Mk-UZOvwB7fMvSQ-6Is0WJX8qQZ5Dih7xhx7HJSFTzigV70tqlJHNjOKQi1fnriUt7mWFAUPnspkXIUjKFImBK-FC1jnL8K3hvc_zFFCPiDrsFsJyaCYYPeVHO6E8w9BMUgDxnpv3UrMWVU_c507Pc74llEHwTZACWUBeri81zhx8PzN2WQC-yOpTtR_R2xb3cZbHJSJ1jOVr1IcWgroUeaLX04KUW6ZvnlrkTQs20mMDZhkgcpwwQpr1FUmVF7-alvlqt0wUoAMy3GDTqcqbNzDtaXs-IAbfumaZsOAIW4GnT_2uDmluhv474Xa6wth1wRaIlwL4sG2DaxM74nStkNoEH2fSKSqvoRmsYiTeBNLzA2-43OotFPSy9uon7rPpEKKFcCloyGF67W8zemM1XkrwOAU7VOBDuPq4vosQ18-7_oyPO1_j_st8IFj2I8ge_7Pdj4iyohTX58vTuSXRd7O5rxhd05CEPoYZyx7YyFeTmACuaCA";
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFzfO1D06qfzdMVJQ8r56ZLzlprVKG-9H197EA7XueWdpsSKbuxihgwyNZrQJNlqi7s3ugOC6P4r03sSknykXwmY1NUCFhkQ1fyTRjoFQ8XHpXt0dXU0e6tbsjHN7zJFH3uJSGoo1BuYReBkONc1CkudiGHYFRttTWWtWBbDuZHsepZL1KCVegpMaJ-RoYrEkbViPDKZUOpMahgYX7Y3R4XRLuS56yRqfTTv_qTrbnwCMY8Ti_Ngl7gQKFhAlkTuL015DfMuT384LGUnCVKCwbZhzy7H2nAMlSdBTR-EtA65K3Q4pa0BNsw8-eA_uRhdPbKEGleZu6DH5oUHWdr5BFwqh_h56ntPwGoP3Nm2hL2Thr-Fk8LJA5anVbrUVcFvyz0i2nBrxgc87QnXoaNKy0mFTOgg8CvAgmVBO-HN0jC8fzALcYFQK0Khrya5TeYigM6deMtf0nYyzrg72Ni5nsfRWzfBIOvsFp1xmoVRSJAnu4ToVIZvOYkwjgx4xqZYlQxw9xulvrBo_K07xsUM5epNo2LX01Zu5kjWcy13baYitKX-OLpksa_55ndqij5PQsxztPbrYW8NpACzu9EpdSORVMreIQOkVJzzMubwASw9ojvOAgEuWTbnP_lydYrN4w5YV5ru5KhAIect3UQhOtbpzXWXLm4vrIln-K7Mto4yaZ3ay91Ksi2ILkpB7LnSoyjNw60xVX-wmm-QCCKAAmzCViDbbGnF_NF07n52iX3Xt50ANaZ_mFOkt4TQPIC8jtzoJTwbaAYRtUanEUzDc_b6YLtY7aqrqQY22lqQR7rMwtlCh-BXPnkXWIGV5ImZzt3LALURxavTFB6tcv7N1U9oeS2Gq0_SPskFo56Rk3mOXAHcDkvjou7F5vtBKU5GQxz-i2CmaGqtjA-JAtUiQWAsMiCujAW0SH55M6g-N8pqfF9hUpPt-BYhMs8_QSzfeGoqpjWh2keHRWMJREtVuCVlBu7ZCYqeSBG83SDxvWykssnSogzP2LNoVVmYzoVl_WDbL3ocVuR7_G5EVyiJCZVjdxyxt91nO-sNYrHC4x_Fd32Uon57zci8Ks_7GRiLVe1A7YD0jYyrnFa7g2ZHfg0HBiHtbOnM6vlYJStR73V3DxmO8iOi0ce3ETBW8Jz_ByW3Nt6E7W3UcArgSzUqsTEb4ejBwf6AQ-ElIcd3gYvqRlrRstRP5YKeuKY44DNd868aeFtMNo_WDkjq9x2bBzSY5zN5-8E5jB0Ywb6OcplPMzBTgmHy-Iil2ee9swL555CerYlKiP_e0Q88ocMCOds6TW4VOSpmFq88uZ-opCc8VyEmUImpWbYi7FMX67ytS0ITo1YBcnFQdT8xDXmVWKUmmS17v3nPGc9UzWLtBExQRUiI1QJjWqR5eiQRNNYJ6EcozvJQBIBE-JBr4AOXcim3k1LhIqloXo1e481F4rMlFuBQtPie3l2V7_iVKzufVQE";
     private final ActivityResultLauncher<String> pdfPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -160,11 +160,43 @@ public class StudentProfileActivity extends AppCompatActivity {
         });
         viewBtn.setOnClickListener(v -> {
             if (cvUrl != null && !cvUrl.isEmpty()) {
-                Intent intent = new Intent(StudentProfileActivity.this, PdfViewerActivity.class);
-                intent.putExtra("pdf_url", cvUrl);
-                startActivity(intent);
+                // Log the URL for debugging
+                Log.d("StudentProfile", "Opening PDF URL: " + cvUrl);
+
+                // Verify the URL is accessible
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .url(cvUrl)
+                        .head()  // Only check headers, don't download content
+                        .build();
+
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(StudentProfileActivity.this,
+                                    "Cannot access PDF: Link may have expired", Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            runOnUiThread(() -> {
+                                Intent intent = new Intent(StudentProfileActivity.this, PdfViewerActivity.class);
+                                intent.putExtra("pdf_url", cvUrl);
+                                startActivity(intent);
+                            });
+                        } else {
+                            runOnUiThread(() -> {
+                                Toast.makeText(StudentProfileActivity.this,
+                                        "PDF link is no longer valid. Please re-upload.", Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    }
+                });
             } else {
-                Toast.makeText(this, "No CV uploaded", Toast.LENGTH_SHORT).show();
+                Toast.makeText(StudentProfileActivity.this, "No CV uploaded", Toast.LENGTH_SHORT).show();
             }
         });
         generateCvBtn.setOnClickListener(v -> {
@@ -176,18 +208,26 @@ public class StudentProfileActivity extends AppCompatActivity {
 
 
     }
-    private void saveStudentData(String tempLink) {
+    // Update your saveStudentData method to also store the file path
+    private void saveStudentDataWithPath(String tempLink, String filePath) {
         Map<String, Object> updates = new HashMap<>();
         if (tempLink != null) {
             updates.put("cvUrl", tempLink);
-            this.cvUrl = tempLink; // ✅ This line is essential
-            cvFileName.setText(Uri.parse(tempLink).getLastPathSegment());
+            updates.put("cvPath", filePath);  // Store the actual file path for deletion
+            this.cvUrl = tempLink;
+            cvFileName.setText("CV.pdf");  // Simple display name
             cvDisplayLayout.setVisibility(View.VISIBLE);
         }
 
         studentRef.updateChildren(updates)
                 .addOnSuccessListener(aVoid -> Toast.makeText(this, "Saved CV successfully", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show());
+    }
+
+    // Keep the old method for compatibility, but add path storage
+    private void saveStudentData(String tempLink) {
+        String defaultPath = "/cv_" + STUDENT_ID + ".pdf";
+        saveStudentDataWithPath(tempLink, defaultPath);
     }
 
 
@@ -209,11 +249,14 @@ public class StudentProfileActivity extends AppCompatActivity {
 
             OkHttpClient client = new OkHttpClient();
 
+            // Use consistent file naming - remove timestamp
+            String fileName = "/cv_" + STUDENT_ID + ".pdf";
+
             // Step 1: Upload the PDF to Dropbox
             JSONObject dropboxArg = new JSONObject();
-            dropboxArg.put("path", "/cv_" + STUDENT_ID + ".pdf");
-            dropboxArg.put("mode", "overwrite");
-            dropboxArg.put("autorename", false);
+            dropboxArg.put("path", fileName);  // Use the consistent filename
+            dropboxArg.put("mode", "overwrite");  // This will overwrite existing files
+            dropboxArg.put("autorename", false);   // Don't auto-rename
             dropboxArg.put("mute", false);
             dropboxArg.put("strict_conflict", false);
 
@@ -247,10 +290,14 @@ public class StudentProfileActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // Step 2: Generate a temporary direct link
+                    // Log the upload response to verify the path
+                    String uploadResponse = response.body().string();
+                    Log.d("DROPBOX_UPLOAD", "Upload successful: " + uploadResponse);
+
+                    // Step 2: Generate a temporary direct link using the same filename
                     JSONObject tempLinkBody = new JSONObject();
                     try {
-                        tempLinkBody.put("path", "/cv_" + STUDENT_ID + ".pdf");
+                        tempLinkBody.put("path", fileName);  // Use the same consistent filename
                     } catch (Exception ex) {
                         runOnUiThread(() -> {
                             progressDialog.dismiss();
@@ -293,7 +340,8 @@ public class StudentProfileActivity extends AppCompatActivity {
 
                                 runOnUiThread(() -> {
                                     progressDialog.dismiss();
-                                    saveStudentData(tempLink); // Save direct access link
+                                    // Store both the link and the actual file path for deletion
+                                    saveStudentDataWithPath(tempLink, fileName);
                                 });
 
                             } catch (Exception e) {
@@ -321,14 +369,47 @@ public class StudentProfileActivity extends AppCompatActivity {
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        // We now always know the file path: "/cv_<STUDENT_ID>.pdf"
-        String dropboxPath = "/cv_" + STUDENT_ID + ".pdf";
+        // First, try to get the stored file path from Firebase
+        studentRef.child("cvPath").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String filePath;
+                if (snapshot.exists()) {
+                    filePath = snapshot.getValue(String.class);
+                    Log.d("DROPBOX_DELETE", "Using stored path: " + filePath);
+                } else {
+                    // Fallback to default naming convention
+                    filePath = "/cv_" + STUDENT_ID + ".pdf";
+                    Log.d("DROPBOX_DELETE", "Using fallback path: " + filePath);
+                }
 
+                performDeletion(filePath, progressDialog);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Use fallback path if Firebase read fails
+                String fallbackPath = "/cv_" + STUDENT_ID + ".pdf";
+                Log.d("DROPBOX_DELETE", "Firebase read failed, using fallback: " + fallbackPath);
+                performDeletion(fallbackPath, progressDialog);
+            }
+        });
+    }
+    private void performDeletion(String filePath, ProgressDialog progressDialog) {
         OkHttpClient client = new OkHttpClient();
+
+        JSONObject requestJson = new JSONObject();
+        try {
+            requestJson.put("path", filePath);
+        } catch (JSONException e) {
+            progressDialog.dismiss();
+            Toast.makeText(this, "Error creating delete request", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         RequestBody body = RequestBody.create(
                 MediaType.parse("application/json"),
-                "{\"path\": \"" + dropboxPath + "\"}"
+                requestJson.toString()
         );
 
         Request request = new Request.Builder()
@@ -341,17 +422,24 @@ public class StudentProfileActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.e("DROPBOX_DELETE", "Network failure: " + e.getMessage());
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
-                    Toast.makeText(StudentProfileActivity.this, "Failed to delete CV", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(StudentProfileActivity.this, "Network error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                String responseBody = response.body() != null ? response.body().string() : "No response body";
+                Log.d("DROPBOX_DELETE", "Response code: " + response.code() + ", Body: " + responseBody);
+
                 if (response.isSuccessful()) {
                     // Remove from Firebase
-                    studentRef.child("cvUrl").removeValue();
+                    Map<String, Object> removeUpdates = new HashMap<>();
+                    removeUpdates.put("cvUrl", null);
+                    removeUpdates.put("cvPath", null);
+                    studentRef.updateChildren(removeUpdates);
 
                     runOnUiThread(() -> {
                         progressDialog.dismiss();
@@ -360,16 +448,33 @@ public class StudentProfileActivity extends AppCompatActivity {
                         cvUrl = null;
                     });
                 } else {
-                    String errorMsg = response.body() != null ? response.body().string() : "Unknown error";
-                    Log.e("DROPBOX_DELETE", "Error: " + errorMsg);
+                    String userMessage = "Deletion failed";
+                    if (response.code() == 409) {
+                        // File not found - clean up Firebase anyway
+                        Map<String, Object> removeUpdates = new HashMap<>();
+                        removeUpdates.put("cvUrl", null);
+                        removeUpdates.put("cvPath", null);
+                        studentRef.updateChildren(removeUpdates);
+
+                        runOnUiThread(() -> {
+                            cvDisplayLayout.setVisibility(View.GONE);
+                            cvUrl = null;
+                        });
+                        userMessage = "File already deleted, cleaned up references";
+                    } else if (response.code() == 401) {
+                        userMessage = "Access token expired";
+                    }
+
+                    final String finalMessage = userMessage;
                     runOnUiThread(() -> {
                         progressDialog.dismiss();
-                        Toast.makeText(StudentProfileActivity.this, "Dropbox deletion failed", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(StudentProfileActivity.this, finalMessage, Toast.LENGTH_LONG).show();
                     });
                 }
             }
         });
     }
+
 
     private String extractDropboxPathFromUrl(String url) {
         try {
@@ -417,6 +522,7 @@ public class StudentProfileActivity extends AppCompatActivity {
 
 
 
+    // Update your loadCompanyData method to load the stored path as well
     private void loadCompanyData() {
         studentRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -449,17 +555,14 @@ public class StudentProfileActivity extends AppCompatActivity {
                                 .into(studentPfp);
                     }
                 }
+
                 if (snapshot.hasChild("cvUrl")) {
                     cvUrl = snapshot.child("cvUrl").getValue(String.class);
                     if (cvUrl != null && !cvUrl.isEmpty()) {
-                        Uri uri = Uri.parse(cvUrl);
-                        String fileName = uri.getLastPathSegment();
-                        cvFileName.setText(fileName != null ? fileName : "CV.pdf");
+                        cvFileName.setText("CV.pdf");
                         cvDisplayLayout.setVisibility(View.VISIBLE);
                     }
                 }
-
-
             }
 
             @Override

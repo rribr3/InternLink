@@ -7,6 +7,10 @@ public class Announcement {
     private String date;
     private boolean isRead;
     private long timestamp;
+    private String category;
+    private String severity;
+    private String reportId;
+    private String priority;
 
     public Announcement() {}
 
@@ -16,6 +20,7 @@ public class Announcement {
         this.message = message;
         this.date = date;
         this.isRead = isRead;
+        this.timestamp = System.currentTimeMillis();
     }
 
     // Required getters & setters
@@ -28,4 +33,13 @@ public class Announcement {
     public String getDate() { return date; }
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { this.isRead = read; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getSeverity() { return severity; }
+    public void setSeverity(String severity) { this.severity = severity; }
+
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
+
 }

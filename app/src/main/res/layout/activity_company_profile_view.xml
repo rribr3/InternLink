@@ -67,7 +67,6 @@
                         android:layout_marginBottom="20dp"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_company"
-                        android:tint="@color/black"
                         android:contentDescription="Company Logo"
                         android:background="@drawable/rounded_background"
                         android:elevation="4dp"

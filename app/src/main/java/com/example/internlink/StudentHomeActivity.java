@@ -1209,7 +1209,6 @@ public class StudentHomeActivity extends AppCompatActivity
 
 
     private void updateApplicationCounts() {
-        // Get references to the TextViews in your card
         TextView interviewCountView = findViewById(R.id.interview_count);
         TextView acceptedCountView = findViewById(R.id.accepted_count);
         TextView rejectedCountView = findViewById(R.id.rejected_count);
@@ -1219,7 +1218,6 @@ public class StudentHomeActivity extends AppCompatActivity
         final int[] acceptedCount = {0};
         final int[] rejectedCount = {0};
 
-        // Get applications for current student
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
         applicationsRef.orderByChild("userId").equalTo(studentId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -1232,21 +1230,34 @@ public class StudentHomeActivity extends AppCompatActivity
 
                         // Count applications by status
                         for (DataSnapshot appSnapshot : snapshot.getChildren()) {
-                            String status = appSnapshot.child("status").getValue(String.class);
+                            try {
+                                // ✅ SAFER: Handle both string and other data types
+                                Object statusObj = appSnapshot.child("status").getValue();
+                                String status = null;
 
-                            if (status != null) {
-                                switch (status.toLowerCase()) {
-                                    case "shortlisted":
-                                        interviewCount[0]++;
-                                        break;
-                                    case "accepted":
-                                        acceptedCount[0]++;
-                                        break;
-                                    case "rejected":
-                                        rejectedCount[0]++;
-                                        break;
-                                    // "pending" and other statuses are not counted in these specific categories
+                                if (statusObj instanceof String) {
+                                    status = (String) statusObj;
+                                } else if (statusObj != null) {
+                                    status = statusObj.toString();
                                 }
+
+                                if (status != null && !status.trim().isEmpty()) {
+                                    switch (status.toLowerCase().trim()) {
+                                        case "shortlisted":
+                                            interviewCount[0]++;
+                                            break;
+                                        case "accepted":
+                                            acceptedCount[0]++;
+                                            break;
+                                        case "rejected":
+                                            rejectedCount[0]++;
+                                            break;
+                                        // "pending" and other statuses are not counted in these specific categories
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // Log the error but continue processing other applications
+                                android.util.Log.e("StudentHome", "Error processing application: " + e.getMessage());
                             }
                         }
 
@@ -1614,6 +1625,9 @@ public class StudentHomeActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        if (bottomNavigationView != null) {
+            bottomNavigationView.setSelectedItemId(R.id.navigation_home);
+        }
         setupNotificationBell();
         setupDynamicTips();
         setupUnreadMessagesBadge();
@@ -2074,7 +2088,6 @@ public class StudentHomeActivity extends AppCompatActivity
         View popupView = LayoutInflater.from(this).inflate(R.layout.popup_all_applications, null);
 
         RecyclerView rvApplications = popupView.findViewById(R.id.rv_applications);
-        FloatingActionButton addButton = popupView.findViewById(R.id.btn_add_application);
         ImageView closeButton = popupView.findViewById(R.id.btn_close_popup);
 
         // Get filter chip references
@@ -2120,9 +2133,7 @@ public class StudentHomeActivity extends AppCompatActivity
                     }
                 });
 
-        addButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Add new application clicked", Toast.LENGTH_SHORT).show();
-        });
+
 
         final PopupWindow popupWindow = new PopupWindow(
                 popupView,
@@ -2355,6 +2366,11 @@ public class StudentHomeActivity extends AppCompatActivity
 
         if (id == R.id.nav_profile) {
             bottomNavigationView.setSelectedItemId(R.id.navigation_profile);
+        }
+        else if (id == R.id.nav_schedule) {
+            // Navigate to Student Schedule Activity
+            Intent intent = new Intent(this, StudentScheduleActivity.class);
+            startActivity(intent);
         }
         else if (id == R.id.nav_applications) {
             showAllApplications();

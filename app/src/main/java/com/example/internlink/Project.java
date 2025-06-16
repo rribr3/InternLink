@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.util.Log;
 import java.util.List;
 
 public class Project {
@@ -8,13 +9,13 @@ public class Project {
     private List<String> skills;
     private String category;
     private String duration;
-    private long startDate;
-    private long deadline;
-    private int studentsRequired;
-    private int applicants;
+    private Object startDate; // ✅ Changed to Object to handle both long and string
+    private Object deadline; // ✅ Changed to Object to handle both long and string
+    private Object studentsRequired; // ✅ Changed to Object to handle both int and string
+    private Object applicants; // ✅ Changed to Object to handle both int and string
     private String educationLevel;
     private String compensationType;
-    private int amount;
+    private Object amount; // ✅ Changed to Object to handle both int and string
     private String companyId;
     private String companyName;
     private String contactPerson;
@@ -23,7 +24,7 @@ public class Project {
     private Quiz quiz;
     private String status;
     private String projectId;
-    private long createdAt;
+    private Object createdAt; // ✅ Changed to Object to handle both long and string
     private boolean resumeRequired;
     private String companyLogoUrl;
     private String location;
@@ -40,6 +41,7 @@ public class Project {
     public void setTitle(String title) {
         this.title = title;
     }
+
     public String getLocation() {
         return location;
     }
@@ -80,35 +82,95 @@ public class Project {
         this.duration = duration;
     }
 
+    // ✅ SAFE GETTER: Handles both long and string types
     public long getStartDate() {
-        return startDate;
+        if (startDate instanceof Long) {
+            return (Long) startDate;
+        } else if (startDate instanceof String) {
+            try {
+                return Long.parseLong((String) startDate);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid startDate format: " + startDate);
+                return System.currentTimeMillis(); // default value
+            }
+        } else if (startDate instanceof Number) {
+            return ((Number) startDate).longValue();
+        }
+        return System.currentTimeMillis(); // default if null
     }
 
-    public void setStartDate(long startDate) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setStartDate(Object startDate) {
         this.startDate = startDate;
     }
 
+    // ✅ SAFE GETTER: Handles both long and string types
     public long getDeadline() {
-        return deadline;
+        if (deadline instanceof Long) {
+            return (Long) deadline;
+        } else if (deadline instanceof String) {
+            try {
+                return Long.parseLong((String) deadline);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid deadline format: " + deadline);
+                return System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000L); // default: 7 days from now
+            }
+        } else if (deadline instanceof Number) {
+            return ((Number) deadline).longValue();
+        }
+        return System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000L); // default if null
     }
 
-    public void setDeadline(long deadline) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setDeadline(Object deadline) {
         this.deadline = deadline;
     }
 
+    // ✅ SAFE GETTER: Handles both int and string types
     public int getStudentsRequired() {
-        return studentsRequired;
+        if (studentsRequired instanceof Integer) {
+            return (Integer) studentsRequired;
+        } else if (studentsRequired instanceof String) {
+            try {
+                return Integer.parseInt((String) studentsRequired);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid studentsRequired format: " + studentsRequired);
+                return 1; // default value
+            }
+        } else if (studentsRequired instanceof Long) {
+            return ((Long) studentsRequired).intValue();
+        } else if (studentsRequired instanceof Number) {
+            return ((Number) studentsRequired).intValue();
+        }
+        return 1; // default if null
     }
 
-    public void setStudentsRequired(int studentsRequired) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setStudentsRequired(Object studentsRequired) {
         this.studentsRequired = studentsRequired;
     }
 
+    // ✅ SAFE GETTER: Handles both int and string types
     public int getApplicants() {
-        return applicants;
+        if (applicants instanceof Integer) {
+            return (Integer) applicants;
+        } else if (applicants instanceof String) {
+            try {
+                return Integer.parseInt((String) applicants);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid applicants format: " + applicants);
+                return 0; // default value
+            }
+        } else if (applicants instanceof Long) {
+            return ((Long) applicants).intValue();
+        } else if (applicants instanceof Number) {
+            return ((Number) applicants).intValue();
+        }
+        return 0; // default if null
     }
 
-    public void setApplicants(int applicants) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setApplicants(Object applicants) {
         this.applicants = applicants;
     }
 
@@ -128,11 +190,27 @@ public class Project {
         this.compensationType = compensationType;
     }
 
+    // ✅ SAFE GETTER: Handles both int and string types
     public int getAmount() {
-        return amount;
+        if (amount instanceof Integer) {
+            return (Integer) amount;
+        } else if (amount instanceof String) {
+            try {
+                return Integer.parseInt((String) amount);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid amount format: " + amount);
+                return 0; // default value
+            }
+        } else if (amount instanceof Long) {
+            return ((Long) amount).intValue();
+        } else if (amount instanceof Number) {
+            return ((Number) amount).intValue();
+        }
+        return 0; // default if null
     }
 
-    public void setAmount(int amount) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setAmount(Object amount) {
         this.amount = amount;
     }
 
@@ -200,11 +278,25 @@ public class Project {
         this.projectId = projectId;
     }
 
+    // ✅ SAFE GETTER: Handles both long and string types
     public long getCreatedAt() {
-        return createdAt;
+        if (createdAt instanceof Long) {
+            return (Long) createdAt;
+        } else if (createdAt instanceof String) {
+            try {
+                return Long.parseLong((String) createdAt);
+            } catch (NumberFormatException e) {
+                Log.w("Project", "Invalid createdAt format: " + createdAt);
+                return System.currentTimeMillis(); // default value
+            }
+        } else if (createdAt instanceof Number) {
+            return ((Number) createdAt).longValue();
+        }
+        return System.currentTimeMillis(); // default if null
     }
 
-    public void setCreatedAt(long createdAt) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setCreatedAt(Object createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -227,7 +319,7 @@ public class Project {
     // Helper method to check if project is active
     public boolean isActive() {
         return "approved".equalsIgnoreCase(status) &&
-                deadline > System.currentTimeMillis();
+                getDeadline() > System.currentTimeMillis(); // Use safe getter
     }
 
     // Helper method to check if project has quiz
@@ -237,12 +329,15 @@ public class Project {
 
     // Helper method to get time left until deadline in days
     public int getTimeLeftInDays() {
-        if (deadline <= 0) return 0;
+        long deadlineValue = getDeadline(); // Use safe getter
+        if (deadlineValue <= 0) return 0;
         long currentTime = System.currentTimeMillis();
-        if (deadline <= currentTime) return 0;
-        return (int) ((deadline - currentTime) / (1000 * 60 * 60 * 24));
+        if (deadlineValue <= currentTime) return 0;
+        return (int) ((deadlineValue - currentTime) / (1000 * 60 * 60 * 24));
     }
+
     public boolean hasEnded() {
-        return deadline > 0 && deadline < System.currentTimeMillis();
+        long deadlineValue = getDeadline(); // Use safe getter
+        return deadlineValue > 0 && deadlineValue < System.currentTimeMillis();
     }
 }

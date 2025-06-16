@@ -12,6 +12,7 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -39,11 +40,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class StudentAnnounce extends AppCompatActivity implements AnnouncementAdapter.AnnouncementClickListener {
 
@@ -118,23 +122,39 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
     }
 
     // UPDATED: Enhanced popup method to handle clickable links for students
+    @Override
     public void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
-        popupView.setBackgroundColor(getResources().getColor(android.R.color.white));
 
+        // Find views
         TextView titleView = popupView.findViewById(R.id.announcement_title);
         TextView bodyView = popupView.findViewById(R.id.announcement_body);
         TextView dateView = popupView.findViewById(R.id.announcement_date);
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
+        // Find the announcement object
+        Announcement announcement = null;
+        for (Announcement a : announcementList) {
+            if (a.getId().equals(announcementId)) {
+                announcement = a;
+                break;
+            }
+        }
+
+        // Apply warning-specific styling if needed
+        if (announcement != null && "warning".equals(announcement.getCategory())) {
+            titleView.setTextColor(Color.RED);
+            //popupView.findViewById(R.id.warning_icon).setVisibility(View.VISIBLE);
+
+            // Add severity indicator
+            /*if ("high".equals(announcement.getPriority())) {
+                popupView.findViewById(R.id.priority_indicator).setVisibility(View.VISIBLE);
+            }*/
+        }
+
         titleView.setText(title);
-
-        // Handle clickable links for students
-        SpannableString spannable = createClickableSpannable(body);
-        bodyView.setText(spannable);
-        bodyView.setMovementMethod(LinkMovementMethod.getInstance());
-
+        bodyView.setText(body);
         dateView.setText("Posted: " + date);
 
         builder.setView(popupView);
@@ -144,7 +164,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
 
-        // Mark the announcement as read when it's opened
+        // Mark the announcement as read
         markAnnouncementAsRead(announcementId);
     }
 
@@ -224,13 +244,79 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         userReadsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot readsSnapshot) {
+                // Load general announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements"), readsSnapshot);
+                // Load student-specific announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements_by_role").child("student"), readsSnapshot);
+                // Load warning announcements specifically for this user
+                loadWarningAnnouncements(readsSnapshot, userId);
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void loadWarningAnnouncements(DataSnapshot readsSnapshot, String userId) {
+        DatabaseReference warningsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("student");
+
+        warningsRef.orderByChild("targetUserId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    String id = snap.getKey();
+                    String category = snap.child("category").getValue(String.class);
+
+                    // Only process if it's a warning announcement
+                    if ("disciplinary_action".equals(category)) {
+                        String title = snap.child("title").getValue(String.class);
+                        String message = snap.child("message").getValue(String.class);
+
+                        // Handle timestamp conversion safely
+                        long timestampLong = 0;
+                        Object timestampObj = snap.child("timestamp").getValue();
+                        if (timestampObj != null) {
+                            if (timestampObj instanceof Long) {
+                                timestampLong = (Long) timestampObj;
+                            } else if (timestampObj instanceof String) {
+                                try {
+                                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                    Date date = sdf.parse((String) timestampObj);
+                                    if (date != null) {
+                                        timestampLong = date.getTime();
+                                    }
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        String severity = snap.child("severity").getValue(String.class);
+                        String priority = snap.child("priority").getValue(String.class);
+                        boolean isRead = readsSnapshot.hasChild(id);
+
+                        // Create announcement
+                        Announcement announcement = new Announcement(id, title, message, formatTimestamp(timestampLong), isRead);
+                        announcement.setTimestamp(timestampLong);
+                        announcement.setCategory("warning");
+                        announcement.setSeverity(severity);
+                        announcement.setPriority(priority);
+
+                        announcementList.add(announcement);
+                        adapter.notifyItemInserted(announcementList.size() - 1);
+                    }
+                }
+                // Sort announcements after adding warnings
+                sortAnnouncementsByDate(false);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(StudentAnnounce.this, "Failed to load warnings", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -240,41 +326,96 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot snap : snapshot.getChildren()) {
-                    String id = snap.getKey();
-                    String title = snap.child("title").getValue(String.class);
-                    String body = snap.child("message").getValue(String.class);
-                    Long timestamp = snap.child("timestamp").getValue(Long.class);
-                    String date = formatTimestamp(timestamp);
-                    boolean isRead = readsSnapshot.hasChild(id);
+                    try {
+                        String id = snap.getKey();
+                        String title = snap.child("title").getValue(String.class);
+                        String body = snap.child("message").getValue(String.class);
 
-                    addAnnouncement(id, title, body, date, isRead, timestamp != null ? timestamp : 0);
+                        // Handle timestamp conversion safely
+                        long timestampLong = 0;
+                        DataSnapshot timestampSnap = snap.child("timestamp");
+                        if (timestampSnap.exists()) {
+                            Object timestampValue = timestampSnap.getValue();
+                            if (timestampValue instanceof Long) {
+                                timestampLong = (Long) timestampValue;
+                            } else if (timestampValue instanceof String) {
+                                String timestampStr = (String) timestampValue;
+                                try {
+                                    if (timestampStr.contains("T")) {
+                                        // ISO 8601 format
+                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                        Date date = sdf.parse(timestampStr);
+                                        if (date != null) {
+                                            timestampLong = date.getTime();
+                                        }
+                                    } else {
+                                        // Numeric string format
+                                        timestampLong = Long.parseLong(timestampStr);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else if (timestampValue instanceof Double) {
+                                // Handle double timestamp
+                                timestampLong = ((Double) timestampValue).longValue();
+                            }
+                        }
+
+                        String date = formatTimestamp(timestampLong);
+                        boolean isRead = readsSnapshot.hasChild(id);
+
+                        // Create announcement with basic info
+                        Announcement announcement = new Announcement(id, title, body, date, isRead);
+                        announcement.setTimestamp(timestampLong);
+
+                        // Check if this is a warning announcement
+                        if (snap.hasChild("category") && "disciplinary_action".equals(snap.child("category").getValue(String.class))) {
+                            announcement.setCategory("warning");
+                            announcement.setSeverity(snap.child("severity").getValue(String.class));
+                            announcement.setPriority(snap.child("priority").getValue(String.class));
+                        }
+
+                        announcementList.add(announcement);
+                    } catch (Exception e) {
+                        Log.e("StudentAnnounce", "Error processing announcement: " + snap.getKey(), e);
+                    }
                 }
+
+                // Sort and update UI after adding all announcements
                 sortAnnouncementsByDate(false);
+                adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Toast.makeText(StudentAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(StudentAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private String formatTimestamp(Long timestamp) {
-        if (timestamp == null) return "Unknown date";
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
-        return sdf.format(new Date(timestamp));
+    private String formatTimestamp(long timestamp) {
+        if (timestamp <= 0) return "Unknown date";
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.US);
+            return sdf.format(new Date(timestamp));
+        } catch (Exception e) {
+            Log.e("StudentAnnounce", "Error formatting timestamp: " + timestamp, e);
+            return "Unknown date";
+        }
     }
 
     private void sortAnnouncementsByDate(boolean ascending) {
         if (announcementList == null || announcementList.isEmpty()) return;
 
-        announcementList.sort((a1, a2) -> {
-            long t1 = a1.getTimestamp();
-            long t2 = a2.getTimestamp();
+        Collections.sort(announcementList, (a1, a2) -> {
+            // Handle null or invalid timestamps
+            long t1 = a1 != null ? a1.getTimestamp() : 0;
+            long t2 = a2 != null ? a2.getTimestamp() : 0;
+
             return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
         });
 
-        adapter.filterChip("All");
         adapter.notifyDataSetChanged();
     }
 }

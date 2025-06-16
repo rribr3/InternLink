@@ -18,6 +18,11 @@
             android:icon="@drawable/ic_report"
             android:iconTint="@color/black"
             android:title="My Applications" />
+        <item
+            android:id="@+id/nav_schedule"
+            android:icon="@drawable/ic_schedule"
+            android:iconTint="@color/black"
+            android:title="Interview Schedule" />
     </group>
     <item android:title="Communication">
         <menu>

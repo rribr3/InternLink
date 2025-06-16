@@ -1,8 +1,11 @@
 package com.example.internlink;
 
+import android.annotation.SuppressLint;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,7 +23,13 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -39,6 +48,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+
+import javax.annotation.Nullable;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -198,29 +210,22 @@ public class ChatActivity extends AppCompatActivity {
         btnInterviewDetails = findViewById(R.id.btn_interview_details);
     }
     private void showAttachmentOptions() {
-        String[] options = {
-                "📷 Send Image",
-                "📄 Send Document",
-                "📁 Send File"
-        };
+        View view = getLayoutInflater().inflate(R.layout.layout_attachment_options, null);
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        bottomSheetDialog.setContentView(view);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Send Attachment")
-                .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            fileAttachmentHelper.pickImage();
-                            break;
-                        case 1:
-                            fileAttachmentHelper.pickDocument();
-                            break;
-                        case 2:
-                            fileAttachmentHelper.pickFile();
-                            break;
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        // Setup click listeners
+        view.findViewById(R.id.image_option).setOnClickListener(v -> {
+            fileAttachmentHelper.pickImage();
+            bottomSheetDialog.dismiss();
+        });
+
+        view.findViewById(R.id.file_option).setOnClickListener(v -> {
+            fileAttachmentHelper.pickFile();
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
     @Override
@@ -351,6 +356,43 @@ public class ChatActivity extends AppCompatActivity {
             // Show interview details dialog or navigate to details
             showInterviewDetails();
         });
+        ivProfile.setOnClickListener(v -> {
+            DatabaseReference userRef = FirebaseDatabase.getInstance()
+                    .getReference("users").child(chatWithId);
+
+            userRef.child("logoUrl").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String logoUrl = snapshot.getValue(String.class);
+                    if (logoUrl != null && !logoUrl.isEmpty()) {
+                        // Show full size image in dialog or new activity
+                        showFullSizeImage(logoUrl);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(ChatActivity.this,
+                            "Failed to load profile picture", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+    private void showFullSizeImage(String imageUrl) {
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        ImageView imageView = new ImageView(this);
+
+        Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_profile)
+                .error(R.drawable.ic_profile)
+                .into(imageView);
+
+        dialog.setContentView(imageView);
+        dialog.show();
+
+        // Close dialog when clicked
+        imageView.setOnClickListener(v -> dialog.dismiss());
     }
 
     private void loadMessages() {
@@ -560,15 +602,48 @@ public class ChatActivity extends AppCompatActivity {
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String degree = snapshot.child("degree").getValue(String.class);
-                String university = snapshot.child("university").getValue(String.class);
+                String logoUrl = snapshot.child("logoUrl").getValue(String.class);
 
-                // You can load profile picture here too
-                // String profilePicUrl = snapshot.child("profilePicUrl").getValue(String.class);
+                // Set default profile picture
+                if (logoUrl == null || logoUrl.isEmpty()) {
+                    ivProfile.setImageResource(R.drawable.ic_profile);
+                    return;
+                }
+
+                // Load profile picture using Glide with error handling
+                Glide.with(ChatActivity.this)
+                        .load(logoUrl)
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
+                        .circleCrop()
+                        .listener(new RequestListener<Drawable>() {
+                            @Override
+                            public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                        Target<Drawable> target, boolean isFirstResource) {
+                                // Handle load failure
+                                Toast.makeText(ChatActivity.this,
+                                        "Failed to load profile picture", Toast.LENGTH_SHORT).show();
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(Drawable resource, Object model,
+                                                           Target<Drawable> target, DataSource dataSource,
+                                                           boolean isFirstResource) {
+                                // Image loaded successfully
+                                return false;
+                            }
+                        })
+                        .into(ivProfile);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Set default profile picture on error
+                ivProfile.setImageResource(R.drawable.ic_profile);
+                Toast.makeText(ChatActivity.this,
+                        "Failed to load profile data", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -607,22 +682,11 @@ public class ChatActivity extends AppCompatActivity {
         popup.getMenuInflater().inflate(R.menu.menu_chat_options, popup.getMenu());
 
         popup.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-
-            if (itemId == R.id.menu_view_profile) {
-                viewStudentProfile();
-                return true;
-            } else if (itemId == R.id.menu_schedule_interview) {
-                scheduleInterview();
-                return true;
-            } else if (itemId == R.id.menu_clear_chat) {
-                clearChat();
-                return true;
-            } else if (itemId == R.id.menu_block_user) {
-                blockUser();
+            if (item.getItemId() == R.id.menu_create_issue) {
+                showIssueTypeSelector();
                 return true;
             }
-
+            // Handle other menu items
             return false;
         });
 
@@ -664,9 +728,175 @@ public class ChatActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void blockUser() {
-        // Implementation to block user
-        Toast.makeText(this, "Block user feature", Toast.LENGTH_SHORT).show();
+    private void reportIssue() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Report Issue")
+                .setMessage("What type of issue would you like to report?")
+                .setItems(new String[]{
+                        "🚫 Inappropriate behavior",
+                        "📧 Spam messages",
+                        "🔒 Privacy concerns",
+                        "🐛 Technical issue",
+                        "❓ Other"
+                }, (dialog, which) -> {
+                    String issueType = "";
+                    switch (which) {
+                        case 0: issueType = "Inappropriate behavior"; break;
+                        case 1: issueType = "Spam messages"; break;
+                        case 2: issueType = "Privacy concerns"; break;
+                        case 3: issueType = "Technical issue"; break;
+                        case 4: issueType = "Other"; break;
+                    }
+
+                    // Create report in Firebase
+                    createIssueReport(issueType);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+    private void showIssueTypeSelector() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_issue_type_selector, null);
+        dialog.setContentView(view);
+
+        RecyclerView rvIssueTypes = view.findViewById(R.id.rv_issue_types);
+        rvIssueTypes.setLayoutManager(new LinearLayoutManager(this));
+
+        IssueTypeAdapter adapter = new IssueTypeAdapter(issueType -> {
+            // Handle issue type selection
+            createIssue(issueType);
+            dialog.dismiss();
+        });
+
+        rvIssueTypes.setAdapter(adapter);
+        dialog.show();
+    }
+
+    private void createIssue(IssueType issueType) {
+        // Show a dialog to get issue description
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_issue_description, null);
+        TextInputEditText etDescription = view.findViewById(R.id.et_description);
+
+        builder.setTitle(issueType.getEmoji() + " New " + issueType.getLabel())
+                .setView(view)
+                .setPositiveButton("Create", (dialog, which) -> {
+                    String description = etDescription.getText().toString().trim();
+                    if (description.isEmpty()) {
+                        Toast.makeText(this, "Please add a description", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DatabaseReference issuesRef = FirebaseDatabase.getInstance()
+                            .getReference("issues").child(chatId);
+
+                    String issueId = issuesRef.push().getKey();
+                    if (issueId == null) return;
+
+                    // First get current user's name
+                    DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
+                            .getReference("users").child(currentUserId);
+
+                    currentUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String creatorName = snapshot.child("name").getValue(String.class);
+                            if (creatorName == null) creatorName = "Unknown User";
+
+                            // Get current UTC timestamp in YYYY-MM-DD HH:MM:SS format
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            String currentTimestamp = sdf.format(new Date());
+
+                            Map<String, Object> issue = new HashMap<>();
+                            issue.put("type", issueType.name());
+                            issue.put("description", description);
+                            issue.put("createdBy", currentUserId);
+                            issue.put("creatorName", creatorName);
+                            issue.put("timestamp", currentTimestamp);
+                            issue.put("status", "open");
+                            issue.put("chatId", chatId);
+                            issue.put("reportedUserId", chatWithId);
+                            issue.put("reportedUserName", chatWithName);
+
+                            String finalCreatorName = creatorName;
+                            issuesRef.child(issueId).setValue(issue)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Create notification for admins about new issue
+                                        createIssueNotification(issueId, issueType, finalCreatorName, currentTimestamp, description);
+
+                                        Toast.makeText(ChatActivity.this,
+                                                issueType.getEmoji() + " Issue created successfully",
+                                                Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(ChatActivity.this,
+                                                "Failed to create issue: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                        android.util.Log.e("ChatActivity", "Error creating issue", e);
+                                    });
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(ChatActivity.this,
+                                    "Failed to create issue: Could not get user information",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+    private void createIssueNotification(String issueId, IssueType issueType, String creatorName, String timestamp, String description) {
+        DatabaseReference notificationsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role").child("admin");
+
+        String notificationId = notificationsRef.push().getKey();
+        if (notificationId == null) return;
+
+        Map<String, Object> notification = new HashMap<>();
+        notification.put("type", "new_issue");
+        notification.put("issueId", issueId);
+        notification.put("issueType", issueType.name());
+        notification.put("chatId", chatId);
+        notification.put("createdBy", currentUserId);
+        notification.put("creatorName", creatorName);
+        notification.put("reportedUserId", chatWithId);
+        notification.put("reportedUserName", chatWithName);
+        notification.put("date", timestamp);
+        notification.put("status", "unread");
+        notification.put("title", issueType.getEmoji() + " New " + issueType.getLabel() + " Issue");
+        notification.put("message", description); // Using the actual description as the message
+
+        notificationsRef.child(notificationId).setValue(notification)
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("ChatActivity", "Error creating issue notification", e);
+                });
+    }
+
+    private void createIssueReport(String issueType) {
+        DatabaseReference reportsRef = FirebaseDatabase.getInstance()
+                .getReference("reports");
+
+        String reportId = reportsRef.push().getKey();
+        if (reportId == null) return;
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("reporterId", currentUserId);
+        report.put("reportedUserId", chatWithId);
+        report.put("chatId", chatId);
+        report.put("issueType", issueType);
+        report.put("timestamp", ServerValue.TIMESTAMP);
+        report.put("status", "pending");
+
+        reportsRef.child(reportId).setValue(report)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Report submitted successfully. We'll review it shortly.", Toast.LENGTH_LONG).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to submit report", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private String getLastSeenText(long timestamp) {

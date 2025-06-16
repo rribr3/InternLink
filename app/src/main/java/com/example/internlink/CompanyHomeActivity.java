@@ -464,9 +464,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         // Automatically refresh data when returning to activity
         if (!isRefreshing) {
             refreshAllData();
+        }
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.navigation_home);
         }
         setupUnreadMessagesBadge();
     }
@@ -1669,10 +1673,7 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         Intent intent;
         String companyId = getCurrentCompanyUid();
 
-        if (id == R.id.nav_dashboard) {
-            // Already here - refresh data
-            refreshAllData();
-        } else if (id == R.id.nav_profile) {
+        if (id == R.id.nav_profile) {
             intent = new Intent(this, CompanyProfileActivity.class);
             intent.putExtra("companyId", companyId);
             startActivity(intent);
@@ -1697,10 +1698,6 @@ public class CompanyHomeActivity extends AppCompatActivity implements
             intent = new Intent(this, CompanyHelpCenterActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_logout) {
-            FirebaseAuth.getInstance().signOut();
-            Intent logoutIntent = new Intent(this, LoginActivity.class);
-            logoutIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(logoutIntent);
             finish();
         }
 

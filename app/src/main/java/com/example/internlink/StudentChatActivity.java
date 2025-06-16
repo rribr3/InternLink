@@ -1,8 +1,10 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,7 +22,13 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -39,6 +47,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
+
+import javax.annotation.Nullable;
 
 public class StudentChatActivity extends AppCompatActivity {
 
@@ -208,29 +219,22 @@ public class StudentChatActivity extends AppCompatActivity {
 
     }
     private void showAttachmentOptions() {
-        String[] options = {
-                "📷 Send Image",
-                "📄 Send Document",
-                "📁 Send File"
-        };
+        View view = getLayoutInflater().inflate(R.layout.layout_attachment_options, null);
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        bottomSheetDialog.setContentView(view);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Send Attachment")
-                .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            fileAttachmentHelper.pickImage();
-                            break;
-                        case 1:
-                            fileAttachmentHelper.pickDocument();
-                            break;
-                        case 2:
-                            fileAttachmentHelper.pickFile();
-                            break;
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        // Setup click listeners
+        view.findViewById(R.id.image_option).setOnClickListener(v -> {
+            fileAttachmentHelper.pickImage();
+            bottomSheetDialog.dismiss();
+        });
+
+        view.findViewById(R.id.file_option).setOnClickListener(v -> {
+            fileAttachmentHelper.pickFile();
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
     @Override
@@ -557,16 +561,67 @@ public class StudentChatActivity extends AppCompatActivity {
         companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String companyDescription = snapshot.child("description").getValue(String.class);
-                String companyWebsite = snapshot.child("website").getValue(String.class);
+                String logoUrl = snapshot.child("logoUrl").getValue(String.class);
 
-                // Load company logo if available
-                // String logoUrl = snapshot.child("logoUrl").getValue(String.class);
+                if (logoUrl != null && !logoUrl.isEmpty()) {
+                    Glide.with(StudentChatActivity.this)
+                            .load(logoUrl)
+                            .placeholder(R.drawable.ic_business)
+                            .error(R.drawable.ic_business)
+                            .circleCrop()
+                            .listener(new RequestListener<Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                            Target<Drawable> target, boolean isFirstResource) {
+                                    // Handle load failure
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean onResourceReady(Drawable resource, Object model,
+                                                               Target<Drawable> target, DataSource dataSource,
+                                                               boolean isFirstResource) {
+                                    // Image loaded successfully
+                                    return false;
+                                }
+                            })
+                            .into(ivCompanyLogo);
+                } else {
+                    ivCompanyLogo.setImageResource(R.drawable.ic_business);
+                }
+
+                // Make the logo clickable to view full size
+                ivCompanyLogo.setOnClickListener(v -> {
+                    if (logoUrl != null && !logoUrl.isEmpty()) {
+                        showFullSizeImage(logoUrl);
+                    }
+                });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(StudentChatActivity.this,
+                        "Failed to load company profile", Toast.LENGTH_SHORT).show();
+                ivCompanyLogo.setImageResource(R.drawable.ic_business);
+            }
         });
+    }
+
+    private void showFullSizeImage(String imageUrl) {
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        ImageView imageView = new ImageView(this);
+
+        Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_business)
+                .error(R.drawable.ic_business)
+                .into(imageView);
+
+        dialog.setContentView(imageView);
+        dialog.show();
+
+        // Close dialog when clicked
+        imageView.setOnClickListener(v -> dialog.dismiss());
     }
 
     private void setupBanners() {
@@ -657,8 +712,8 @@ public class StudentChatActivity extends AppCompatActivity {
             } else if (itemId == R.id.menu_clear_chat) {
                 clearChat();
                 return true;
-            } else if (itemId == R.id.menu_report_issue) {
-                reportIssue();
+            } else if (itemId == R.id.menu_create_issue) {
+                showIssueTypeSelector();
                 return true;
             }
 
@@ -667,6 +722,126 @@ public class StudentChatActivity extends AppCompatActivity {
 
         popup.show();
     }
+    private void showIssueTypeSelector() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_issue_type_selector, null);
+        dialog.setContentView(view);
+
+        RecyclerView rvIssueTypes = view.findViewById(R.id.rv_issue_types);
+        rvIssueTypes.setLayoutManager(new LinearLayoutManager(this));
+
+        IssueTypeAdapter adapter = new IssueTypeAdapter(issueType -> {
+            // Handle issue type selection
+            createIssue(issueType);
+            dialog.dismiss();
+        });
+
+        rvIssueTypes.setAdapter(adapter);
+        dialog.show();
+    }
+    private void createIssue(IssueType issueType) {
+        // Show a dialog to get issue description
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_issue_description, null);
+        TextInputEditText etDescription = view.findViewById(R.id.et_description);
+
+        builder.setTitle(issueType.getEmoji() + " New " + issueType.getLabel())
+                .setView(view)
+                .setPositiveButton("Create", (dialog, which) -> {
+                    String description = etDescription.getText().toString().trim();
+                    if (description.isEmpty()) {
+                        Toast.makeText(this, "Please add a description", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // First get current user's name
+                    DatabaseReference currentUserRef = FirebaseDatabase.getInstance()
+                            .getReference("users").child(currentUserId);
+
+                    currentUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String creatorName = snapshot.child("name").getValue(String.class);
+                            if (creatorName == null) creatorName = "Unknown User";
+
+                            // Get current UTC timestamp in YYYY-MM-DD HH:MM:SS format
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                            String currentTimestamp = sdf.format(new Date());
+
+                            DatabaseReference issuesRef = FirebaseDatabase.getInstance()
+                                    .getReference("issues").child(chatId);
+
+                            String issueId = issuesRef.push().getKey();
+                            if (issueId == null) return;
+
+                            Map<String, Object> issue = new HashMap<>();
+                            issue.put("type", issueType.name());
+                            issue.put("description", description);
+                            issue.put("createdBy", currentUserId);
+                            issue.put("creatorName", creatorName);
+                            issue.put("timestamp", currentTimestamp);
+                            issue.put("status", "open");
+                            issue.put("chatId", chatId);
+                            issue.put("reportedUserId", chatWithId);
+                            issue.put("reportedUserName", chatWithName);
+
+                            String finalCreatorName = creatorName;
+                            issuesRef.child(issueId).setValue(issue)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Create notification for admins about new issue
+                                        createIssueNotification(issueId, issueType, finalCreatorName, currentTimestamp, description);
+
+                                        Toast.makeText(StudentChatActivity.this,
+                                                issueType.getEmoji() + " Issue created successfully",
+                                                Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(StudentChatActivity.this,
+                                                "Failed to create issue: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                        android.util.Log.e("StudentChatActivity", "Error creating issue", e);
+                                    });
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(StudentChatActivity.this,
+                                    "Failed to create issue: Could not get user information",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+    private void createIssueNotification(String issueId, IssueType issueType, String creatorName, String timestamp, String description) {
+        DatabaseReference notificationsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role").child("admin");
+
+        String notificationId = notificationsRef.push().getKey();
+        if (notificationId == null) return;
+
+        Map<String, Object> notification = new HashMap<>();
+        notification.put("type", "new_issue");
+        notification.put("issueId", issueId);
+        notification.put("issueType", issueType.name());
+        notification.put("chatId", chatId);
+        notification.put("createdBy", currentUserId);
+        notification.put("creatorName", creatorName);
+        notification.put("reportedUserId", chatWithId);
+        notification.put("reportedUserName", chatWithName);
+        notification.put("date", timestamp);
+        notification.put("status", "unread");
+        notification.put("title", issueType.getEmoji() + " New " + issueType.getLabel() + " Issue");
+        notification.put("message", description);
+
+        notificationsRef.child(notificationId).setValue(notification)
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("StudentChatActivity", "Error creating issue notification", e);
+                });
+    }
+
 
     private void showInterviewDetails() {
         if (applicationId != null) {

@@ -1,10 +1,8 @@
 package com.example.internlink;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,8 +21,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -47,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CreateProject extends AppCompatActivity {
 
@@ -77,6 +74,7 @@ public class CreateProject extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private DatabaseReference categoriesRef;
     private String companyId;
+    private String projectId;
 
     // Date Picker
     final Calendar calendar = Calendar.getInstance();
@@ -538,6 +536,7 @@ public class CreateProject extends AppCompatActivity {
 
         project.put("companyId", companyId);
         project.put("timestamp", System.currentTimeMillis());
+        project.put("createdBy", companyId);
 
         // Add quiz if enabled
         SwitchMaterial quizToggle = findViewById(R.id.quiz_toggle);
@@ -560,7 +559,7 @@ public class CreateProject extends AppCompatActivity {
         progressDialog.show();
 
         // Save to Firebase
-        String projectId = databaseReference.push().getKey();
+        projectId = databaseReference.push().getKey(); // Set the class field
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             progressDialog.dismiss();
             Toast.makeText(this, "You must be logged in to publish a project", Toast.LENGTH_SHORT).show();
@@ -569,6 +568,8 @@ public class CreateProject extends AppCompatActivity {
 
         databaseReference.child(projectId).setValue(project)
                 .addOnSuccessListener(aVoid -> {
+                    // Send notification to admins after successful project creation
+                    sendProjectNotificationToAdmins(project.get("title").toString());
                     progressDialog.dismiss();
                     Toast.makeText(this, "Project published successfully", Toast.LENGTH_SHORT).show();
                     finish();
@@ -638,5 +639,86 @@ public class CreateProject extends AppCompatActivity {
             e.printStackTrace();
             return 0L;
         }
+    }
+    private void sendProjectNotificationToAdmins(String projectTitle) {
+        // Get reference to admin announcements node
+        DatabaseReference adminAnnouncementsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("admin");
+
+        // Create announcement ID
+        String announcementId = adminAnnouncementsRef.push().getKey();
+        if (announcementId == null) return;
+
+        // Get company name from users node where role = company
+        DatabaseReference usersRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(companyId);
+
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.child("role").getValue(String.class).equals("company")) {
+                    String companyName = dataSnapshot.child("name").getValue(String.class);
+                    if (companyName == null || companyName.isEmpty()) {
+                        companyName = "Company";
+                    }
+
+                    // Create announcement data
+                    Map<String, Object> announcementMap = new HashMap<>();
+                    announcementMap.put("id", announcementId);
+                    announcementMap.put("title", "New Project Created");
+                    announcementMap.put("message", String.format("A new project \"%s\" has been created by %s and needs approval.",
+                            projectTitle, companyName));
+                    announcementMap.put("date", "2025-06-15 11:15:41"); // Current UTC time
+                    announcementMap.put("timestamp", System.currentTimeMillis());
+                    announcementMap.put("isRead", false);
+                    announcementMap.put("createdBy", companyId);
+                    announcementMap.put("type", "project_created");
+                    announcementMap.put("projectId", projectId);
+                    announcementMap.put("companyId", companyId);
+
+                    // Save only to admin announcements node
+                    adminAnnouncementsRef.child(announcementId).setValue(announcementMap)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("CreateProject", "Admin notification sent successfully");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("CreateProject", "Error sending admin notification", e);
+                            });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("CreateProject", "Error fetching company name", error.toException());
+                // Create announcement with default company name
+                createAndSendAnnouncement(announcementId, projectTitle, "Company", adminAnnouncementsRef);
+            }
+        });
+    }
+
+    private void createAndSendAnnouncement(String announcementId, String projectTitle, String companyName,
+                                           DatabaseReference adminAnnouncementsRef) {
+        Map<String, Object> announcementMap = new HashMap<>();
+        announcementMap.put("id", announcementId);
+        announcementMap.put("title", "New Project Created");
+        announcementMap.put("message", String.format("A new project \"%s\" has been created by %s and needs approval.",
+                projectTitle, companyName));
+        announcementMap.put("date", "2025-06-15 11:15:41"); // Current UTC time
+        announcementMap.put("timestamp", System.currentTimeMillis());
+        announcementMap.put("isRead", false);
+        announcementMap.put("createdBy", companyId);
+        announcementMap.put("type", "project_created");
+        announcementMap.put("projectId", projectId);
+        announcementMap.put("companyId", companyId);
+
+        adminAnnouncementsRef.child(announcementId).setValue(announcementMap)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("CreateProject", "Admin notification sent successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("CreateProject", "Error sending admin notification", e);
+                });
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:padding="4dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/dayNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="1"
+        android:textSize="16sp"
+        android:textColor="#333333"
+        android:gravity="center" />
+
+    <View
+        android:id="@+id/interviewIndicator"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_below="@id/dayNumber"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="2dp"
+        android:background="#4CAF50"
+        android:visibility="gone" />
+
+</RelativeLayout>

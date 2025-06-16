@@ -18,8 +18,8 @@
         android:icon="@drawable/ic_delete" />
 
     <item
-        android:id="@+id/menu_block_user"
-        android:title="🚫 Block User"
-        android:icon="@drawable/ic_block" />
+        android:id="@+id/menu_create_issue"
+        android:title="⚠️ Report Issue"
+        android:icon="@drawable/ic_report" />
 
 </menu>

@@ -1,5 +1,7 @@
 package com.example.internlink;
 
+import static android.content.ContentValues.TAG;
+
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -7,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -392,14 +395,20 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                 // Fetch CV URL for this specific applicant
                 fetchApplicantCvUrl(applicant.getUserId(), cvUrl -> {
                     if (cvUrl != null && !cvUrl.isEmpty()) {
-                        Intent intent = new Intent(MyApplicants.this, PdfViewerActivity.class);
-                        if (cvUrl.contains("www.dropbox.com")) {
-                            cvUrl = cvUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
+                        try {
+                            // Use PdfViewerActivity instead of browser intent
+                            Intent pdfIntent = new Intent(this, PdfViewerActivity.class);
+                            pdfIntent.putExtra("pdf_url", cvUrl);
+                            startActivity(pdfIntent);
+                            Toast.makeText(this, "Opening CV...", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "✅ CV opened successfully");
+                        } catch (Exception e) {
+                            Log.e(TAG, "❌ Failed to open CV", e);
+                            Toast.makeText(this, "Unable to open CV", Toast.LENGTH_SHORT).show();
                         }
-                        intent.putExtra("pdf_url", cvUrl);
-                        startActivity(intent);
                     } else {
-                        Toast.makeText(this, "No CV uploaded", Toast.LENGTH_SHORT).show();
+                        Log.w(TAG, "CV not available");
+                        showNoCVDialog();
                     }
                 });
                 return true;
@@ -422,6 +431,15 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
 
         popup.show();
     }
+    private void showNoCVDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("CV Not Available")
+                .setMessage("Applicant hasn't uploaded a CV yet.")
+                .setPositiveButton("OK", null)
+                .setIcon(R.drawable.ic_report)
+                .show();
+    }
+
 
     /**
      * Fetches interview details from Firebase for a specific applicant

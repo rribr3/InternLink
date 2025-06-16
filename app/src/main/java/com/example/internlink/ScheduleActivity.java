@@ -1,5 +1,7 @@
 package com.example.internlink;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -404,15 +407,20 @@ public class ScheduleActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String cvUrl = snapshot.getValue(String.class);
                 if (cvUrl != null && !cvUrl.isEmpty()) {
-                    if (cvUrl.contains("www.dropbox.com")) {
-                        cvUrl = cvUrl.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
+                    try {
+                        // Use PdfViewerActivity instead of browser intent
+                        Intent pdfIntent = new Intent(ScheduleActivity.this, PdfViewerActivity.class);
+                        pdfIntent.putExtra("pdf_url", cvUrl);
+                        startActivity(pdfIntent);
+                        Toast.makeText(ScheduleActivity.this, "Opening CV...", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "✅ CV opened successfully");
+                    } catch (Exception e) {
+                        Log.e(TAG, "❌ Failed to open CV", e);
+                        Toast.makeText(ScheduleActivity.this, "Unable to open CV", Toast.LENGTH_SHORT).show();
                     }
-                    Intent intent = new Intent(ScheduleActivity.this, PdfViewerActivity.class);
-                    intent.putExtra("pdf_url", cvUrl);
-                    startActivity(intent);
-                }
-                else {
-                    Toast.makeText(ScheduleActivity.this, "CV not available", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.w(TAG, "CV not available");
+                    showNoCVDialog();
                 }
             }
 
@@ -421,6 +429,14 @@ public class ScheduleActivity extends AppCompatActivity {
                 Toast.makeText(ScheduleActivity.this, "Failed to load CV", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void showNoCVDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("CV Not Available")
+                .setMessage("Applicant hasn't uploaded a CV yet.")
+                .setPositiveButton("OK", null)
+                .setIcon(R.drawable.ic_report)
+                .show();
     }
 
     private void showEditInterviewDialog(ShortlistedApplicant applicant) {

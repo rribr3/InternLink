@@ -47,6 +47,17 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
     @Override
     public void onBindViewHolder(AnnouncementAdapter.ViewHolder holder, int position) {
         Announcement item = filteredList.get(position);
+        if ("warning".equals(item.getCategory())) {
+            // Set warning-specific styling
+            holder.title.setTextColor(Color.RED);
+            holder.itemView.setBackgroundColor(Color.parseColor("#FFEBEE")); // Light red background
+
+        } else {
+            // Reset to default styling for non-warning announcements
+            holder.title.setTextColor(Color.BLACK);
+            holder.itemView.setBackgroundColor(Color.WHITE);
+        }
+        holder.itemView.setAlpha(item.isRead() ? 0.7f : 1.0f);
         holder.title.setText(item.getTitle());
         holder.body.setText(item.getBody());
         holder.date.setText("Posted: " + item.getDate());

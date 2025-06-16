@@ -99,6 +99,37 @@ public class MapActivity extends AppCompatActivity {
 
         projectLocations = new ArrayList<>();
         filteredProjects = new ArrayList<>();
+
+        // ADD THESE CLICK LISTENERS:
+        setupClickListeners();
+    }
+    private void setupClickListeners() {
+        // Apply button click listener
+        applyButton.setOnClickListener(v -> {
+            if (currentProjectId != null) {
+                applyToProject(currentProjectId);
+            } else {
+                Toast.makeText(this, "No project selected", Toast.LENGTH_SHORT).show();
+            }
+        });
+        // View details button click listener
+        viewDetailsButton.setOnClickListener(v -> {
+            if (currentProjectId != null) {
+                openProjectDetails(currentProjectId);
+            } else {
+                Toast.makeText(this, "No project selected", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Current location FAB click listener
+        currentLocationFab.setOnClickListener(v -> {
+            getCurrentLocation();
+        });
+
+        // Hide project details when clicking outside (optional)
+        projectDetailsSheet.setOnClickListener(v -> {
+            // Do nothing - prevents click from propagating
+        });
     }
 
     private void initializeLocation() {
@@ -576,12 +607,20 @@ public class MapActivity extends AppCompatActivity {
                 "</html>";
     }
 
+    // Also, make sure your showProjectDetails method properly sets the currentProjectId:
     private void showProjectDetails(String projectId, String title, String company, String address, String category) {
-        currentProjectId = projectId;
+        currentProjectId = projectId; // This is already correct in your code
         projectTitle.setText(title);
         companyName.setText(company);
         projectLocation.setText(address);
         projectCategory.setText(category);
+
+        // Make sure the buttons are enabled and visible
+        applyButton.setEnabled(true);
+        applyButton.setVisibility(View.VISIBLE);
+        viewDetailsButton.setEnabled(true);
+        viewDetailsButton.setVisibility(View.VISIBLE);
+
         projectDetailsSheet.setVisibility(View.VISIBLE);
     }
 

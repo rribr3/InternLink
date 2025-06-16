@@ -1,9 +1,9 @@
 package com.example.internlink;
 
 import androidx.annotation.NonNull;
+import android.util.Log;
 
 import java.util.Objects;
-
 
 public class Application {
     private String applicationId;
@@ -11,17 +11,15 @@ public class Application {
     private String userId;
     private String companyId;
     private String status; // Submitted, Under Review, Shortlisted, Rejected, Interview Scheduled
-    private long appliedDate;
+    private Object appliedDate; // ✅ Changed to Object to handle both long and string
     private String resumeUrl;
     private String notes;
-    private Integer quizGrade;
+    private Object quizGrade; // ✅ Changed to Object to handle both Integer and String
     private boolean isReapplication;
     private String interviewDate;
     private String interviewTime;
-    private long lastUpdated;
+    private Object lastUpdated; // ✅ Changed to Object to handle both long and string
     private String parentApplicationId;
-
-
 
     // Required empty constructor for Firebase
     public Application() {
@@ -36,8 +34,9 @@ public class Application {
         setAppliedDate(appliedDate);
         setResumeUrl(resumeUrl);
         setNotes(notes);
-        setQuizGrade(quizGrade); // ✅ new field
+        setQuizGrade(quizGrade);
     }
+
     public String getParentApplicationId() {
         return parentApplicationId;
     }
@@ -53,6 +52,7 @@ public class Application {
     public void setInterviewTime(String interviewTime) {
         this.interviewTime = interviewTime;
     }
+
     public String getInterviewDate() {
         return interviewDate;
     }
@@ -61,25 +61,57 @@ public class Application {
         return interviewTime;
     }
 
+    // ✅ SAFE GETTER: Handles both long and string types
     public long getLastUpdated() {
-        return lastUpdated;
+        if (lastUpdated instanceof Long) {
+            return (Long) lastUpdated;
+        } else if (lastUpdated instanceof String) {
+            try {
+                return Long.parseLong((String) lastUpdated);
+            } catch (NumberFormatException e) {
+                Log.w("Application", "Invalid lastUpdated format: " + lastUpdated);
+                return System.currentTimeMillis(); // default value
+            }
+        } else if (lastUpdated instanceof Number) {
+            return ((Number) lastUpdated).longValue();
+        }
+        return System.currentTimeMillis(); // default if null
     }
 
-    public void setLastUpdated(long lastUpdated) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setLastUpdated(Object lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
+
     public boolean isReapplication() {
         return isReapplication;
     }
+
     public void setReapplication(boolean isReapplication) {
         this.isReapplication = isReapplication;
     }
 
+    // ✅ SAFE GETTER: Handles both Integer and String types
     public Integer getQuizGrade() {
-        return quizGrade;
+        if (quizGrade instanceof Integer) {
+            return (Integer) quizGrade;
+        } else if (quizGrade instanceof String) {
+            try {
+                return Integer.parseInt((String) quizGrade);
+            } catch (NumberFormatException e) {
+                Log.w("Application", "Invalid quizGrade format: " + quizGrade);
+                return null; // return null for invalid grades
+            }
+        } else if (quizGrade instanceof Long) {
+            return ((Long) quizGrade).intValue();
+        } else if (quizGrade instanceof Number) {
+            return ((Number) quizGrade).intValue();
+        }
+        return null; // default if null or invalid
     }
 
-    public void setQuizGrade(Integer quizGrade) {
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setQuizGrade(Object quizGrade) {
         this.quizGrade = quizGrade;
     }
 
@@ -103,8 +135,21 @@ public class Application {
         return status;
     }
 
+    // ✅ SAFE GETTER: Handles both long and string types
     public long getAppliedDate() {
-        return appliedDate;
+        if (appliedDate instanceof Long) {
+            return (Long) appliedDate;
+        } else if (appliedDate instanceof String) {
+            try {
+                return Long.parseLong((String) appliedDate);
+            } catch (NumberFormatException e) {
+                Log.w("Application", "Invalid appliedDate format: " + appliedDate);
+                return System.currentTimeMillis(); // default value
+            }
+        } else if (appliedDate instanceof Number) {
+            return ((Number) appliedDate).longValue();
+        }
+        return System.currentTimeMillis(); // default if null
     }
 
     public String getResumeUrl() {
@@ -143,23 +188,20 @@ public class Application {
 
     public void setStatus(String status) {
         // Map "Under Review" to "Shortlisted"
-        if (status.equalsIgnoreCase("Under Review")) {
+        if (status != null && status.equalsIgnoreCase("Under Review")) {
             this.status = "Shortlisted";
-        } else if (status.equals("Accepted") ||
+        } else if (status != null && (status.equals("Accepted") ||
                 status.equals("Rejected") ||
                 status.equals("Pending") ||
-                status.equals("Shortlisted")) {
+                status.equals("Shortlisted"))) {
             this.status = status;
         } else {
             throw new IllegalArgumentException("Invalid status value: " + status);
         }
     }
 
-
-    public void setAppliedDate(long appliedDate) {
-        if (appliedDate <= 0) {
-            throw new IllegalArgumentException("Applied date must be positive");
-        }
+    // ✅ SAFE SETTER: Only one setter that accepts Object
+    public void setAppliedDate(Object appliedDate) {
         this.appliedDate = appliedDate;
     }
 
@@ -176,8 +218,7 @@ public class Application {
     // Validation helper
     private boolean isValidStatus(String status) {
         return status != null &&
-                (
-                        status.equals("Pending") ||
+                (status.equals("Pending") ||
                         status.equals("Shortlisted") ||
                         status.equals("Rejected") ||
                         status.equals("Accepted") ||
@@ -194,9 +235,10 @@ public class Application {
                 ", userId='" + userId + '\'' +
                 ", companyId='" + companyId + '\'' +
                 ", status='" + status + '\'' +
-                ", appliedDate=" + appliedDate +
+                ", appliedDate=" + getAppliedDate() + // Use getter for safe conversion
                 ", resumeUrl='" + resumeUrl + '\'' +
                 ", notes='" + notes + '\'' +
+                ", quizGrade=" + getQuizGrade() + // Use getter for safe conversion
                 '}';
     }
 
@@ -205,19 +247,21 @@ public class Application {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Application that = (Application) o;
-        return appliedDate == that.appliedDate &&
+        return getAppliedDate() == that.getAppliedDate() && // Use getter
                 Objects.equals(applicationId, that.applicationId) &&
                 Objects.equals(projectId, that.projectId) &&
                 Objects.equals(userId, that.userId) &&
                 Objects.equals(companyId, that.companyId) &&
                 Objects.equals(status, that.status) &&
                 Objects.equals(resumeUrl, that.resumeUrl) &&
-                Objects.equals(notes, that.notes);
+                Objects.equals(notes, that.notes) &&
+                Objects.equals(getQuizGrade(), that.getQuizGrade()); // Use getter
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(applicationId, projectId, userId, companyId, status, appliedDate, resumeUrl, notes);
+        return Objects.hash(applicationId, projectId, userId, companyId, status,
+                getAppliedDate(), resumeUrl, notes, getQuizGrade()); // Use getters
     }
 
     // Builder pattern for fluent creation
@@ -265,6 +309,7 @@ public class Application {
             this.notes = notes;
             return this;
         }
+
         public Builder setQuizGrade(Integer quizGrade) {
             this.quizGrade = quizGrade;
             return this;
