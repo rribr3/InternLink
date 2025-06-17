@@ -26,6 +26,10 @@ public class Announcement {
     // Required getters & setters
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public void setId(String id) { this.id = id; }
+    public void setTitle(String title) { this.title = title; }
+    public void setBody(String message) { this.message = message; }
+    public void setDate(String date) { this.date = date; }
 
     public String getId() { return id; }
     public String getTitle() { return title; }

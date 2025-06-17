@@ -1,9 +1,15 @@
 package com.example.internlink;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +37,8 @@ import java.util.List;
 public class MyProjectsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
+    private EditText searchEditText;
+    private String currentSearchQuery = "";
     private MaterialButton filterButton;
     private FloatingActionButton fabAddProject;
     private MyProjectsAdapter adapter;
@@ -38,6 +46,7 @@ public class MyProjectsActivity extends AppCompatActivity {
     private List<Project> filteredProjects = new ArrayList<>();
     private ChipGroup selectedFiltersChipGroup;
     private LinearLayout emptyStateView;
+    private MaterialButton createNewButton;
 
     private final List<String> selectedFilters = new ArrayList<>();
 
@@ -54,6 +63,7 @@ public class MyProjectsActivity extends AppCompatActivity {
         setupRecyclerView();
         setupClickListeners();
         loadProjects();
+        setupSearchFunctionality();
     }
 
     private void initViews() {
@@ -64,6 +74,49 @@ public class MyProjectsActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.topAppBar);
         txtProjectsCount = findViewById(R.id.txt_projects_count);
         emptyStateView = findViewById(R.id.empty_state);
+        searchEditText = findViewById(R.id.search_edit_text);
+        createNewButton = findViewById(R.id.createNew);
+
+        // Add the click listener right here
+        createNewButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MyProjectsActivity.this, CreateProject.class);
+            startActivity(intent);
+        });
+    }
+    private void setupSearchFunctionality() {
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                currentSearchQuery = s.toString().toLowerCase().trim();
+                applyFilters(); // This will now also apply search filtering
+            }
+        });
+
+        // Handle search action on keyboard
+        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                // Hide keyboard
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private boolean projectMatchesSearch(Project project) {
+        String searchQuery = currentSearchQuery.toLowerCase();
+        String projectName = project.getTitle() != null ? project.getTitle().toLowerCase() : "";
+        String companyName = project.getCompanyName() != null ? project.getCompanyName().toLowerCase() : "";
+
+        return projectName.contains(searchQuery) ||
+                companyName.contains(searchQuery);
     }
 
     private void setupRecyclerView() {
@@ -170,13 +223,24 @@ public class MyProjectsActivity extends AppCompatActivity {
     private void applyFilters() {
         filteredProjects.clear();
 
-        // If no filters selected, show all projects
+        // First, filter by status if filters are selected
+        List<Project> statusFilteredProjects = new ArrayList<>();
         if (selectedFilters.isEmpty()) {
-            filteredProjects.addAll(allProjects);
+            statusFilteredProjects.addAll(allProjects);
         } else {
-            // Filter projects based on selected status filters
             for (Project project : allProjects) {
                 if (selectedFilters.contains(project.getStatus())) {
+                    statusFilteredProjects.add(project);
+                }
+            }
+        }
+
+        // Then, apply search filter
+        if (currentSearchQuery.isEmpty()) {
+            filteredProjects.addAll(statusFilteredProjects);
+        } else {
+            for (Project project : statusFilteredProjects) {
+                if (projectMatchesSearch(project)) {
                     filteredProjects.add(project);
                 }
             }

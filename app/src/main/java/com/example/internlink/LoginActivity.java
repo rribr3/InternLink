@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -401,32 +403,72 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showReactivationDialog(String userId) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Account Deactivated")
-                .setMessage("Your account is currently deactivated. Would you like to reactivate it?")
-                .setPositiveButton("Reactivate", (dialog, which) -> {
-                    FirebaseDatabase.getInstance().getReference("users")
-                            .child(userId)
-                            .child("status")
-                            .setValue("active")
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    Toast.makeText(this, "Account reactivated. Please log in again.", Toast.LENGTH_SHORT).show();
-                                    FirebaseAuth.getInstance().signOut();
-                                    // Clear biometric data
-                                    biometricPrefs.edit().clear().apply();
-                                    btnAuth.setVisibility(View.GONE);
-                                } else {
-                                    Toast.makeText(this, "Failed to reactivate. Try again later.", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    FirebaseAuth.getInstance().signOut();
-                    dialog.dismiss();
-                })
-                .setCancelable(false)
-                .show();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String deactivatedBy = snapshot.child("deactivatedBy").getValue(String.class);
+
+                if ("admin".equals(deactivatedBy)) {
+                    // Account was deactivated by admin
+                    new android.app.AlertDialog.Builder(LoginActivity.this)
+                            .setTitle("Account Deactivated")
+                            .setMessage("Your account has been deactivated by an administrator. Please contact support for assistance.")
+                            .setPositiveButton("OK", (dialog, which) -> {
+                                // Sign out the user
+                                FirebaseAuth.getInstance().signOut();
+                                // Clear biometric data
+                                biometricPrefs.edit().clear().apply();
+                                btnAuth.setVisibility(View.GONE);
+                                dialog.dismiss();
+                            })
+                            .setCancelable(false)
+                            .show();
+                } else {
+                    // Account was deactivated by user
+                    new android.app.AlertDialog.Builder(LoginActivity.this)
+                            .setTitle("Account Deactivated")
+                            .setMessage("Your account is currently deactivated. Would you like to reactivate it?")
+                            .setPositiveButton("Reactivate", (dialog, which) -> {
+                                // Update both status and deactivatedBy fields
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("status", "active");
+                                updates.put("deactivatedBy", null); // Clear the deactivatedBy field
+
+                                userRef.updateChildren(updates)
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) {
+                                                Toast.makeText(LoginActivity.this,
+                                                        "Account reactivated. Please log in again.",
+                                                        Toast.LENGTH_SHORT).show();
+                                                FirebaseAuth.getInstance().signOut();
+                                                // Clear biometric data
+                                                biometricPrefs.edit().clear().apply();
+                                                btnAuth.setVisibility(View.GONE);
+                                            } else {
+                                                Toast.makeText(LoginActivity.this,
+                                                        "Failed to reactivate. Try again later.",
+                                                        Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            })
+                            .setNegativeButton("Cancel", (dialog, which) -> {
+                                FirebaseAuth.getInstance().signOut();
+                                dialog.dismiss();
+                            })
+                            .setCancelable(false)
+                            .show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(LoginActivity.this,
+                        "Error checking account status: " + error.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+                FirebaseAuth.getInstance().signOut();
+            }
+        });
     }
 
     // Add method to disable biometric login (for logout or settings)

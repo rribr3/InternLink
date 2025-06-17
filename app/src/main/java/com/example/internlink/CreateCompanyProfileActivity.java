@@ -25,6 +25,7 @@ import com.example.internlink.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 import org.json.JSONObject;
 
@@ -33,7 +34,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import okhttp3.Call;
@@ -49,7 +53,7 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
 
     private String userId, name, email, password;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFxwei-bdH12l4QAQSN2wi9wx7yUHACctqI35BnLi3yb9mHMqEIwqpUGS5v1UPECqZF1LYyVyOEojkX631ocMI54g1o3qTOC_a6FjGuQBSLaWhPrq63xqTCH9bK1MsGoa7oEYuKlS34YzlQct0eWxKZtttVrqNPHywM4w0GcoXoDlln9MtFI4DkhgetFzgNqD3qqOGCn9w9Xhq0CYVjSk9RAuyHwnbeIwHWevLT8Zpl4rhaBCuuxT4P9DvOMo-gsmjniuKxvMNA73Ame0Pru1VM1FbELACe1WaGn7c08fVasEgN2hjscfnGF9JKhTcJKwReXHA9BFyZ61tnuP8NEy7QmkdrjLrlKrgSAW8LgS-0ZkxjCtA_mY1-BxLvTMu00H--n-cM07nhh5Nm1Q6GciXeSLs1kdxCr7rloOiWfX-gJ24h8ZFAcnKfOOFuZ0ghFm5FRqbkMxN43b_-cJq0DgrpfEwxC2foT-4nyHm0AZ9cp64F46kDFLP4inyb29k4y8MKl1YRyyM3qLN0emtzT3STTF6rVXrljfPSIY70JPxtAN-T9--8TAPQMWfjlUDOsQvhSq8ujL--ThZTyQ4N66OqbPBtwF4bC2-3foE13pK-g1iOumfP5IjcEVmtnHXJlnrmPUVo7PhXnQrK0o2A93nCUiboWDhgnrrbuJS2G_o-dZV9tx-6Tf797p9XrfNE19sNsQNm1HHY_h-xr-jlw6YM65PNqMRHhPzmsv5ax3Nt7C4-qcfpEv8NadolxevJ626ZLXIfVGmH8nGFGo9n2FC3fXEe42MudmFtYBOVC8f5KhP7XKyfbXIVi3Pzg11AgYUifmm_AILmz6DMHQKqmade0TDBx2o6fSfVL0CgBAMnEtOfmgrJfM4DiC1qvDg_9FIAPMC1EpDX5MVRSTu_40Mn2_OmyKLD6Lwly_BOJSE_NpPw949nxszzvxLv9JNmQC85yJJCL3qGljSCvb8JbllZQ_jnQtkhbA2b_wz_3_KG3rbHI9_tHd6_s7jd4OvsY3bwGUNtqBhhyXLbHTpLZIp1yBUMzgQHrUEZjsVg6Wy1T9GlykPgtjsTsQM8HvMoDywssAkM9M4k9X0QMMLdyPiqcfkZFVMaO9-pN1EQQaMZmVyRX05zftjFwyHq9gpVBfqMyCWipSznnqJJH0yaYUpUYn9T26lxtjOuPLRyYSQ2r7Lyh6wMF6YJd_PBI24glPGoMBeC0eGAv6kKFCu2vgSmzUEjvNmJczpy02aqTwdkJ6_F47LEb3cvAeeEVPeHAKF2lJ3a4KLhvS_seMfZYDq8qTrx-amE6J2CpiR6cqxT0PaObnY6d9NNxc_8mmn0hN9dcywIYJTS7aBNtxHJ_XSFHHFGCYHnIbUypOSxgjNWTxW1o1o461qxrnuEu4KdSI1C2wpCXoouiUTpg4MYlSpwE8RatJAjrcbLJLL5ZVXSgtA";
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFxQduCyv8vVpB4lpNQoZEba1_OQOSc2fwiIDqMVMHBzdkfUbgiS7KI4j-KytLRch_53XfFm4FzpSyuQKZkxGjjD7qEAVOChy_n60jVTTz6pyrR0iZbhUS--gDmU8WBv-vdm8RBrzVACoE3ckl37MQ-C1Kd041DMhyEvq5WWiWi4lKOHslUH4snqZ_ZJI5ckAYrcI-_MRvluGSkKMx9n4u8oETYbxGDzOCS4Q-P8KLDRv9HF9mTf6Jo2BQ20ubAKtk2Gc2xTJ6QqhfQcgDAVePPFufbgRL3FPlUh0Ht-bA61tOklrCk6Xaw75lDhr-Fc8OFYytOu9hWYaAsZY7BoZ5dyY1AO9XK8ucYb0YBqFHeLMHZRVqED-l-2Yqi0n10r-9lSgc_b4g-B-TsT6FSN6FjEFQcphFb9wFYZocMw9xDGHVcyKppe9BAIsijF4B4Z4pAp60jLob81E0xL-Mdzv2ukWsQhZ-jDBAg7FKXDKsWATK3YP4gQycCif0eHWdc9y1J8OSv9Lu4Wn50LcgWL-2lCApxftMjyVkqlGF4m9pEP5X-_p7wHHN7iyHjdZHAP2c_6TcRcOsshBwhw4QDCAYSDOCksuRd4J0J1DdHORfQuo5dD-l50bJDGvP6xd0qQLTi_aSOJKlcsQOeeYSJtpMRO_rVejJFfukwjkLSKVrK70Ed3u9w4GTpvc6CWr8gByCyHWXe931RU4ngtmlUyu3EbqmVNJYbE4mHeqezJ7fQPgPzGrnKBUzOP4eA1HMaRt9TEXhaQecyhR0Op_tw5cPuZ-P3htvuw0xvjO7g_C5HGozBJ0Z__wnnGBELFvT9pNGc8iqNktR6Hp-wwxnz-35DLTvGoLhPNoVlwuSLO5wo2P4esPxTUkSaUq34QbrI0IAZ8jSWAD-imzckQdg0OtYlH3vMFEDQfksUuH37n6SDoCH6hWBOiJi47DkES656WUnKJKeC6hmRuJDEePrp6J6oAOdwrIqWH0DKHJbDTeK5D-xX1LIYeh7sKxD60_1nT-A8q5hS4ZosSjIvPSv1wiqRC1hzK47MJYZI8pWL7zL4ErXWdmPZfiYZUs5ffvAVUe51HKkPxgZpT6kWei9AbsphJAvri6DYhfaVME_ZxKX_C-pWbxA9RSSPvo7JonnZ_vkinQvXtdX47wHwNi9_1VgwQ5lpZ9BUhk6HF0-dVC53w8cbC-FbMzah_Ud4jUr7xi9HFA_L81szqLnerNrtpLGIGM7Pj3ha0aUlPKq1rovrIROrTtvIptS9VjYSeb_n9J5aqmkXf9dVIk9oZbIlS2VCc2SOgiPLvtD3xxymcDHwVCtMp9v06i1EcQzKofNKa7Du3YA_oglrO0bAwHp2ovWL8j07161Ejd0DmKR-FM9uIaHIg1hF4QOwjDDRx9n_Cfl80U-5Ddyzm525PxwaHeTj6HruefLfoq8gR4FoOiXuXXw";
     private CheckBox checkAgree;
 
     private EditText editCompanyName, editIndustry, editLocation, editLinkedIn, editTwitter,
@@ -344,6 +348,7 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
         dialog.show();
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        DatabaseReference adminAnnouncementsRef = FirebaseDatabase.getInstance().getReference("announcements_by_role").child("admin");
 
         Map<String, Object> companyData = new HashMap<>();
         companyData.put("name", editCompanyName.getText().toString().trim());
@@ -362,17 +367,58 @@ public class CreateCompanyProfileActivity extends AppCompatActivity {
         if (logoUrl != null) companyData.put("logoUrl", logoUrl);
         if (uploadedLegalDocsUrl != null) companyData.put("legalDocsUrl", uploadedLegalDocsUrl);
 
-
         ref.updateChildren(companyData).addOnCompleteListener(task -> {
-            dialog.dismiss();
             if (task.isSuccessful()) {
-                Toast.makeText(this, "Profile created successfully", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(this, CompanyHomeActivity.class);
-                startActivity(intent);
-                finish();
+                // Create admin announcement for legal documents verification
+                String announcementId = adminAnnouncementsRef.push().getKey();
+                if (announcementId != null) {
+                    Map<String, Object> announcement = new HashMap<>();
+                    announcement.put("id", announcementId);
+                    announcement.put("title", "New Company Registration");
+                    announcement.put("message", "A new company \"" + editCompanyName.getText().toString().trim() +
+                            "\" has registered and needs legal documents verification.");
+                    announcement.put("type", "company_registration");
+                    announcement.put("companyId", userId);
+                    announcement.put("createdBy", userId);
+                    announcement.put("timestamp", ServerValue.TIMESTAMP);
+                    announcement.put("isRead", false);
+                    announcement.put("date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                            .format(new Date()));
+
+                    // Add the legal docs URL to the announcement
+                    if (uploadedLegalDocsUrl != null) {
+                        announcement.put("legalDocsUrl", uploadedLegalDocsUrl);
+                    }
+
+                    adminAnnouncementsRef.child(announcementId).setValue(announcement)
+                            .addOnCompleteListener(announcementTask -> {
+                                dialog.dismiss();
+                                if (announcementTask.isSuccessful()) {
+                                    Toast.makeText(CreateCompanyProfileActivity.this,
+                                            "Profile created successfully", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(CreateCompanyProfileActivity.this,
+                                            CompanyHomeActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                } else {
+                                    Toast.makeText(CreateCompanyProfileActivity.this,
+                                            "Profile created but failed to notify admin", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                } else {
+                    dialog.dismiss();
+                    Toast.makeText(CreateCompanyProfileActivity.this,
+                            "Profile created successfully", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(CreateCompanyProfileActivity.this,
+                            CompanyHomeActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
             } else {
-                Toast.makeText(this, "Failed to save profile", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                Toast.makeText(CreateCompanyProfileActivity.this,
+                        "Failed to save profile", Toast.LENGTH_SHORT).show();
             }
-});
-}
+        });
+    }
 }

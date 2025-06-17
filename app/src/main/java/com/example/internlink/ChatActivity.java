@@ -814,7 +814,7 @@ public class ChatActivity extends AppCompatActivity {
                             issue.put("createdBy", currentUserId);
                             issue.put("creatorName", creatorName);
                             issue.put("timestamp", currentTimestamp);
-                            issue.put("status", "open");
+                            issue.put("status", "pending");
                             issue.put("chatId", chatId);
                             issue.put("reportedUserId", chatWithId);
                             issue.put("reportedUserName", chatWithName);

@@ -12,6 +12,7 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -30,11 +31,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -115,23 +118,34 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
     }
 
     // UPDATED: Enhanced popup method to handle all clickable links
+    @Override
     public void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
-        popupView.setBackgroundColor(getResources().getColor(android.R.color.white));
 
+        // Find views
         TextView titleView = popupView.findViewById(R.id.announcement_title);
         TextView bodyView = popupView.findViewById(R.id.announcement_body);
         TextView dateView = popupView.findViewById(R.id.announcement_date);
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
+        // Find the announcement object
+        Announcement announcement = null;
+        for (Announcement a : announcementList) {
+            if (a.getId().equals(announcementId)) {
+                announcement = a;
+                break;
+            }
+        }
+
+        // Apply warning-specific styling if needed
+        if (announcement != null && "warning".equals(announcement.getCategory())) {
+            titleView.setTextColor(Color.RED);
+            popupView.setBackgroundColor(Color.parseColor("#FFEBEE")); // Light red background
+        }
+
         titleView.setText(title);
-
-        // Handle multiple types of clickable links
-        SpannableString spannable = createClickableSpannable(body);
-        bodyView.setText(spannable);
-        bodyView.setMovementMethod(LinkMovementMethod.getInstance());
-
+        bodyView.setText(body);
         dateView.setText("Posted: " + date);
 
         builder.setView(popupView);
@@ -141,7 +155,7 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
 
-        // Mark the announcement as read when it's opened
+        // Mark the announcement as read
         markAnnouncementAsRead(announcementId);
     }
 
@@ -214,13 +228,79 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
         userReadsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot readsSnapshot) {
+                // Load general announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements"), readsSnapshot);
+                // Load company-specific announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company"), readsSnapshot);
+                // Load warning announcements specifically for this user
+                loadWarningAnnouncements(readsSnapshot, userId);
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(CompanyAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void loadWarningAnnouncements(DataSnapshot readsSnapshot, String userId) {
+        DatabaseReference warningsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("company");
+
+        warningsRef.orderByChild("targetUserId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    String id = snap.getKey();
+                    String category = snap.child("category").getValue(String.class);
+
+                    // Only process if it's a warning announcement
+                    if ("disciplinary_action".equals(category)) {
+                        String title = snap.child("title").getValue(String.class);
+                        String message = snap.child("message").getValue(String.class);
+
+                        // Handle timestamp conversion safely
+                        long timestampLong = 0;
+                        Object timestampObj = snap.child("timestamp").getValue();
+                        if (timestampObj != null) {
+                            if (timestampObj instanceof Long) {
+                                timestampLong = (Long) timestampObj;
+                            } else if (timestampObj instanceof String) {
+                                try {
+                                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                    Date date = sdf.parse((String) timestampObj);
+                                    if (date != null) {
+                                        timestampLong = date.getTime();
+                                    }
+                                } catch (ParseException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        String severity = snap.child("severity").getValue(String.class);
+                        String priority = snap.child("priority").getValue(String.class);
+                        boolean isRead = readsSnapshot.hasChild(id);
+
+                        // Create announcement
+                        Announcement announcement = new Announcement(id, title, message, formatTimestamp(timestampLong), isRead);
+                        announcement.setTimestamp(timestampLong);
+                        announcement.setCategory("warning");
+                        announcement.setSeverity(severity);
+                        announcement.setPriority(priority);
+
+                        announcementList.add(announcement);
+                        adapter.notifyItemInserted(announcementList.size() - 1);
+                    }
+                }
+                // Sort announcements after adding warnings
+                sortAnnouncementsByDate(false);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(CompanyAnnounce.this, "Failed to load warnings", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -230,23 +310,70 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot snap : snapshot.getChildren()) {
-                    String id = snap.getKey();
-                    String title = snap.child("title").getValue(String.class);
-                    String message = snap.child("message").getValue(String.class);
-                    Long timestamp = snap.child("timestamp").getValue(Long.class);
-                    String date = formatTimestamp(timestamp);
-                    boolean isRead = readsSnapshot.hasChild(id);
+                    try {
+                        String id = snap.getKey();
+                        String title = snap.child("title").getValue(String.class);
+                        String body = snap.child("message").getValue(String.class);
 
-                    addAnnouncement(id, title, message, date, isRead, timestamp != null ? timestamp : 0);
+                        // Improved timestamp handling
+                        long timestampLong = getTimestampFromSnapshot(snap.child("timestamp"));
+
+                        String date = formatTimestamp(timestampLong);
+                        boolean isRead = readsSnapshot.hasChild(id);
+
+                        Announcement announcement = new Announcement(id, title, body, date, isRead);
+                        announcement.setTimestamp(timestampLong);
+
+                        // Check if this is a warning announcement
+                        if (snap.hasChild("category") && "disciplinary_action".equals(snap.child("category").getValue(String.class))) {
+                            announcement.setCategory("warning");
+                            announcement.setSeverity(snap.child("severity").getValue(String.class));
+                            announcement.setPriority(snap.child("priority").getValue(String.class));
+                        }
+
+                        announcementList.add(announcement);
+                    } catch (Exception e) {
+                        Log.e("CompanyAnnounce", "Error processing announcement: " + snap.getKey(), e);
+                    }
                 }
                 sortAnnouncementsByDate(false);
+                adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Toast.makeText(CompanyAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CompanyAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private long getTimestampFromSnapshot(DataSnapshot timestampSnap) {
+        if (!timestampSnap.exists()) return 0;
+
+        try {
+            Object value = timestampSnap.getValue();
+            if (value == null) return 0;
+
+            if (value instanceof Long) {
+                return (Long) value;
+            } else if (value instanceof Double) {
+                return ((Double) value).longValue();
+            } else if (value instanceof String) {
+                String timestampStr = (String) value;
+                if (timestampStr.contains("T")) {
+                    // ISO 8601 format
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                    Date date = sdf.parse(timestampStr);
+                    return date != null ? date.getTime() : 0;
+                } else {
+                    // Try parsing as numeric string
+                    return Long.parseLong(timestampStr);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("CompanyAnnounce", "Error converting timestamp: " + timestampSnap.getValue(), e);
+        }
+        return 0;
     }
 
     private String formatTimestamp(Long timestamp) {
