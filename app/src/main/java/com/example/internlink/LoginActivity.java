@@ -409,7 +409,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot snapshot) {
                 String deactivatedBy = snapshot.child("deactivatedBy").getValue(String.class);
 
-                if ("admin".equals(deactivatedBy)) {
+                if ("currentAdminId".equals(deactivatedBy)) {
                     // Account was deactivated by admin
                     new android.app.AlertDialog.Builder(LoginActivity.this)
                             .setTitle("Account Deactivated")

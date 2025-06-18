@@ -99,16 +99,21 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override public void afterTextChanged(Editable s) {}
         });
 
+        // Replace the existing chipGroup.setOnCheckedChangeListener with this:
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
             Chip chip = findViewById(checkedId);
             if (chip != null) {
                 String chipText = chip.getText().toString();
-                if (chipText.equalsIgnoreCase("Earliest")) {
-                    sortAnnouncementsByDate(true);
-                } else if (chipText.equalsIgnoreCase("Latest")) {
-                    sortAnnouncementsByDate(false);
-                } else {
-                    adapter.filterChip(chipText);
+                switch (chipText.toLowerCase()) {
+                    case "earliest":
+                        adapter.sortByDate(true);  // true for ascending (earliest first)
+                        break;
+                    case "latest":
+                        adapter.sortByDate(false); // false for descending (latest first)
+                        break;
+                    default:
+                        adapter.filterChip(chipText); // for All/Read/Unread filters
+                        break;
                 }
             }
         });
@@ -246,8 +251,75 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             public void onDataChange(DataSnapshot readsSnapshot) {
                 // Load general announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements"), readsSnapshot);
-                // Load student-specific announcements
-                loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements_by_role").child("student"), readsSnapshot);
+
+                // Load student-specific announcements - modified to check recipientId and removed type setting
+                DatabaseReference studentAnnouncementsRef = FirebaseDatabase.getInstance()
+                        .getReference("announcements_by_role")
+                        .child("student");
+
+                studentAnnouncementsRef.orderByChild("recipientId")
+                        .equalTo(userId)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot snapshot) {
+                                for (DataSnapshot snap : snapshot.getChildren()) {
+                                    try {
+                                        String id = snap.getKey();
+                                        String title = snap.child("title").getValue(String.class);
+                                        String body = snap.child("message").getValue(String.class);
+
+                                        // Handle timestamp conversion safely
+                                        long timestampLong = 0;
+                                        Object timestampObj = snap.child("timestamp").getValue();
+                                        if (timestampObj != null) {
+                                            if (timestampObj instanceof Long) {
+                                                timestampLong = (Long) timestampObj;
+                                            } else if (timestampObj instanceof String) {
+                                                try {
+                                                    timestampLong = Long.parseLong((String) timestampObj);
+                                                } catch (NumberFormatException e) {
+                                                    try {
+                                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                                        Date date = sdf.parse((String) timestampObj);
+                                                        if (date != null) {
+                                                            timestampLong = date.getTime();
+                                                        }
+                                                    } catch (ParseException pe) {
+                                                        pe.printStackTrace();
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        String date = formatTimestamp(timestampLong);
+                                        boolean isRead = readsSnapshot.hasChild(id);
+
+                                        // Create announcement without setting type
+                                        Announcement announcement = new Announcement(id, title, body, date, isRead);
+                                        announcement.setTimestamp(timestampLong);
+
+                                        // Only set category for application status announcements
+                                        if (snap.hasChild("applicant_status")) {
+                                            announcement.setCategory("application_status");
+                                        }
+
+                                        announcementList.add(announcement);
+                                        adapter.notifyItemInserted(announcementList.size() - 1);
+                                    } catch (Exception e) {
+                                        Log.e("StudentAnnounce", "Error processing student announcement: " + snap.getKey(), e);
+                                    }
+                                }
+                                // Sort announcements after adding all
+                                sortAnnouncementsByDate(false);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError error) {
+                                Toast.makeText(StudentAnnounce.this, "Failed to load student announcements", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
                 // Load warning announcements specifically for this user
                 loadWarningAnnouncements(readsSnapshot, userId);
             }

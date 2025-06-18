@@ -242,6 +242,7 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
             }
         });
     }
+
     private void loadWarningAnnouncements(DataSnapshot readsSnapshot, String userId) {
         DatabaseReference warningsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
@@ -306,12 +307,26 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
     }
 
     private void loadAnnouncementsFromRef(DatabaseReference ref, DataSnapshot readsSnapshot) {
+        // Get current company's ID
+        String currentCompanyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @SuppressLint("RestrictedApi")
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot snap : snapshot.getChildren()) {
                     try {
                         String id = snap.getKey();
+
+                        // For company-specific announcements, check if this announcement is for the current company
+                        if (ref.getPath().toString().contains("announcements_by_role/company")) {
+                            String targetCompanyId = snap.child("companyId").getValue(String.class);
+                            // Skip if this announcement is not for this company
+                            if (targetCompanyId != null && !targetCompanyId.equals(currentCompanyId)) {
+                                continue;
+                            }
+                        }
+
                         String title = snap.child("title").getValue(String.class);
                         String body = snap.child("message").getValue(String.class);
 

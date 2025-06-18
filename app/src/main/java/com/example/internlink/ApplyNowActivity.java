@@ -330,6 +330,7 @@ public class ApplyNowActivity extends AppCompatActivity {
     }
 
     private void notifyCompanyOfApplication(String companyId, String studentName, String projectTitle) {
+        // Remove companyId from path structure
         DatabaseReference announcementsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
                 .child("company");
@@ -345,6 +346,10 @@ public class ApplyNowActivity extends AppCompatActivity {
         announcementData.put("title", title);
         announcementData.put("message", message);
         announcementData.put("timestamp", timestamp);
+        announcementData.put("companyId", companyId);  // Company ID stored as a field in the announcement
+        announcementData.put("projectId", projectId);
+        announcementData.put("type", "application");
+        announcementData.put("read", false);
 
         announcementsRef.child(announcementId).setValue(announcementData);
     }

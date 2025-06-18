@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapter.ViewHolder> {
@@ -114,6 +115,23 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
                 }
                 break;
         }
+        notifyDataSetChanged();
+    }
+    // Add this method to AnnouncementAdapter.java
+    public void sortByDate(boolean ascending) {
+        // Sort both original and filtered lists
+        Collections.sort(originalList, (a1, a2) -> {
+            long t1 = a1 != null ? a1.getTimestamp() : 0;
+            long t2 = a2 != null ? a2.getTimestamp() : 0;
+            return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
+        });
+
+        // Sort filtered list and refresh view
+        Collections.sort(filteredList, (a1, a2) -> {
+            long t1 = a1 != null ? a1.getTimestamp() : 0;
+            long t2 = a2 != null ? a2.getTimestamp() : 0;
+            return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
+        });
         notifyDataSetChanged();
     }
     public interface AnnouncementClickListener {
