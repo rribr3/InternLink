@@ -81,12 +81,6 @@
                     android:text="🟢 Scheduled"
                     style="@style/Widget.Material3.Chip.Filter" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_pending"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🔵 Pending"
-                    style="@style/Widget.Material3.Chip.Filter" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_completed"
@@ -96,6 +90,40 @@
                     style="@style/Widget.Material3.Chip.Filter" />
 
             </com.google.android.material.chip.ChipGroup>
+            <!-- Add inside the LinearLayout containing search and chips -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tv_selected_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Filter by date"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginEnd="12dp"
+                    android:textSize="15sp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_pick_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pick Date"
+                    style="@style/Widget.Material3.Button.TextButton"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_clear_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Clear"
+                    android:visibility="gone"
+                    style="@style/Widget.Material3.Button.TextButton" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

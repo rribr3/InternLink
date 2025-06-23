@@ -98,6 +98,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
     }
 
     // 🔍 Filter announcements by chip type: All / Read / Unread
+    // From AnnouncementAdapter.java
     public void filterChip(String type) {
         filteredList.clear();
         switch (type) {
@@ -112,6 +113,11 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             case "Unread":
                 for (Announcement a : originalList) {
                     if (!a.isRead()) filteredList.add(a);
+                }
+                break;
+            case "Warning":
+                for (Announcement a : originalList) {
+                    if ("warning".equals(a.getCategory())) filteredList.add(a);
                 }
                 break;
         }

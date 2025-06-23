@@ -339,47 +339,73 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot snap : snapshot.getChildren()) {
-                    String id = snap.getKey();
-                    String category = snap.child("category").getValue(String.class);
-
-                    // Only process if it's a warning announcement
-                    if ("disciplinary_action".equals(category)) {
-                        String title = snap.child("title").getValue(String.class);
-                        String message = snap.child("message").getValue(String.class);
-
-                        // Handle timestamp conversion safely
-                        long timestampLong = 0;
-                        Object timestampObj = snap.child("timestamp").getValue();
-                        if (timestampObj != null) {
-                            if (timestampObj instanceof Long) {
-                                timestampLong = (Long) timestampObj;
-                            } else if (timestampObj instanceof String) {
-                                try {
-                                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                    Date date = sdf.parse((String) timestampObj);
-                                    if (date != null) {
-                                        timestampLong = date.getTime();
-                                    }
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                    try {
+                        String id = snap.getKey();
+                        if (id == null) {
+                            Log.w("StudentAnnounce", "Warning announcement has null id, skipping");
+                            continue;
                         }
 
-                        String severity = snap.child("severity").getValue(String.class);
-                        String priority = snap.child("priority").getValue(String.class);
-                        boolean isRead = readsSnapshot.hasChild(id);
+                        String category = snap.child("category").getValue(String.class);
+                        // Only process if it's a warning announcement
+                        if ("disciplinary_action".equals(category)) {
+                            String title = snap.child("title").getValue(String.class);
+                            String message = snap.child("message").getValue(String.class);
 
-                        // Create announcement
-                        Announcement announcement = new Announcement(id, title, message, formatTimestamp(timestampLong), isRead);
-                        announcement.setTimestamp(timestampLong);
-                        announcement.setCategory("warning");
-                        announcement.setSeverity(severity);
-                        announcement.setPriority(priority);
+                            // Validate required fields
+                            if (title == null || message == null) {
+                                Log.w("StudentAnnounce", "Warning announcement " + id + " missing required fields, skipping");
+                                continue;
+                            }
 
-                        announcementList.add(announcement);
-                        adapter.notifyItemInserted(announcementList.size() - 1);
+                            // Handle timestamp conversion safely
+                            long timestampLong = 0;
+                            Object timestampObj = snap.child("timestamp").getValue();
+                            if (timestampObj != null) {
+                                if (timestampObj instanceof Long) {
+                                    timestampLong = (Long) timestampObj;
+                                } else if (timestampObj instanceof String) {
+                                    try {
+                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                                        Date date = sdf.parse((String) timestampObj);
+                                        if (date != null) {
+                                            timestampLong = date.getTime();
+                                        }
+                                    } catch (ParseException e) {
+                                        Log.e("StudentAnnounce", "Error parsing timestamp for warning " + id, e);
+                                    }
+                                }
+                            }
+
+                            // Get optional fields with null checks
+                            String severity = snap.child("severity").getValue(String.class);
+                            String priority = snap.child("priority").getValue(String.class);
+                            boolean isRead = readsSnapshot.hasChild(id);
+
+                            // Create and configure announcement
+                            Announcement announcement = new Announcement(id, title, message, formatTimestamp(timestampLong), isRead);
+                            announcement.setTimestamp(timestampLong);
+                            announcement.setCategory("warning");
+
+                            // Set optional fields only if they exist
+                            if (severity != null) {
+                                announcement.setSeverity(severity);
+                            }
+                            if (priority != null) {
+                                announcement.setPriority(priority);
+                            }
+
+                            // Log warning creation for debugging
+                            Log.d("StudentAnnounce", String.format("Adding warning announcement: id=%s, title=%s, timestamp=%d",
+                                    id, title, timestampLong));
+
+                            announcementList.add(announcement);
+                            adapter.notifyItemInserted(announcementList.size() - 1);
+                        }
+                    } catch (Exception e) {
+                        Log.e("StudentAnnounce", "Error processing warning announcement: " + snap.getKey(), e);
+                        // Continue processing other announcements
                     }
                 }
                 // Sort announcements after adding warnings
@@ -388,7 +414,9 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
 
             @Override
             public void onCancelled(DatabaseError error) {
-                Toast.makeText(StudentAnnounce.this, "Failed to load warnings", Toast.LENGTH_SHORT).show();
+                String errorMsg = "Failed to load warnings: " + error.getMessage();
+                Log.e("StudentAnnounce", errorMsg, error.toException());
+                Toast.makeText(StudentAnnounce.this, errorMsg, Toast.LENGTH_SHORT).show();
             }
         });
     }

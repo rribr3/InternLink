@@ -57,6 +57,9 @@ public class ScheduleActivity extends AppCompatActivity {
     private List<ShortlistedApplicant> filteredList = new ArrayList<>();
     private String currentFilter = "All";
     private BottomNavigationView bottomNavigation;
+    private String selectedFilterDate = null;
+    private TextView tvSelectedDate;
+    private MaterialButton btnPickDate, btnClearDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +67,7 @@ public class ScheduleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_schedule);
 
         initializeViews();
+        setupDateFilter();
         setupToolbar();
         setupSearchAndFilters();
         setupBottomNavigation();
@@ -78,10 +82,40 @@ public class ScheduleActivity extends AppCompatActivity {
         searchEditText = findViewById(R.id.search_edit_text);
         filterChips = findViewById(R.id.filter_chips);
         bottomNavigation = findViewById(R.id.bottom_navigation);
+        tvSelectedDate = findViewById(R.id.tv_selected_date);
+        btnPickDate = findViewById(R.id.btn_pick_date);
+        btnClearDate = findViewById(R.id.btn_clear_date);
 
         // Setup RecyclerView with Grid Layout
         int spanCount = getResources().getConfiguration().screenWidthDp > 600 ? 2 : 1;
         recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+    }
+    private void setupDateFilter() {
+        btnPickDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog datePicker = new DatePickerDialog(
+                    this,
+                    (view, year, month, dayOfMonth) -> {
+                        calendar.set(year, month, dayOfMonth);
+                        SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+                        selectedFilterDate = sdf.format(calendar.getTime());
+                        tvSelectedDate.setText("Date: " + selectedFilterDate);
+                        btnClearDate.setVisibility(View.VISIBLE);
+                        filterApplicants(searchEditText.getText().toString());
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+            );
+            datePicker.show();
+        });
+
+        btnClearDate.setOnClickListener(v -> {
+            selectedFilterDate = null;
+            tvSelectedDate.setText("Filter by date");
+            btnClearDate.setVisibility(View.GONE);
+            filterApplicants(searchEditText.getText().toString());
+        });
     }
 
     private void setupToolbar() {
@@ -163,8 +197,12 @@ public class ScheduleActivity extends AppCompatActivity {
                     applicant.getProjectTitle().toLowerCase().contains(lowerQuery);
             boolean matchesFilter = currentFilter.equals("All") ||
                     currentFilter.equals(applicant.getInterviewStatus());
+            boolean matchesDate = true;
+            if (selectedFilterDate != null) {
+                matchesDate = selectedFilterDate.equals(applicant.getInterviewDate());
+            }
 
-            if (matchesQuery && matchesFilter) {
+            if (matchesQuery && matchesFilter && matchesDate) {
                 filteredList.add(applicant);
             }
         }
@@ -602,8 +640,6 @@ public class ScheduleActivity extends AppCompatActivity {
     interface ConflictCallback {
         void onCheckComplete(boolean canProceed);
     }
-
-
 
     void updateApplicantStatus(ShortlistedApplicant applicant, String newStatus) {
         DatabaseReference applicationRef = FirebaseDatabase.getInstance()
