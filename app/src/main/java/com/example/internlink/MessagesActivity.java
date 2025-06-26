@@ -889,36 +889,42 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                             if (otherUserId != null) {
                                 Log.d(TAG, "Found other user: " + otherUserId);
 
-                                // Create conversation object
-                                Conversation conversation = new Conversation();
-                                conversation.setChatId(chatId);
-                                conversation.setOtherUserId(otherUserId);
+                                // Check if we already have a conversation with this user
+                                if (!hasConversationWithUser(otherUserId)) {
+                                    // Create conversation object
+                                    Conversation conversation = new Conversation();
+                                    conversation.setChatId(chatId);
+                                    conversation.setOtherUserId(otherUserId);
 
-                                String lastMessage = chatSnapshot.child("lastMessage").getValue(String.class);
-                                conversation.setLastMessage(lastMessage != null ? lastMessage : "No messages yet");
+                                    String lastMessage = chatSnapshot.child("lastMessage").getValue(String.class);
+                                    conversation.setLastMessage(lastMessage != null ? lastMessage : "No messages yet");
 
-                                Long lastMessageTime = chatSnapshot.child("lastMessageTime").getValue(Long.class);
-                                conversation.setLastMessageTime(lastMessageTime != null ? lastMessageTime : 0);
+                                    Long lastMessageTime = chatSnapshot.child("lastMessageTime").getValue(Long.class);
+                                    conversation.setLastMessageTime(lastMessageTime != null ? lastMessageTime : 0);
 
-                                conversation.setLastSenderId(chatSnapshot.child("lastSenderId").getValue(String.class));
+                                    conversation.setLastSenderId(chatSnapshot.child("lastSenderId").getValue(String.class));
 
-                                // Check if conversation is archived
-                                Boolean archived = chatSnapshot.child("archivedBy").child(currentUserId).getValue(Boolean.class);
-                                conversation.setArchived(Boolean.TRUE.equals(archived));
+                                    // Check if conversation is archived
+                                    Boolean archived = chatSnapshot.child("archivedBy").child(currentUserId).getValue(Boolean.class);
+                                    conversation.setArchived(Boolean.TRUE.equals(archived));
 
-                                // Calculate unread count from notifications
-                                calculateUnreadCount(conversation, otherUserId);
+                                    // Calculate unread count from notifications
+                                    calculateUnreadCount(conversation, otherUserId);
 
-                                // Add to appropriate list
-                                if (conversation.isArchived()) {
-                                    archivedConversationsList.add(conversation);
+                                    // Add to appropriate list
+                                    if (conversation.isArchived()) {
+                                        archivedConversationsList.add(conversation);
+                                    } else {
+                                        conversationsList.add(conversation);
+                                    }
+
+                                    processedChatIds.add(chatId);
+
+                                    Log.d(TAG, "Added conversation with user: " + otherUserId + " (archived: " + conversation.isArchived() + ")");
                                 } else {
-                                    conversationsList.add(conversation);
+                                    Log.d(TAG, "Conversation with user " + otherUserId + " already exists, skipping");
+                                    processedChatIds.add(chatId);
                                 }
-
-                                processedChatIds.add(chatId);
-
-                                Log.d(TAG, "Added conversation with user: " + otherUserId + " (archived: " + conversation.isArchived() + ")");
                             }
                         }
                     }
@@ -938,6 +944,21 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
+    }
+
+    // Helper method to check if we already have a conversation with this user
+    private boolean hasConversationWithUser(String userId) {
+        for (Conversation conv : conversationsList) {
+            if (userId.equals(conv.getOtherUserId())) {
+                return true;
+            }
+        }
+        for (Conversation conv : archivedConversationsList) {
+            if (userId.equals(conv.getOtherUserId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void calculateUnreadCount(Conversation conversation, String otherUserId) {
@@ -1010,6 +1031,12 @@ public class MessagesActivity extends AppCompatActivity implements Conversations
 
                             if (otherUserId != null) {
                                 Log.d(TAG, "Found direct chat with: " + otherUserId);
+
+                                // Check if we already have a conversation with this user
+                                if (hasConversationWithUser(otherUserId)) {
+                                    Log.d(TAG, "Conversation with user " + otherUserId + " already exists, skipping direct chat");
+                                    continue;
+                                }
 
                                 // Check if there are actually messages in this chat
                                 DataSnapshot messagesSnapshot = chatSnapshot.child("messages");
