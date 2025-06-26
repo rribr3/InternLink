@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -14,6 +15,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +42,8 @@ public class QuizActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
-
+        // In your QuizActivity onCreate()
+        FirebaseAnalytics.getInstance(this).setAnalyticsCollectionEnabled(false);
         // Get quiz data from intent
         quiz = getIntent().getParcelableExtra("QUIZ_DATA");
         if (quiz == null) {
@@ -191,6 +195,16 @@ public class QuizActivity extends AppCompatActivity {
         String type = question.getType();
         List<Option> options = question.getOptions();
 
+        Log.d("QuizActivity", "Validating question " + index + ", type: " + type);
+        Log.d("QuizActivity", "Options count: " + (options != null ? options.size() : 0));
+
+        if (options != null) {
+            for (int i = 0; i < options.size(); i++) {
+                Option opt = options.get(i);
+                Log.d("QuizActivity", "Option " + i + ": " + opt.getText() + ", correct: " + opt.isCorrect());
+            }
+        }
+
         switch (type) {
             case "Multiple Choice":
                 // Check if at least one checkbox is selected
@@ -225,9 +239,10 @@ public class QuizActivity extends AppCompatActivity {
                 int selectedTfId = tfRadioGroup.getCheckedRadioButtonId();
                 if (selectedTfId == -1) return false;
 
-                boolean userAnswer = selectedTfId == 0;
-                boolean correctAnswer = options.get(0).isCorrect(); // assuming index 0 = "True"
-                if (userAnswer == correctAnswer) score++;
+                Option selectedOption = options.get(selectedTfId);
+                if (selectedOption.isCorrect()) {
+                    score++;
+                }
                 return true;
         }
 
@@ -243,10 +258,16 @@ public class QuizActivity extends AppCompatActivity {
         int percentageScore = (int) (((double) score / questions.size()) * 100);
         boolean passed = percentageScore >= quiz.getPassingScore();
 
+        // Add debug logs
+        Log.d("QuizActivity", "Final score: " + score + "/" + questions.size());
+        Log.d("QuizActivity", "Percentage score: " + percentageScore);
+        Log.d("QuizActivity", "Passing score required: " + quiz.getPassingScore());
+        Log.d("QuizActivity", "Quiz passed: " + passed);
+
         // Return result to ApplyNowActivity
         Intent resultIntent = new Intent();
         resultIntent.putExtra("QUIZ_PASSED", passed);
-        resultIntent.putExtra("QUIZ_SCORE", percentageScore);
+        resultIntent.putExtra("QUIZ_GRADE", percentageScore); // 🔧 Changed from QUIZ_SCORE to QUIZ_GRADE
         setResult(RESULT_OK, resultIntent);
         finish();
     }

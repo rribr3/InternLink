@@ -307,13 +307,9 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         if (requestCode == UPLOAD_RESUME_REQUEST_CODE && resultCode == RESULT_OK) {
             if (data != null && data.getData() != null) {
-                // Handle the uploaded resume file
-                // You would typically upload this to Firebase Storage and get a URL
-                // For simplicity, we'll just store the URI
                 resumeUrl = data.getData().toString();
                 Toast.makeText(this, "Resume uploaded successfully", Toast.LENGTH_SHORT).show();
 
-                // After resume upload, check if quiz is needed
                 if (hasQuiz) {
                     showQuizConfirmationDialog();
                 } else {
@@ -323,8 +319,11 @@ public class ApplyNowActivity extends AppCompatActivity {
         } else if (requestCode == QUIZ_REQUEST_CODE && resultCode == RESULT_OK) {
             applyButton.setEnabled(true);
             if (data != null) {
-                int quizGrade = data.getIntExtra("QUIZ_GRADE", 0); // 🎯 Retrieve grade from QuizActivity
-                submitApplicationWithGrade(quizGrade); // Proceed regardless of quiz outcome
+                int quizGrade = data.getIntExtra("QUIZ_GRADE", 0);
+                Log.d("ApplyNowActivity", "Quiz grade received: " + quizGrade); // 🔧 Add debug log
+                submitApplicationWithGrade(quizGrade);
+            } else {
+                Log.e("ApplyNowActivity", "Quiz result data is null!"); // 🔧 Add error log
             }
         }
     }
@@ -601,14 +600,35 @@ public class ApplyNowActivity extends AppCompatActivity {
                     amountText.setText(String.valueOf(currentProject.getAmount()));
                 }
 
-                if (currentProject.getQuiz() != null) {
-                    quizSection.setVisibility(View.VISIBLE);
-                    Quiz quiz = currentProject.getQuiz();
-                    quizTitle.setText(quiz.getTitle());
-                    quizInstructions.setText(quiz.getInstructions());
-                    quizTime.setText(quiz.getTimeLimit() + " mins");
-                    quizScore.setText(quiz.getPassingScore() + "%");
-                    hasQuiz = true;
+                // ✅ FIXED: Custom quiz conversion
+                DataSnapshot quizSnapshot = snapshot.child("quiz");
+                if (quizSnapshot.exists()) {
+                    try {
+                        Map<String, Object> quizData = (Map<String, Object>) quizSnapshot.getValue();
+                        if (quizData != null) {
+                            Quiz quiz = Quiz.fromFirebaseData(quizData);
+                            currentProject.setQuiz(quiz); // Make sure you have this setter in your Project class
+
+                            quizSection.setVisibility(View.VISIBLE);
+                            quizTitle.setText(quiz.getTitle());
+                            quizInstructions.setText(quiz.getInstructions());
+                            quizTime.setText(quiz.getTimeLimit() + " mins");
+                            quizScore.setText(quiz.getPassingScore() + "%");
+                            hasQuiz = true;
+
+                            Log.d("ApplyNowActivity", "Quiz loaded successfully with " +
+                                    quiz.getQuestions().size() + " questions");
+                        }
+                    } catch (Exception e) {
+                        Log.e("ApplyNowActivity", "Error loading quiz data", e);
+                        // If quiz loading fails, continue without quiz
+                        quizSection.setVisibility(View.GONE);
+                        hasQuiz = false;
+                    }
+                } else {
+                    // No quiz for this project
+                    quizSection.setVisibility(View.GONE);
+                    hasQuiz = false;
                 }
 
                 // Enable/disable company profile button based on company ID availability

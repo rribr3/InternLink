@@ -2,8 +2,11 @@ package com.example.internlink;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Quiz implements Parcelable {
@@ -107,11 +110,48 @@ public class Quiz implements Parcelable {
         this.passingScore = passingScore;
     }
 
+    // ✅ KEEP ONLY THE ORIGINAL SETTER
     public void setQuestions(List<Question> questions) {
         if (questions == null || questions.isEmpty()) {
             throw new IllegalArgumentException("Questions list cannot be null or empty");
         }
         this.questions = questions;
+    }
+
+    // ✅ ADD: Custom method to convert Firebase data
+    public static Quiz fromFirebaseData(Map<String, Object> data) {
+        Quiz quiz = new Quiz();
+
+        quiz.setTitle((String) data.get("title"));
+        quiz.setInstructions((String) data.get("instructions"));
+
+        Object timeLimitObj = data.get("timeLimit");
+        if (timeLimitObj instanceof Number) {
+            quiz.setTimeLimit(((Number) timeLimitObj).intValue());
+        }
+
+        Object passingScoreObj = data.get("passingScore");
+        if (passingScoreObj instanceof Number) {
+            quiz.setPassingScore(((Number) passingScoreObj).intValue());
+        }
+
+        // Convert questions
+        Object questionsData = data.get("questions");
+        if (questionsData instanceof List) {
+            List<Question> convertedQuestions = new ArrayList<>();
+            List<?> questionsList = (List<?>) questionsData;
+
+            for (Object questionObj : questionsList) {
+                if (questionObj instanceof Map) {
+                    Question question = Question.fromFirebaseData((Map<String, Object>) questionObj);
+                    convertedQuestions.add(question);
+                }
+            }
+
+            quiz.questions = convertedQuestions; // Set directly to avoid validation
+        }
+
+        return quiz;
     }
 
     // Helper methods
