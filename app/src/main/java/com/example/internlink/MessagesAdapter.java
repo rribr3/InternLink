@@ -30,6 +30,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_FILE_RECEIVED = 5;
     private static final int TYPE_IMAGE_SENT = 6;
     private static final int TYPE_IMAGE_RECEIVED = 7;
+    private static final int TYPE_DELETED_MESSAGE = 8;
 
     private List<Message> messages;
     private String currentUserId;
@@ -61,6 +62,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         if ("system".equals(message.getMessageType())) {
             return TYPE_SYSTEM_MESSAGE;
+        }
+        if ("deleted".equals(message.getMessageType())) {
+            return TYPE_DELETED_MESSAGE;
         }
 
         boolean isSent = message.isSentByCurrentUser(currentUserId);
@@ -97,6 +101,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 View systemView = inflater.inflate(R.layout.item_system_message, parent, false);
                 return new SystemMessageViewHolder(systemView);
 
+            case TYPE_DELETED_MESSAGE:
+                View deletedView = inflater.inflate(R.layout.item_deleted_message, parent, false);
+                return new DeletedMessageViewHolder(deletedView);
+
             case TYPE_FILE_SENT:
                 View fileSentView = inflater.inflate(R.layout.item_message_file_sent, parent, false);
                 return new FileSentViewHolder(fileSentView);
@@ -131,7 +139,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             ((ReceivedMessageViewHolder) holder).bind(message, position);
         } else if (holder instanceof SystemMessageViewHolder) {
             ((SystemMessageViewHolder) holder).bind(message);
-        } else if (holder instanceof FileSentViewHolder) {
+        } else if (holder instanceof DeletedMessageViewHolder) {
+            ((DeletedMessageViewHolder) holder).bind(message);
+        }
+        else if (holder instanceof FileSentViewHolder) {
             ((FileSentViewHolder) holder).bind(message, position);
         } else if (holder instanceof FileReceivedViewHolder) {
             ((FileReceivedViewHolder) holder).bind(message, position);
@@ -161,6 +172,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
         return currentCal.get(Calendar.DAY_OF_YEAR) != previousCal.get(Calendar.DAY_OF_YEAR) ||
                 currentCal.get(Calendar.YEAR) != previousCal.get(Calendar.YEAR);
+    }
+    static class DeletedMessageViewHolder extends RecyclerView.ViewHolder {
+        TextView tvDeletedMessage, tvTime;
+
+        DeletedMessageViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvDeletedMessage = itemView.findViewById(R.id.tv_deleted_message);
+            tvTime = itemView.findViewById(R.id.tv_time);
+        }
+
+        void bind(Message message) {
+            tvDeletedMessage.setText(message.getText()); // "A message was deleted"
+            tvTime.setText(message.getFormattedTime());
+        }
     }
 
     // Helper method to set up long click listener for message containers

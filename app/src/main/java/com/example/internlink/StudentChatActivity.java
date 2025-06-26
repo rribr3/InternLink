@@ -343,6 +343,7 @@ public class StudentChatActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         messagesAdapter = new MessagesAdapter(messagesList, currentUserId);
+        messagesAdapter.setOnMessageLongClickListener(this::handleMessageLongClick);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
@@ -721,6 +722,76 @@ public class StudentChatActivity extends AppCompatActivity {
         });
 
         popup.show();
+    }
+
+    private void handleMessageLongClick(Message message, int position) {
+        // Only allow deletion of messages sent by current user
+        if (!message.getSenderId().equals(currentUserId)) {
+            return;
+        }
+
+        showDeleteMessageDialog(message, position);
+    }
+
+    private void showDeleteMessageDialog(Message message, int position) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Message")
+                .setMessage("Are you sure you want to delete this message?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteMessage(message);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteMessage(Message message) {
+        if (message.getId() == null) {
+            Toast.makeText(this, "Cannot delete message", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show loading
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Deleting message...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        // Instead of removing the message, update it to show as deleted
+        Map<String, Object> deletedMessageData = new HashMap<>();
+        deletedMessageData.put("text", "A message was deleted");
+        deletedMessageData.put("messageType", "deleted");
+        deletedMessageData.put("deletedAt", System.currentTimeMillis());
+        deletedMessageData.put("deletedBy", currentUserId);
+
+        // Keep original timestamp and other metadata
+        deletedMessageData.put("timestamp", message.getTimestamp());
+        deletedMessageData.put("senderId", message.getSenderId());
+        deletedMessageData.put("receiverId", message.getReceiverId());
+        deletedMessageData.put("status", "deleted");
+
+        messagesRef.child(message.getId()).updateChildren(deletedMessageData)
+                .addOnSuccessListener(aVoid -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Message deleted", Toast.LENGTH_SHORT).show();
+
+                    // Update chat metadata - use "A message was deleted" as last message if this was the most recent
+                    updateChatMetadataAfterDeletion(message);
+                })
+                .addOnFailureListener(e -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(this, "Failed to delete message: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void updateChatMetadataAfterDeletion(Message deletedMessage) {
+        // Check if the deleted message was the last message
+        if (!messagesList.isEmpty()) {
+            Message lastMessage = messagesList.get(messagesList.size() - 1);
+            if (lastMessage.getId() != null && lastMessage.getId().equals(deletedMessage.getId())) {
+                // This was the last message, update metadata with "A message was deleted"
+                updateChatMetadata("A message was deleted");
+            }
+        }
     }
     private void showIssueTypeSelector() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
