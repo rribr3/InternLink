@@ -94,20 +94,14 @@
 
                                 <TextView
                                     android:id="@+id/notification_badge"
-                                    android:layout_width="18dp"
-                                    android:layout_height="18dp"
+                                    android:layout_width="7dp"
+                                    android:layout_height="7dp"
                                     android:layout_alignTop="@id/notification_bell"
-                                    android:layout_alignEnd="@id/notification_bell"
+                                    android:layout_alignStart="@id/notification_bell"
                                     android:layout_marginTop="2dp"
                                     android:layout_marginEnd="2dp"
-                                    android:background="@drawable/bg_card_blue"
-                                    android:gravity="center"
-                                    android:textColor="@color/white"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold"
-                                    android:visibility="gone"
-                                    tools:text="5"
-                                    tools:visibility="visible" />
+                                    android:background="@drawable/red_dot_background"
+                                    android:visibility="gone" />
                             </RelativeLayout>
                         </RelativeLayout>
                     </com.google.android.material.appbar.MaterialToolbar>

@@ -139,7 +139,7 @@
                     app:boxCornerRadiusTopEnd="12dp"
                     app:boxCornerRadiusTopStart="12dp"
                     app:counterEnabled="true"
-                    app:counterMaxLength="500">
+                    app:counterMaxLength="240">  <!-- CHANGE THIS FROM 500 TO 240 -->
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/description_edit_text"
@@ -148,9 +148,9 @@
                         android:gravity="top"
                         android:inputType="textMultiLine"
                         android:textColor="#0F172A"
-                        android:padding="16dp" />
+                        android:padding="16dp"
+                        android:maxLength="240" />  <!-- ADD THIS LINE TO ENFORCE THE LIMIT -->
                 </com.google.android.material.textfield.TextInputLayout>
-
                 <!-- Project Category -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/location_input_layout"

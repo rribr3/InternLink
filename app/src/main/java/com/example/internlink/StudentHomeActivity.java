@@ -1582,23 +1582,19 @@ public class StudentHomeActivity extends AppCompatActivity
                             @Override
                             public void onDataChange(@NonNull DataSnapshot roleSnapshot) {
                                 for (DataSnapshot snap : roleSnapshot.getChildren()) {
-                                    // Check if this announcement is for all students or specifically for this student
                                     String recipientId = snap.child("recipientId").getValue(String.class);
 
-                                    // Only add to unread if:
-                                    // 1. The announcement doesn't have a specific recipient (meant for all students), or
-                                    // 2. The announcement is specifically for this student
-                                    // 3. And the student hasn't read it yet
                                     if (!readsSnapshot.hasChild(snap.getKey()) &&
                                             (recipientId == null || recipientId.isEmpty() || recipientId.equals(userId))) {
                                         unreadIds.add(snap.getKey());
                                     }
                                 }
 
-                                // Update the badge
+                                // Update the badge - show red dot if there are unread notifications
                                 if (!unreadIds.isEmpty()) {
                                     notificationBadge.setVisibility(View.VISIBLE);
-                                    notificationBadge.setText(String.valueOf(unreadIds.size()));
+                                    // Remove text and just show as a red dot
+                                    notificationBadge.setText("");
                                 } else {
                                     notificationBadge.setVisibility(View.GONE);
                                 }

@@ -460,7 +460,8 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         if (notificationBadge != null) {
             if (unreadCount > 0) {
                 notificationBadge.setVisibility(View.VISIBLE);
-                notificationBadge.setText(unreadCount > 99 ? "99+" : String.valueOf(unreadCount));
+                // Remove text and just show as a red dot
+                notificationBadge.setText("");
             } else {
                 notificationBadge.setVisibility(View.GONE);
             }
