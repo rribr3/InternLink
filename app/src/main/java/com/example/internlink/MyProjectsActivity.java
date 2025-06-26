@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -47,6 +48,7 @@ public class MyProjectsActivity extends AppCompatActivity {
     private ChipGroup selectedFiltersChipGroup;
     private LinearLayout emptyStateView;
     private MaterialButton createNewButton;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private final List<String> selectedFilters = new ArrayList<>();
 
@@ -62,6 +64,7 @@ public class MyProjectsActivity extends AppCompatActivity {
         initViews();
         setupRecyclerView();
         setupClickListeners();
+        setupRefreshLayout();
         loadProjects();
         setupSearchFunctionality();
     }
@@ -76,6 +79,7 @@ public class MyProjectsActivity extends AppCompatActivity {
         emptyStateView = findViewById(R.id.empty_state);
         searchEditText = findViewById(R.id.search_edit_text);
         createNewButton = findViewById(R.id.createNew);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         // Add the click listener right here
         createNewButton.setOnClickListener(v -> {
@@ -83,6 +87,26 @@ public class MyProjectsActivity extends AppCompatActivity {
             startActivity(intent);
         });
     }
+
+    private void setupRefreshLayout() {
+        swipeRefreshLayout.setColorSchemeResources(
+                R.color.blue_500,
+                R.color.green,
+                R.color.red,
+                R.color.yellow
+        );
+
+        swipeRefreshLayout.setOnRefreshListener(this::refreshProjects);
+    }
+
+    private void refreshProjects() {
+        // Clear existing projects and reload from database
+        allProjects.clear();
+        filteredProjects.clear();
+        adapter.notifyDataSetChanged();
+        loadProjects();
+    }
+
     private void setupSearchFunctionality() {
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -192,6 +216,9 @@ public class MyProjectsActivity extends AppCompatActivity {
     }
 
     private void loadProjects() {
+        // Show the refresh indicator
+        swipeRefreshLayout.setRefreshing(true);
+
         String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("projects");
 
@@ -211,11 +238,16 @@ public class MyProjectsActivity extends AppCompatActivity {
 
                         // Apply current filters
                         applyFilters();
+
+                        // Hide the refresh indicator
+                        swipeRefreshLayout.setRefreshing(false);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(MyProjectsActivity.this, "Failed to load projects", Toast.LENGTH_SHORT).show();
+                        // Hide the refresh indicator
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
     }

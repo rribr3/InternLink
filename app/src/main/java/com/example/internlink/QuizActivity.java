@@ -6,13 +6,16 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -20,9 +23,10 @@ public class QuizActivity extends AppCompatActivity {
 
     private TextView quizTitle, quizInstructions, questionText, timerText;
     private Button nextButton, submitButton;
-    private View multipleChoiceLayout, trueFalseLayout, shortAnswerLayout;
-    private RadioGroup mcRadioGroup, tfRadioGroup;
-    private EditText shortAnswerInput;
+    private View multipleChoiceLayout, trueFalseLayout;
+    private LinearLayout mcCheckBoxContainer; // Changed from RadioGroup to LinearLayout
+    private RadioGroup tfRadioGroup;
+    private List<CheckBox> mcCheckBoxes; // Store checkboxes for validation
 
     private Quiz quiz;
     private List<Question> questions;
@@ -70,12 +74,11 @@ public class QuizActivity extends AppCompatActivity {
 
         multipleChoiceLayout = findViewById(R.id.multiple_choice_layout);
         trueFalseLayout = findViewById(R.id.true_false_layout);
-        shortAnswerLayout = findViewById(R.id.short_answer_layout);
 
-        mcRadioGroup = findViewById(R.id.mc_radio_group);
+        mcCheckBoxContainer = findViewById(R.id.mc_checkbox_container); // Updated ID
         tfRadioGroup = findViewById(R.id.tf_radio_group);
-        shortAnswerInput = findViewById(R.id.short_answer_input);
 
+        mcCheckBoxes = new ArrayList<>(); // Initialize checkbox list
 
         quizTitle.setText(quiz.getTitle());
         quizInstructions.setText(quiz.getInstructions());
@@ -133,7 +136,6 @@ public class QuizActivity extends AppCompatActivity {
         // Hide all question type layouts first
         multipleChoiceLayout.setVisibility(View.GONE);
         trueFalseLayout.setVisibility(View.GONE);
-        shortAnswerLayout.setVisibility(View.GONE);
 
         // Show the appropriate layout based on question type
         switch (question.getType()) {
@@ -143,27 +145,29 @@ public class QuizActivity extends AppCompatActivity {
             case "True/False":
                 setupTrueFalseQuestion(question);
                 break;
-            case "Short Answer":
-                setupShortAnswerQuestion(question);
-                break;
         }
     }
 
     private void setupMultipleChoiceQuestion(Question question) {
         multipleChoiceLayout.setVisibility(View.VISIBLE);
-        mcRadioGroup.removeAllViews(); // clear old options
+        mcCheckBoxContainer.removeAllViews(); // clear old options
+        mcCheckBoxes.clear(); // clear checkbox list
 
         List<Option> options = question.getOptions();
         if (options != null) {
             for (int i = 0; i < options.size(); i++) {
-                RadioButton rb = new RadioButton(this);
-                rb.setText(options.get(i).getText());
-                rb.setId(i); // ID = index
-                mcRadioGroup.addView(rb);
+                CheckBox checkBox = new CheckBox(this);
+                checkBox.setText(options.get(i).getText());
+                checkBox.setId(i); // ID = index
+                checkBox.setPadding(32, 24, 32, 24); // Add padding for better appearance
+                checkBox.setTextSize(16);
+                checkBox.setTextColor(getResources().getColor(android.R.color.black));
+
+                mcCheckBoxContainer.addView(checkBox);
+                mcCheckBoxes.add(checkBox);
             }
         }
     }
-
 
     @SuppressLint("ResourceType")
     private void setupTrueFalseQuestion(Question question) {
@@ -182,24 +186,39 @@ public class QuizActivity extends AppCompatActivity {
         tfRadioGroup.addView(falseBtn);
     }
 
-
-    private void setupShortAnswerQuestion(Question question) {
-        shortAnswerLayout.setVisibility(View.VISIBLE);
-        shortAnswerInput.setText(""); // clear previous input
-    }
-
-
     private boolean validateAndScoreQuestion(int index) {
         Question question = questions.get(index);
         String type = question.getType();
-        List<Option> options = question.getOptions(); // ✅ No conversion needed
+        List<Option> options = question.getOptions();
 
         switch (type) {
             case "Multiple Choice":
-                int selectedMcId = mcRadioGroup.getCheckedRadioButtonId();
-                if (selectedMcId == -1) return false;
+                // Check if at least one checkbox is selected
+                boolean hasSelection = false;
+                List<Integer> selectedIndices = new ArrayList<>();
 
-                if (options.get(selectedMcId).isCorrect()) score++;
+                for (int i = 0; i < mcCheckBoxes.size(); i++) {
+                    if (mcCheckBoxes.get(i).isChecked()) {
+                        hasSelection = true;
+                        selectedIndices.add(i);
+                    }
+                }
+
+                if (!hasSelection) return false; // Must select at least one option
+
+                // Get all correct answer indices
+                List<Integer> correctIndices = new ArrayList<>();
+                for (int i = 0; i < options.size(); i++) {
+                    if (options.get(i).isCorrect()) {
+                        correctIndices.add(i);
+                    }
+                }
+
+                // Check if selected answers exactly match correct answers
+                if (selectedIndices.size() == correctIndices.size() &&
+                        selectedIndices.containsAll(correctIndices)) {
+                    score++;
+                }
                 return true;
 
             case "True/False":
@@ -210,17 +229,10 @@ public class QuizActivity extends AppCompatActivity {
                 boolean correctAnswer = options.get(0).isCorrect(); // assuming index 0 = "True"
                 if (userAnswer == correctAnswer) score++;
                 return true;
-
-            case "Short Answer":
-                String answer = shortAnswerInput.getText().toString().trim();
-                return !answer.isEmpty(); // You can add keyword-matching logic later
         }
 
         return false;
     }
-
-
-
 
     private void finishQuiz() {
         if (countDownTimer != null) {
@@ -238,7 +250,6 @@ public class QuizActivity extends AppCompatActivity {
         setResult(RESULT_OK, resultIntent);
         finish();
     }
-
 
     @Override
     protected void onDestroy() {

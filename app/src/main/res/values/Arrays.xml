@@ -43,7 +43,6 @@
     <string-array name="question_types">
         <item>Multiple Choice</item>
         <item>True/False</item>
-        <item>Short Answer</item>
     </string-array>
     <!-- Language proficiency levels -->
     <string-array name="proficiency_levels">

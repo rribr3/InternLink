@@ -682,7 +682,15 @@ public class ChatActivity extends AppCompatActivity {
         popup.getMenuInflater().inflate(R.menu.menu_chat_options, popup.getMenu());
 
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.menu_create_issue) {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.menu_view_profile) {
+                viewStudentProfile();
+                return true;
+            } else if (itemId == R.id.menu_clear_chat) {
+                clearChat();
+                return true;
+            } else if (itemId == R.id.menu_create_issue) {
                 showIssueTypeSelector();
                 return true;
             }

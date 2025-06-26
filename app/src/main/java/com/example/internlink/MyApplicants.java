@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.ChipGroup;
@@ -64,6 +65,7 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
     private String currentFilter = "All";
     private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFwCy7V8cHUsYrguu9QzH4ltfyhyTn2bQ6wSzTOc6sF-ay1pTEKWxXvc5vb7hPkoC6boFkqomrr8TrUkKPPAGJ_oJ3Kj1ouxHmiZDEqVxgp8gxyu_N2UtXehXMhFhRNMWAQhKQkyKiE-r55x_rPBCPtgrPC5m83jX4ApPr7-srWbibVvKyuSE4VWyrMOJZOkWBdX8dA4zdvdHbUOqrzJblbwKNyHZQ35pZ4oJqVN3VNsFw0FB3dT-Yn4Ds2mahP5Ab7r1XpQcF2XBKE0j4Q61AGtc7NA4iaBlH2IUdwSb1K4AQXuvJ2wsZnIcL-fBK29CLaMYbm3am2J7xKt6QGKIdIV7ovUBPBkBgjaBwvSff87krs7wRjdPDTS2e-Y7gAYCAsll_S72CiVvmnG1N-57arudjaqIZ60Z1NmcbBjpTGIuN6IBsF9LH8uepuGhtvFEzId2hMGWze21tDYqmrS73aaKtux_bK7QAfd5F5VL_Zwn754XJxp1hQe1gXc4jbO3HKAjDrxCbeB5YWYitdFo57gBq21lRnbQ6cVEZJmrzSMrTmi7O_PzStHfV5Y9LLqGQk_djneQeIndh21LhwGAvHhq5AkZ44xqLuWpmQAS39gnuF-36P-pYfxy13HtZJKg0CeT9ltCep1DcRaw3a7MN3obuY3PKUYa_jfivvw5z9PX8O1qln_-lekyojpWXCV-JSG1f_GrXqSknYAIV145tOSp4QptG1_4dx0yfa8Hrl_SqHKL6wPZSiFt1Zz64iacziNia-71EcBd5Rbob2Mpjhwa31b4G4DvikS_u8qSvK0cnd2_hzJQDOfCWdi771QVRY61tleZT26_kBxXoAN-nMy4ssgQeuU9_E4hRWVZo8ysYblvgkP7JV5RU87RGOubutR1qrYtXg649_pIkp19OnnhgMWkxthA-fR0FngRCIkRmnvkJzuujdV5H419hXMrLHOVso-fr87NPw0PdeHSEtlkCaiz88au1uEz9WY4V26C2SxiElMZMPOnJxjlHdc_iI-ni9O239keG0LXGmGQg0UTmAytriDkHjfYbHJCULaJ72RWq24gQ5SFKwJn-D99dhBR35GqizR6Jxff3l_ub0cgg-4Pk3XjKM312JSAsl9cZ48pXutJvjfthvHXZKMLIWzYll-_5WlyAbW2IqzfpYnRisoYcIyr-SSFtz4IsskL9-WTn6Fw1caoGUQoXLAAHEbw8NxYBAV41-HR7lfiKqfkSjIMzxbS-l04oevW7fxeUtnylHZ85rTKRuL3zG84xHB9zEc12gnXFJ2k5DcQSFI_jIRlyofk_fy_UpazbJOA7M-vwIqOBQSOwqa3faTG8KGDotzfITScXSzQ3Ddzqngdj1GWXi7djJFVBY510PNZ8-kj1D3ZWe42XVMk2Eu8081JY13_Xm7jenT_4f8Eop80al5kupl6aI8BBAl7Ay2TsMLMflwE3DnF10AStoy668";
 
+    private SwipeRefreshLayout swipeRefreshLayout;
     private String cvUrl;
 
     @Override
@@ -75,6 +77,7 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
         setupToolbar();
         setupSearchAndFilters();
         loadApplicantsData();
+        setupSwipeRefresh();
     }
 
     private void setupSearchAndFilters() {
@@ -112,6 +115,34 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                 filterApplicants(searchEditText.getText().toString());
             });
         }
+    }
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set custom colors for the refresh indicator
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blue_500,
+                    R.color.green,
+                    R.color.red,
+                    R.color.yellow
+            );
+
+            // Set the listener for refresh action
+            swipeRefreshLayout.setOnRefreshListener(this::refreshApplicantsData);
+        }
+    }
+
+    private void refreshApplicantsData() {
+        // Clear existing data
+        projectsWithApplicantsList.clear();
+        filteredList.clear();
+
+        // If we have an adapter, notify it about the cleared data
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        // Then load fresh data
+        loadApplicantsData();
     }
 
     private void filterApplicants(String query) {
@@ -154,6 +185,7 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
         searchEditText = findViewById(R.id.search_edit_text);
         chipGroup = findViewById(R.id.filter_chip_group);
         emptyState = findViewById(R.id.empty_state);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -166,6 +198,9 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
         showLoading(true);
         fetchProjectsWithApplicants(projectsWithApplicants -> {
             showLoading(false);
+            if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
             projectsWithApplicantsList = projectsWithApplicants;
             filteredList = new ArrayList<>(projectsWithApplicantsList);
 

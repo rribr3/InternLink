@@ -72,7 +72,7 @@
             android:lineSpacingMultiplier="1.4"
             android:layout_marginBottom="24dp"/>
 
-        <!-- Multiple Choice Layout -->
+        <!-- Multiple Choice Layout (Updated to use CheckBoxes) -->
         <LinearLayout
             android:id="@+id/multiple_choice_layout"
             android:layout_width="match_parent"
@@ -80,8 +80,8 @@
             android:orientation="vertical"
             android:visibility="gone">
 
-            <RadioGroup
-                android:id="@+id/mc_radio_group"
+            <LinearLayout
+                android:id="@+id/mc_checkbox_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -133,34 +133,6 @@
                         style="@style/RadioButtonMaterial"/>
                 </com.google.android.material.card.MaterialCardView>
             </RadioGroup>
-        </LinearLayout>
-
-        <!-- Short Answer Layout -->
-        <LinearLayout
-            android:id="@+id/short_answer_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:boxBackgroundMode="outline"
-                app:boxStrokeColor="@color/primaryDark"
-                app:hintTextColor="@color/primaryDark">
-
-                <EditText
-                    android:id="@+id/short_answer_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Type your answer here"
-                    android:minHeight="100dp"
-                    android:gravity="top"
-                    android:inputType="textMultiLine"
-                    android:padding="16dp"/>
-            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <!-- Action Buttons -->
