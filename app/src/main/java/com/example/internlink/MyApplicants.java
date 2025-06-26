@@ -230,6 +230,7 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
         return FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
+    // Update the fetchProjectsWithApplicants method to include quiz grade
     private void fetchProjectsWithApplicants(ProjectsWithApplicantsCallback callback) {
         String companyId = getCurrentCompanyUid();
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
@@ -261,8 +262,13 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                             String status = appSnapshot.child("status").getValue(String.class);
                             Long appliedDate = appSnapshot.child("appliedDate").getValue(Long.class);
 
+                            // Fetch quiz grade from application
+                            Integer quizGrade = appSnapshot.child("quizGrade").getValue(Integer.class);
+                            if (quizGrade == null) quizGrade = -1; // Default to -1 if no quiz taken
+
                             if (userId != null && projectId != null) {
                                 // Get user and project details
+                                Integer finalQuizGrade = quizGrade;
                                 usersRef.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot userSnapshot) {
@@ -277,6 +283,9 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                                             public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
                                                 String projectTitle = projectSnapshot.child("title").getValue(String.class);
 
+                                                // Check if project has a quiz
+                                                boolean hasQuiz = projectSnapshot.child("quiz").exists();
+
                                                 if (userName != null && projectTitle != null) {
                                                     // Create or get existing project
                                                     if (!projectsMap.containsKey(projectId)) {
@@ -287,7 +296,7 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                                                         projectsMap.put(projectId, project);
                                                     }
 
-                                                    // Create applicant with more details
+                                                    // Create applicant with more details including quiz grade
                                                     Applicant applicant = new Applicant(
                                                             userName,
                                                             createApplicantPosition(userBio, userUniversity, userDegree),
@@ -297,6 +306,11 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                                                     applicant.setUserId(userId);
                                                     applicant.setProjectId(projectId);
                                                     applicant.setAppliedDate(appliedDate);
+
+                                                    // Set quiz grade only if project has a quiz
+                                                    if (hasQuiz) {
+                                                        applicant.setQuizGrade(finalQuizGrade);
+                                                    }
 
                                                     projectsMap.get(projectId).getApplicants().add(applicant);
                                                 }
@@ -354,7 +368,6 @@ public class MyApplicants extends AppCompatActivity implements EnhancedApplicant
                     }
                 });
     }
-
     private String createApplicantPosition(String bio, String university, String degree) {
         StringBuilder position = new StringBuilder();
 

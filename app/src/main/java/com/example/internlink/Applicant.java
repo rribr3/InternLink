@@ -9,6 +9,7 @@ public class Applicant {
     private String projectId;
     private Long appliedDate;
     private String cvUrl;
+    private int quizGrade;
 
     // ✅ Default constructor (needed for Firebase)
     public Applicant() {
@@ -20,6 +21,7 @@ public class Applicant {
         this.position = position;
         this.status = status;
         this.profileImageResId = profileImageResId;
+        this.quizGrade = -1;
     }
 
     // ✅ Constructor with all parameters (useful for creating complete objects)
@@ -33,7 +35,11 @@ public class Applicant {
         this.projectId = projectId;
         this.appliedDate = appliedDate;
         this.cvUrl = cvUrl;
+        this.quizGrade = -1;
     }
+
+    public int getQuizGrade() { return quizGrade; }
+    public void setQuizGrade(int quizGrade) { this.quizGrade = quizGrade; }
 
     // Getters and Setters
     public String getName() {
@@ -149,6 +155,7 @@ public class Applicant {
     public boolean hasCv() {
         return cvUrl != null && !cvUrl.trim().isEmpty();
     }
+    public boolean hasQuizGrade() { return quizGrade >= 0; }
 
     // ✅ Helper method to get formatted applied date
     public String getFormattedAppliedDate() {

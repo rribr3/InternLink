@@ -66,6 +66,25 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="9sp"
                     tools:text="Computer Science Student at MIT" />
+
+                <LinearLayout
+                    android:id="@+id/quiz_grade_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/quiz_grade_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quiz: 85%"
+                        android:textSize="10sp"
+                        android:textColor="@color/blue_500"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <!-- Status badge (smaller) -->
