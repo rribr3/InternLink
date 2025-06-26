@@ -59,6 +59,10 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
     private MaterialToolbar toolbar;
     private List<Announcement> announcementList = new ArrayList<>();
 
+    // ADD: Loading coordination variables
+    private int loadingOperationsCount = 0;
+    private final Object loadingLock = new Object();
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +84,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
             @Override
             public void showAnnouncementPopup(String id, String title, String body, String date) {
-                StudentAnnounce.this.showAnnouncementPopup(id, title, body, date); // ☑ this calls the actual method in your Activity
+                StudentAnnounce.this.showAnnouncementPopup(id, title, body, date);
             }
         });
 
@@ -99,24 +103,41 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Replace the existing chipGroup.setOnCheckedChangeListener with this:
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
             Chip chip = findViewById(checkedId);
             if (chip != null) {
                 String chipText = chip.getText().toString();
                 switch (chipText.toLowerCase()) {
                     case "earliest":
-                        adapter.sortByDate(true);  // true for ascending (earliest first)
+                        adapter.sortByDate(true);
                         break;
                     case "latest":
-                        adapter.sortByDate(false); // false for descending (latest first)
+                        adapter.sortByDate(false);
                         break;
                     default:
-                        adapter.filterChip(chipText); // for All/Read/Unread filters
+                        adapter.filterChip(chipText);
                         break;
                 }
             }
         });
+    }
+
+    // ADD: Method to coordinate loading completion
+    private void checkAndFinalizeLoading() {
+        synchronized (loadingLock) {
+            loadingOperationsCount--;
+            Log.d("StudentAnnounce", "Loading operation completed. Remaining: " + loadingOperationsCount);
+
+            if (loadingOperationsCount <= 0) {
+                // All operations complete, finalize the UI on main thread
+                runOnUiThread(() -> {
+                    Log.d("StudentAnnounce", "All announcements loaded. Total count: " + announcementList.size());
+                    sortAnnouncementsByDate(false);
+                    // CRITICAL FIX: Refresh the adapter's filtered list after all data is loaded
+                    adapter.filterChip("All");
+                });
+            }
+        }
     }
 
     private void addAnnouncement(String announcementId, String title, String body, String date, boolean isRead, long timestamp) {
@@ -126,19 +147,16 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         adapter.notifyItemInserted(announcementList.size() - 1);
     }
 
-    // UPDATED: Enhanced popup method to handle clickable links for students
     @Override
     public void showAnnouncementPopup(String announcementId, String title, String body, String date) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View popupView = LayoutInflater.from(this).inflate(R.layout.announcement_item, null);
 
-        // Find views
         TextView titleView = popupView.findViewById(R.id.announcement_title);
         TextView bodyView = popupView.findViewById(R.id.announcement_body);
         TextView dateView = popupView.findViewById(R.id.announcement_date);
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
-        // Find the announcement object
         Announcement announcement = null;
         for (Announcement a : announcementList) {
             if (a.getId().equals(announcementId)) {
@@ -147,15 +165,8 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             }
         }
 
-        // Apply warning-specific styling if needed
         if (announcement != null && "warning".equals(announcement.getCategory())) {
             titleView.setTextColor(Color.RED);
-            //popupView.findViewById(R.id.warning_icon).setVisibility(View.VISIBLE);
-
-            // Add severity indicator
-            /*if ("high".equals(announcement.getPriority())) {
-                popupView.findViewById(R.id.priority_indicator).setVisibility(View.VISIBLE);
-            }*/
         }
 
         titleView.setText(title);
@@ -168,22 +179,17 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         dialog.show();
 
         closeIcon.setOnClickListener(v -> dialog.dismiss());
-
-        // Mark the announcement as read
         markAnnouncementAsRead(announcementId);
     }
 
-    // NEW: Method to create clickable spans for student-specific links
     private SpannableString createClickableSpannable(String body) {
         SpannableString spannable = new SpannableString(body);
 
-        // Handle [View Details] links - navigate to applications
         handleClickableLink(spannable, body, "[View Details]", () -> {
             Intent intent = new Intent(StudentAnnounce.this, StudentHomeActivity.class);
             startActivity(intent);
         });
 
-        // Handle [View Status] links - navigate to applications
         handleClickableLink(spannable, body, "[View Status]", () -> {
             Intent intent = new Intent(StudentAnnounce.this, StudentHomeActivity.class);
             startActivity(intent);
@@ -192,7 +198,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         return spannable;
     }
 
-    // NEW: Helper method to handle clickable links
     private void handleClickableLink(SpannableString spannable, String body, String linkText, Runnable action) {
         int start = body.indexOf(linkText);
         if (start != -1) {
@@ -216,7 +221,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         }
     }
 
-    // NEW: Method to mark announcement as read (similar to company version)
     private void markAnnouncementAsRead(String announcementId) {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance()
@@ -239,9 +243,15 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 });
     }
 
+    // UPDATED: Coordinate all async operations with proper completion handling
     private void loadAllAnnouncements() {
         announcementList.clear();
         adapter.notifyDataSetChanged();
+
+        // Initialize loading counter for 3 async operations
+        synchronized (loadingLock) {
+            loadingOperationsCount = 3;
+        }
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference userReadsRef = FirebaseDatabase.getInstance().getReference("user_reads").child(userId);
@@ -252,7 +262,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 // Load general announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements"), readsSnapshot);
 
-                // Load student-specific announcements - modified to check recipientId and removed type setting
+                // Load student-specific announcements
                 DatabaseReference studentAnnouncementsRef = FirebaseDatabase.getInstance()
                         .getReference("announcements_by_role")
                         .child("student");
@@ -268,7 +278,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                         String title = snap.child("title").getValue(String.class);
                                         String body = snap.child("message").getValue(String.class);
 
-                                        // Handle timestamp conversion safely
                                         long timestampLong = 0;
                                         Object timestampObj = snap.child("timestamp").getValue();
                                         if (timestampObj != null) {
@@ -295,28 +304,26 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                         String date = formatTimestamp(timestampLong);
                                         boolean isRead = readsSnapshot.hasChild(id);
 
-                                        // Create announcement without setting type
                                         Announcement announcement = new Announcement(id, title, body, date, isRead);
                                         announcement.setTimestamp(timestampLong);
 
-                                        // Only set category for application status announcements
                                         if (snap.hasChild("applicant_status")) {
                                             announcement.setCategory("application_status");
                                         }
 
                                         announcementList.add(announcement);
-                                        adapter.notifyItemInserted(announcementList.size() - 1);
                                     } catch (Exception e) {
                                         Log.e("StudentAnnounce", "Error processing student announcement: " + snap.getKey(), e);
                                     }
                                 }
-                                // Sort announcements after adding all
-                                sortAnnouncementsByDate(false);
+                                // REMOVED: Individual sorting and notify - now handled centrally
+                                checkAndFinalizeLoading();
                             }
 
                             @Override
                             public void onCancelled(DatabaseError error) {
                                 Toast.makeText(StudentAnnounce.this, "Failed to load student announcements", Toast.LENGTH_SHORT).show();
+                                checkAndFinalizeLoading();
                             }
                         });
 
@@ -327,9 +334,16 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                // Handle complete failure
+                synchronized (loadingLock) {
+                    loadingOperationsCount = 0;
+                    runOnUiThread(() -> adapter.filterChip("All"));
+                }
             }
         });
     }
+
+    // UPDATED: Remove individual UI updates
     private void loadWarningAnnouncements(DataSnapshot readsSnapshot, String userId) {
         DatabaseReference warningsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
@@ -347,18 +361,15 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         }
 
                         String category = snap.child("category").getValue(String.class);
-                        // Only process if it's a warning announcement
                         if ("disciplinary_action".equals(category)) {
                             String title = snap.child("title").getValue(String.class);
                             String message = snap.child("message").getValue(String.class);
 
-                            // Validate required fields
                             if (title == null || message == null) {
                                 Log.w("StudentAnnounce", "Warning announcement " + id + " missing required fields, skipping");
                                 continue;
                             }
 
-                            // Handle timestamp conversion safely
                             long timestampLong = 0;
                             Object timestampObj = snap.child("timestamp").getValue();
                             if (timestampObj != null) {
@@ -378,17 +389,14 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                 }
                             }
 
-                            // Get optional fields with null checks
                             String severity = snap.child("severity").getValue(String.class);
                             String priority = snap.child("priority").getValue(String.class);
                             boolean isRead = readsSnapshot.hasChild(id);
 
-                            // Create and configure announcement
                             Announcement announcement = new Announcement(id, title, message, formatTimestamp(timestampLong), isRead);
                             announcement.setTimestamp(timestampLong);
                             announcement.setCategory("warning");
 
-                            // Set optional fields only if they exist
                             if (severity != null) {
                                 announcement.setSeverity(severity);
                             }
@@ -396,20 +404,18 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                 announcement.setPriority(priority);
                             }
 
-                            // Log warning creation for debugging
                             Log.d("StudentAnnounce", String.format("Adding warning announcement: id=%s, title=%s, timestamp=%d",
                                     id, title, timestampLong));
 
                             announcementList.add(announcement);
-                            adapter.notifyItemInserted(announcementList.size() - 1);
+                            // REMOVED: Individual notifyItemInserted
                         }
                     } catch (Exception e) {
                         Log.e("StudentAnnounce", "Error processing warning announcement: " + snap.getKey(), e);
-                        // Continue processing other announcements
                     }
                 }
-                // Sort announcements after adding warnings
-                sortAnnouncementsByDate(false);
+                // REMOVED: Individual sorting - now handled centrally
+                checkAndFinalizeLoading();
             }
 
             @Override
@@ -417,10 +423,12 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 String errorMsg = "Failed to load warnings: " + error.getMessage();
                 Log.e("StudentAnnounce", errorMsg, error.toException());
                 Toast.makeText(StudentAnnounce.this, errorMsg, Toast.LENGTH_SHORT).show();
+                checkAndFinalizeLoading();
             }
         });
     }
 
+    // UPDATED: Remove individual UI updates
     private void loadAnnouncementsFromRef(DatabaseReference ref, DataSnapshot readsSnapshot) {
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -431,7 +439,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         String title = snap.child("title").getValue(String.class);
                         String body = snap.child("message").getValue(String.class);
 
-                        // Handle timestamp conversion safely
                         long timestampLong = 0;
                         DataSnapshot timestampSnap = snap.child("timestamp");
                         if (timestampSnap.exists()) {
@@ -442,7 +449,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                 String timestampStr = (String) timestampValue;
                                 try {
                                     if (timestampStr.contains("T")) {
-                                        // ISO 8601 format
                                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
                                         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
                                         Date date = sdf.parse(timestampStr);
@@ -450,14 +456,12 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                             timestampLong = date.getTime();
                                         }
                                     } else {
-                                        // Numeric string format
                                         timestampLong = Long.parseLong(timestampStr);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                             } else if (timestampValue instanceof Double) {
-                                // Handle double timestamp
                                 timestampLong = ((Double) timestampValue).longValue();
                             }
                         }
@@ -465,11 +469,9 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         String date = formatTimestamp(timestampLong);
                         boolean isRead = readsSnapshot.hasChild(id);
 
-                        // Create announcement with basic info
                         Announcement announcement = new Announcement(id, title, body, date, isRead);
                         announcement.setTimestamp(timestampLong);
 
-                        // Check if this is a warning announcement
                         if (snap.hasChild("category") && "disciplinary_action".equals(snap.child("category").getValue(String.class))) {
                             announcement.setCategory("warning");
                             announcement.setSeverity(snap.child("severity").getValue(String.class));
@@ -482,14 +484,14 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                     }
                 }
 
-                // Sort and update UI after adding all announcements
-                sortAnnouncementsByDate(false);
-                adapter.notifyDataSetChanged();
+                // REMOVED: Individual sorting and UI updates - now handled centrally
+                checkAndFinalizeLoading();
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
+                checkAndFinalizeLoading();
             }
         });
     }
@@ -509,10 +511,8 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         if (announcementList == null || announcementList.isEmpty()) return;
 
         Collections.sort(announcementList, (a1, a2) -> {
-            // Handle null or invalid timestamps
             long t1 = a1 != null ? a1.getTimestamp() : 0;
             long t2 = a2 != null ? a2.getTimestamp() : 0;
-
             return ascending ? Long.compare(t1, t2) : Long.compare(t2, t1);
         });
 
