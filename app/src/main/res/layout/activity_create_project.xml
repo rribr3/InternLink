@@ -225,9 +225,10 @@
                         android:id="@+id/skills_auto_complete"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
+                        android:inputType="text"
                         android:padding="16dp"
                         android:textColor="#0F172A"
+                        android:imeOptions="actionDone"
                         android:completionHint="Select multiple skills"
                         android:completionThreshold="1"
                         tools:ignore="SpeakableTextPresentCheck" />

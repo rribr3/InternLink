@@ -6,8 +6,10 @@ import android.app.ProgressDialog;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -250,28 +252,63 @@ public class CreateProject extends AppCompatActivity {
     }
 
     private void setupSkillsInput() {
+        // Keep existing predefined skills dropdown
+        String[] predefinedSkills = getResources().getStringArray(R.array.tech_skills);
+        ArrayAdapter<String> skillsAdapter = new ArrayAdapter<>(this, R.layout.dropdown_item, predefinedSkills);
+        skillsAutoComplete.setAdapter(skillsAdapter);
+
+        // Handle both dropdown selection and custom input
         skillsAutoComplete.setOnItemClickListener((parent, view, position, id) -> {
             String selectedSkill = (String) parent.getItemAtPosition(position);
             addSkillChip(selectedSkill);
             skillsAutoComplete.setText("");
         });
 
-        skillsAutoComplete.setOnKeyListener((v, keyCode, event) -> {
-            if (keyCode == 66) { // Enter key
-                String skill = skillsAutoComplete.getText().toString().trim();
-                if (!skill.isEmpty()) {
-                    addSkillChip(skill);
+        // Add custom skill on Enter/Done key press
+        skillsAutoComplete.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                String customSkill = skillsAutoComplete.getText().toString().trim();
+                if (!customSkill.isEmpty()) {
+                    addSkillChip(customSkill);
                     skillsAutoComplete.setText("");
                 }
                 return true;
             }
             return false;
         });
+
+        // Allow free text input
+        skillsAutoComplete.setThreshold(0);
+        skillsAutoComplete.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                String customSkill = skillsAutoComplete.getText().toString().trim();
+                if (!customSkill.isEmpty()) {
+                    addSkillChip(customSkill);
+                    skillsAutoComplete.setText("");
+                }
+            }
+        });
     }
 
     private void addSkillChip(String skill) {
+        // Validate skill before adding
+        if (skill == null || skill.trim().isEmpty()) {
+            return;
+        }
+
+        // Check for duplicates
+        for (int i = 0; i < skillsChipGroup.getChildCount(); i++) {
+            Chip existingChip = (Chip) skillsChipGroup.getChildAt(i);
+            if (existingChip.getText().toString().equalsIgnoreCase(skill.trim())) {
+                Toast.makeText(this, "Skill already added", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // Add the chip
         Chip chip = new Chip(this);
-        chip.setText(skill);
+        chip.setText(skill.trim());
         chip.setCloseIconVisible(true);
         chip.setOnCloseIconClickListener(v -> skillsChipGroup.removeView(chip));
         skillsChipGroup.addView(chip);
