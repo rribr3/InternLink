@@ -114,4 +114,14 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
+    <style name="DialogTheme" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    </style>
+    <!-- Add to your styles.xml -->
+    <style name="DisabledButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:alpha">0.5</item>
+        <item name="android:enabled">false</item>
+    </style>
 </resources>

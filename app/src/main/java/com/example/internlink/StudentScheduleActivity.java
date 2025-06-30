@@ -1,11 +1,15 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -116,6 +120,175 @@ public class StudentScheduleActivity extends AppCompatActivity {
                     .setPositiveButton("Got it!", null)
                     .setIcon(android.R.drawable.ic_dialog_info)
                     .show();
+        }
+    }
+
+    private void showSingleInterviewDialog(InterviewEvent interview) {
+        Dialog dialog = new Dialog(this, R.style.DialogTheme);
+        dialog.setContentView(R.layout.dialog_calendar_int);
+
+        // Find views
+        TextView dateTimeText = dialog.findViewById(R.id.interview_datetime);
+        TextView projectText = dialog.findViewById(R.id.interview_project);
+        TextView companyText = dialog.findViewById(R.id.interview_company);
+        TextView typeText = dialog.findViewById(R.id.interview_type);
+        View locationContainer = dialog.findViewById(R.id.location_container);
+        TextView locationText = dialog.findViewById(R.id.interview_location);
+        View zoomContainer = dialog.findViewById(R.id.zoom_container);
+        TextView zoomText = dialog.findViewById(R.id.interview_zoom);
+        ImageView closeBtn = dialog.findViewById(R.id.btn_close);
+
+        Button calendarBtn = dialog.findViewById(R.id.btn_calendar);
+        Button chatBtn = dialog.findViewById(R.id.btn_chat);
+        Button joinBtn = dialog.findViewById(R.id.btn_join);
+
+        // Set content
+        dateTimeText.setText(String.format("%s at %s", interview.date, interview.time));
+        projectText.setText(interview.projectTitle != null ? interview.projectTitle : "Loading...");
+        companyText.setText(interview.companyName != null ? interview.companyName : "Loading...");
+        typeText.setText(String.format("%s (%s)", interview.type, interview.method));
+
+        // Show/hide location or zoom based on type
+        if ("In-person".equals(interview.type) && !interview.location.isEmpty()) {
+            locationContainer.setVisibility(View.VISIBLE);
+            locationText.setText(interview.location);
+            zoomContainer.setVisibility(View.GONE);
+        } else if ("Online".equals(interview.type) && "Zoom".equals(interview.method)
+                && !interview.zoomLink.isEmpty()) {
+            zoomContainer.setVisibility(View.VISIBLE);
+            zoomText.setText(interview.zoomLink);
+            locationContainer.setVisibility(View.GONE);
+        } else {
+            locationContainer.setVisibility(View.GONE);
+            zoomContainer.setVisibility(View.GONE);
+        }
+
+        // Check if it's interview time
+        boolean isInterviewTime = isInterviewTimeNow(interview);
+        boolean isInterviewDay = isInterviewDay(interview);
+
+        // Configure buttons
+        chatBtn.setEnabled(isInterviewDay); // Only enable on the day of interview
+        if (!isInterviewDay) {
+            chatBtn.setAlpha(0.5f);
+            chatBtn.setText("Chat available on interview day");
+        } else {
+            chatBtn.setAlpha(1.0f);
+            chatBtn.setText("Chat with Company");
+        }
+
+        if (isInterviewTime) {
+            calendarBtn.setVisibility(View.GONE);
+            joinBtn.setVisibility(View.VISIBLE);
+            joinBtn.setEnabled(true);
+            joinBtn.setAlpha(1.0f);
+
+            if ("Online".equals(interview.type) && "Zoom".equals(interview.method)
+                    && !interview.zoomLink.isEmpty()) {
+                joinBtn.setText("Join Zoom");
+                joinBtn.setOnClickListener(v -> {
+                    openZoomLink(interview.zoomLink);
+                    dialog.dismiss();
+                });
+            } else {
+                joinBtn.setVisibility(View.GONE);
+            }
+        } else {
+            if (isInterviewDay) {
+                joinBtn.setVisibility(View.VISIBLE);
+                joinBtn.setEnabled(false);
+                joinBtn.setAlpha(0.5f);
+                SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                try {
+                    Date interviewTime = timeFormat.parse(interview.time);
+                    joinBtn.setText("Available at " + timeFormat.format(interviewTime));
+                } catch (ParseException e) {
+                    joinBtn.setText("Available at " + interview.time);
+                }
+            } else {
+                joinBtn.setVisibility(View.GONE);
+            }
+            calendarBtn.setVisibility(View.VISIBLE);
+        }
+
+        // Set click listeners
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        chatBtn.setOnClickListener(v -> {
+            if (isInterviewDay) {
+                openChatWithCompany(interview);
+                dialog.dismiss();
+            }
+        });
+
+        calendarBtn.setOnClickListener(v -> {
+            addToCalendar(interview);
+            dialog.dismiss();
+        });
+
+        // Configure buttons
+        if (isInterviewTime) {
+            calendarBtn.setVisibility(View.GONE);
+            joinBtn.setVisibility(View.VISIBLE);
+            chatBtn.setText("Start Interview Chat");
+
+            if ("Online".equals(interview.type) && "Zoom".equals(interview.method)
+                    && !interview.zoomLink.isEmpty()) {
+                joinBtn.setText("Join Zoom");
+                joinBtn.setOnClickListener(v -> {
+                    openZoomLink(interview.zoomLink);
+                    dialog.dismiss();
+                });
+            } else {
+                joinBtn.setVisibility(View.GONE);
+            }
+        } else {
+            joinBtn.setVisibility(View.GONE);
+            calendarBtn.setVisibility(View.VISIBLE);
+            chatBtn.setText("Chat with Company");
+        }
+
+        // Set click listeners
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
+
+        chatBtn.setOnClickListener(v -> {
+            openChatWithCompany(interview);
+            dialog.dismiss();
+        });
+
+        calendarBtn.setOnClickListener(v -> {
+            addToCalendar(interview);
+            dialog.dismiss();
+        });
+
+        // Show dialog
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+        dialog.show();
+    }
+    private boolean isInterviewDay(InterviewEvent interview) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy", Locale.getDefault());
+            Date interviewDate = dateFormat.parse(interview.date);
+            Date today = new Date();
+
+            Calendar interviewCal = Calendar.getInstance();
+            interviewCal.setTime(interviewDate);
+
+            Calendar todayCal = Calendar.getInstance();
+            todayCal.setTime(today);
+
+            return (interviewCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                    interviewCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR));
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -389,66 +562,7 @@ public class StudentScheduleActivity extends AppCompatActivity {
         }
     }
 
-    private void showSingleInterviewDialog(InterviewEvent interview) {
-        StringBuilder details = new StringBuilder();
-        details.append("📅 Date: ").append(interview.date).append("\n");
-        details.append("🕐 Time: ").append(interview.time).append("\n");
-        details.append("🏢 Project: ").append(interview.projectTitle != null ? interview.projectTitle : "Loading...").append("\n");
-        details.append("🏛️ Company: ").append(interview.companyName != null ? interview.companyName : "Loading...").append("\n");
-        details.append("💻 Type: ").append(interview.type).append(" (").append(interview.method).append(")\n");
 
-        if ("In-person".equals(interview.type) && !interview.location.isEmpty()) {
-            details.append("📍 Location: ").append(interview.location).append("\n");
-        }
-
-        if ("Online".equals(interview.type) && "Zoom".equals(interview.method) && !interview.zoomLink.isEmpty()) {
-            details.append("🔗 Zoom Link: ").append(interview.zoomLink).append("\n");
-        }
-
-        // Check if it's the interview day and within time range
-        boolean isInterviewTime = isInterviewTimeNow(interview);
-
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setTitle("📋 Interview Details")
-                .setMessage(details.toString())
-                .setPositiveButton("✓ Got it", null);
-
-        // Add conditional buttons based on interview type and timing
-        if (isInterviewTime) {
-            // Interview is happening now or very soon
-            if ("Online".equals(interview.type) && "Zoom".equals(interview.method) && !interview.zoomLink.isEmpty()) {
-                // Online Zoom interview: Show both chat and zoom buttons
-                builder.setNeutralButton("🔗 Join Zoom", (dialog, which) -> {
-                    openZoomLink(interview.zoomLink);
-                });
-                builder.setNegativeButton("💬 Chat with Company", (dialog, which) -> {
-                    openChatWithCompany(interview);
-                });
-            } else if ("Online".equals(interview.type) && "Messages".equalsIgnoreCase(interview.method)) {
-                // Online Messages/Chat only interview: Show chat button
-                builder.setNegativeButton("💬 Start Chat Interview", (dialog, which) -> {
-                    openChatWithCompany(interview);
-                });
-            } else if ("In-person".equals(interview.type)) {
-                // In-person interview: Show chat button for coordination
-                builder.setNegativeButton("💬 Chat with Company", (dialog, which) -> {
-                    openChatWithCompany(interview);
-                });
-            }
-        } else {
-            // Interview is not happening now: Show calendar add button
-            builder.setNegativeButton("📅 Add to Calendar", (dialog, which) -> {
-                addToCalendar(interview);
-            });
-
-            // Always show chat option for coordination
-            builder.setNeutralButton("💬 Chat with Company", (dialog, which) -> {
-                openChatWithCompany(interview);
-            });
-        }
-
-        builder.show();
-    }
 
     private boolean isInterviewTimeNow(InterviewEvent interview) {
         try {
