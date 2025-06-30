@@ -525,9 +525,6 @@ public class ScheduleActivity extends AppCompatActivity {
         TextView titleText = dialogView.findViewById(R.id.dialog_title);
         TextInputEditText dateInput = dialogView.findViewById(R.id.et_date);
         TextInputEditText timeInput = dialogView.findViewById(R.id.et_time);
-        TextInputEditText modeInput = dialogView.findViewById(R.id.et_mode);
-        TextInputEditText locationInput = dialogView.findViewById(R.id.et_location);
-        TextInputEditText notesInput = dialogView.findViewById(R.id.et_notes);
         MaterialButton saveButton = dialogView.findViewById(R.id.btn_save);
         MaterialButton cancelButton = dialogView.findViewById(R.id.btn_cancel);
 
@@ -536,9 +533,6 @@ public class ScheduleActivity extends AppCompatActivity {
         // Pre-fill existing data
         if (applicant.getInterviewDate() != null) dateInput.setText(applicant.getInterviewDate());
         if (applicant.getInterviewTime() != null) timeInput.setText(applicant.getInterviewTime());
-        if (applicant.getInterviewMode() != null) modeInput.setText(applicant.getInterviewMode());
-        if (applicant.getInterviewLocation() != null) locationInput.setText(applicant.getInterviewLocation());
-        if (applicant.getInterviewNotes() != null) notesInput.setText(applicant.getInterviewNotes());
 
         // Disable keyboard for date and time inputs
         dateInput.setKeyListener(null);
@@ -571,11 +565,8 @@ public class ScheduleActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> {
             String date = dateInput.getText().toString().trim();
             String time = timeInput.getText().toString().trim();
-            String mode = modeInput.getText().toString().trim();
-            String location = locationInput.getText().toString().trim();
-            String notes = notesInput.getText().toString().trim();
 
-            updateInterviewDetails(applicant, date, time, mode, location, notes);
+            updateInterviewDetails(applicant, date, time);
             dialog.dismiss();
         });
 
@@ -584,8 +575,7 @@ public class ScheduleActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void updateInterviewDetails(ShortlistedApplicant applicant, String date, String time,
-                                        String mode, String location, String notes) {
+    private void updateInterviewDetails(ShortlistedApplicant applicant, String date, String time) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy hh:mm a", Locale.getDefault());
             Date selectedDateTime = sdf.parse(date + " " + time);
@@ -604,9 +594,6 @@ public class ScheduleActivity extends AppCompatActivity {
                 Map<String, Object> updates = new HashMap<>();
                 updates.put("interviewDate", date.isEmpty() ? null : date);
                 updates.put("interviewTime", time.isEmpty() ? null : time);
-                updates.put("interviewMode", mode.isEmpty() ? "Pending" : mode);
-                updates.put("interviewLocation", location.isEmpty() ? null : location);
-                updates.put("interviewNotes", notes.isEmpty() ? null : notes);
                 updates.put("lastUpdated", System.currentTimeMillis());
 
                 applicationRef.updateChildren(updates)
@@ -615,9 +602,6 @@ public class ScheduleActivity extends AppCompatActivity {
 
                             applicant.setInterviewDate(date.isEmpty() ? null : date);
                             applicant.setInterviewTime(time.isEmpty() ? null : time);
-                            applicant.setInterviewMode(mode.isEmpty() ? "Pending" : mode);
-                            applicant.setInterviewLocation(location.isEmpty() ? null : location);
-                            applicant.setInterviewNotes(notes.isEmpty() ? null : notes);
 
                             String status = (date.isEmpty() || time.isEmpty()) ? "Pending" : "Scheduled";
                             applicant.setInterviewStatus(status);
