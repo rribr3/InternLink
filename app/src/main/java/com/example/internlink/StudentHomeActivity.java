@@ -1,5 +1,6 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
@@ -44,6 +45,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -134,6 +136,18 @@ public class StudentHomeActivity extends AppCompatActivity
             this.title = title;
             this.description = description;
             this.actionId = actionId;
+            this.colorHex = colorHex;
+        }
+    }
+    // Add this inner class inside StudentHomeActivity
+    private static class SimpleTip {
+        String title;
+        String description;
+        String colorHex;
+
+        SimpleTip(String title, String description, String colorHex) {
+            this.title = title;
+            this.description = description;
             this.colorHex = colorHex;
         }
     }
@@ -597,59 +611,7 @@ public class StudentHomeActivity extends AppCompatActivity
         return cardView;
     }
 
-    private void handleTipClick(Tip tip) {
-        Intent intent;
 
-        switch (tip.actionId) {
-            case "upload_cv":
-                intent = new Intent(this, StudentProfileActivity.class);
-                intent.putExtra("FOCUS_SECTION", "cv");
-                startActivity(intent);
-                break;
-
-            case "complete_profile":
-                intent = new Intent(this, StudentProfileActivity.class);
-                intent.putExtra("FOCUS_SECTION", "general");
-                startActivity(intent);
-                break;
-
-            case "add_skills":
-                intent = new Intent(this, StudentProfileActivity.class);
-                intent.putExtra("FOCUS_SECTION", "skills");
-                startActivity(intent);
-                break;
-
-            case "add_linkedin":
-            case "add_github":
-                intent = new Intent(this, StudentProfileActivity.class);
-                intent.putExtra("FOCUS_SECTION", "social");
-                startActivity(intent);
-                break;
-
-            case "highlight_gpa":
-            case "boost_application":
-                intent = new Intent(this, StudentProfileActivity.class);
-                intent.putExtra("FOCUS_SECTION", "academic");
-                startActivity(intent);
-                break;
-
-            case "final_year_tip":
-            case "junior_year_tip":
-                showAllProjectsPopup(); // Show projects available
-                break;
-
-            case "weekly_goal":
-                showWeeklyGoalDialog();
-                break;
-
-            default:
-                Toast.makeText(this, "Tip: " + tip.title, Toast.LENGTH_SHORT).show();
-                break;
-        }
-
-        // Track tip interactions
-        trackTipInteraction(tip.actionId);
-    }
 
     private void showWeeklyGoalDialog() {
         new AlertDialog.Builder(this)
@@ -686,29 +648,165 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void showAllTipsDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("All Tips & Recommendations")
-                .setMessage("Profile Tips:\n" +
-                        "• Complete all profile sections\n" +
-                        "• Upload a professional CV\n" +
-                        "• Add relevant skills\n" +
-                        "• Connect social profiles\n\n" +
-                        "Application Strategy:\n" +
-                        "• Quality over quantity\n" +
-                        "• Research companies before applying\n" +
-                        "• Tailor each application\n" +
-                        "• Follow up strategically\n\n" +
-                        "Networking:\n" +
-                        "• Build LinkedIn presence\n" +
-                        "• Connect with alumni\n" +
-                        "• Attend virtual events\n" +
-                        "• Request informational interviews")
-                .setPositiveButton("Got it!", null)
-                .show();
+        // Inflate the custom dialog layout
+        Dialog dialog = new Dialog(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_all_tips, null);
+        dialog.setContentView(dialogView);
+
+        // Setup close button
+        ImageView btnClose = dialogView.findViewById(R.id.btn_close_tips_dialog);
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        // Get container references
+        LinearLayout profileTipsContainer = dialogView.findViewById(R.id.profile_tips_container);
+        LinearLayout strategyTipsContainer = dialogView.findViewById(R.id.strategy_tips_container);
+        LinearLayout interviewTipsContainer = dialogView.findViewById(R.id.interview_tips_container);
+        LinearLayout networkingTipsContainer = dialogView.findViewById(R.id.networking_tips_container);
+        LinearLayout careerTipsContainer = dialogView.findViewById(R.id.career_tips_container);
+
+        // Add tips to each section
+        addTipsToSection(profileTipsContainer, Arrays.asList(
+                new SimpleTip("Complete Your Profile", "A complete profile increases visibility by 80%", "#4CAF50"),
+                new SimpleTip("Upload Your CV", "Keep your CV updated and professional", "#2196F3"),
+                new SimpleTip("Add Key Skills", "List relevant skills to match with opportunities", "#FF9800")
+        ));
+
+        addTipsToSection(strategyTipsContainer, Arrays.asList(
+                new SimpleTip("Quality Over Quantity", "Focus on opportunities that match your skills", "#E91E63"),
+                new SimpleTip("Personalize Applications", "Tailor each application to the position", "#9C27B0"),
+                new SimpleTip("Track Your Progress", "Monitor application statuses and follow up", "#3F51B5")
+        ));
+
+        addTipsToSection(interviewTipsContainer, Arrays.asList(
+                new SimpleTip("Research Companies", "Learn about the company before interviews", "#F44336"),
+                new SimpleTip("Practice Common Questions", "Prepare answers for typical questions", "#009688"),
+                new SimpleTip("Be Punctual", "Join virtual interviews 5 minutes early", "#795548")
+        ));
+
+        addTipsToSection(networkingTipsContainer, Arrays.asList(
+                new SimpleTip("Build LinkedIn Profile", "Connect with industry professionals", "#607D8B"),
+                new SimpleTip("Engage with Companies", "Follow and interact with target companies", "#FF5722"),
+                new SimpleTip("Attend Virtual Events", "Join career fairs and webinars", "#8BC34A")
+        ));
+
+        addTipsToSection(careerTipsContainer, Arrays.asList(
+                new SimpleTip("Set Clear Goals", "Define your career objectives", "#00BCD4"),
+                new SimpleTip("Keep Learning", "Stay updated with industry trends", "#CDDC39"),
+                new SimpleTip("Build Portfolio", "Document your projects and achievements", "#FFC107")
+        ));
+
+        // Setup refresh button
+        Button btnRefresh = dialogView.findViewById(R.id.btn_refresh_tips);
+        btnRefresh.setOnClickListener(v -> {
+            refreshTips(profileTipsContainer, strategyTipsContainer,
+                    interviewTipsContainer, networkingTipsContainer,
+                    careerTipsContainer);
+        });
+
+        // Setup got it button
+        Button btnGotIt = dialogView.findViewById(R.id.btn_got_it);
+        btnGotIt.setOnClickListener(v -> dialog.dismiss());
+
+        // Show dialog with window animations
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().getAttributes().windowAnimations = R.style.DialogAnimation;
+        }
+        dialog.show();
     }
 
-// CONTINUATION OF STUDENT HOME ACTIVITY - PART 2
-    // ADD THIS TO THE END OF PART 1
+    private void addTipsToSection(LinearLayout container, List<SimpleTip> tips) {
+        container.removeAllViews();
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        for (SimpleTip tip : tips) {
+            View tipView = inflater.inflate(R.layout.item_tip_card, container, false);
+
+            TextView titleView = tipView.findViewById(R.id.tip_title);
+            TextView descriptionView = tipView.findViewById(R.id.tip_description);
+            MaterialCardView cardView = tipView.findViewById(R.id.tip_card);
+
+            titleView.setText(tip.title);
+            descriptionView.setText(tip.description);
+
+            // Set card stroke color
+            try {
+                cardView.setStrokeColor(Color.parseColor(tip.colorHex));
+                cardView.setStrokeWidth(2);
+            } catch (IllegalArgumentException e) {
+                cardView.setStrokeColor(Color.GRAY);
+            }
+
+            // Add click animation
+            cardView.setOnClickListener(v -> {
+                v.animate()
+                        .scaleX(0.95f)
+                        .scaleY(0.95f)
+                        .setDuration(100)
+                        .withEndAction(() -> {
+                            v.animate()
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setDuration(100)
+                                    .start();
+                            handleTipClick(new Tip(R.drawable.ic_tip, tip.title, tip.description, "default", tip.colorHex));
+                        })
+                        .start();
+            });
+
+            container.addView(tipView);
+        }
+    }
+    private void refreshTips(LinearLayout... containers) {
+        // Add loading animation
+        for (LinearLayout container : containers) {
+            container.setAlpha(0.5f);
+        }
+
+        // Simulate refresh with delay
+        new Handler().postDelayed(() -> {
+            for (LinearLayout container : containers) {
+                container.setAlpha(1.0f);
+                // Re-add tips with new random order
+                List<SimpleTip> currentTips = getCurrentTips(container);
+                Collections.shuffle(currentTips);
+                addTipsToSection(container, currentTips);
+            }
+        }, 500);
+    }
+
+    private List<SimpleTip> getCurrentTips(LinearLayout container) {
+        List<SimpleTip> tips = new ArrayList<>();
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View child = container.getChildAt(i);
+            TextView titleView = child.findViewById(R.id.tip_title);
+            TextView descriptionView = child.findViewById(R.id.tip_description);
+            MaterialCardView cardView = child.findViewById(R.id.tip_card);
+
+            tips.add(new SimpleTip(
+                    titleView.getText().toString(),
+                    descriptionView.getText().toString(),
+                    String.format("#%06X", (0xFFFFFF & cardView.getStrokeColor()))
+            ));
+        }
+        return tips;
+    }
+
+    private void handleTipClick(Tip tip) {
+        Intent intent = null;
+
+        if (tip.title.contains("Profile") || tip.title.contains("CV") || tip.title.contains("Skills")) {
+            intent = new Intent(this, StudentProfileActivity.class);
+        } else if (tip.title.contains("Track") || tip.title.contains("Application")) {
+            showAllApplications();
+        } else if (tip.title.contains("Interview")) {
+            intent = new Intent(this, StudentScheduleActivity.class);
+        }
+
+        if (intent != null) {
+            startActivity(intent);
+        }
+    }
 
     private void setupEnhancedSearch() {
         if (searchView != null && searchBar != null) {

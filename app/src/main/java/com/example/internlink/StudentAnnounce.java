@@ -28,6 +28,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
@@ -62,6 +63,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
     // ADD: Loading coordination variables
     private int loadingOperationsCount = 0;
     private final Object loadingLock = new Object();
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -79,6 +81,9 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         recyclerView = findViewById(R.id.announcement_recycler_view);
         searchEditText = findViewById(R.id.search_edit_text);
         chipGroup = findViewById(R.id.filter_chip_group);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout); // Add this line
+
+        setupSwipeRefresh();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new AnnouncementAdapter(announcementList, new AnnouncementAdapter.AnnouncementClickListener() {
@@ -121,6 +126,36 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             }
         });
     }
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set custom colors for the refresh indicator
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blue_500,
+                    R.color.green,
+                    R.color.red,
+                    R.color.yellow
+            );
+
+            // Set the listener for refresh action
+            swipeRefreshLayout.setOnRefreshListener(this::refreshAnnouncements);
+        }
+    }
+
+    private void refreshAnnouncements() {
+        // Reset loading counter
+        synchronized (loadingLock) {
+            loadingOperationsCount = 0;
+        }
+
+        // Clear existing data
+        announcementList.clear();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        // Load fresh data
+        loadAllAnnouncements();
+    }
 
     // ADD: Method to coordinate loading completion
     private void checkAndFinalizeLoading() {
@@ -135,6 +170,9 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                     sortAnnouncementsByDate(false);
                     // CRITICAL FIX: Refresh the adapter's filtered list after all data is loaded
                     adapter.filterChip("All");
+                    if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 });
             }
         }
@@ -339,6 +377,9 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                     loadingOperationsCount = 0;
                     runOnUiThread(() -> adapter.filterChip("All"));
                 }
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         });
     }
@@ -424,6 +465,13 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 Log.e("StudentAnnounce", errorMsg, error.toException());
                 Toast.makeText(StudentAnnounce.this, errorMsg, Toast.LENGTH_SHORT).show();
                 checkAndFinalizeLoading();
+                synchronized (loadingLock) {
+                    if (loadingOperationsCount <= 1) {
+                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
+                    }
+                }
             }
         });
     }
@@ -492,6 +540,13 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
                 checkAndFinalizeLoading();
+                synchronized (loadingLock) {
+                    if (loadingOperationsCount <= 1) {
+                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
+                    }
+                }
             }
         });
     }

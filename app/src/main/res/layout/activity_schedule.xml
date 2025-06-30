@@ -127,11 +127,16 @@
 
         </LinearLayout>
 
-        <!-- Main Content Area -->
-        <FrameLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
+
+        <!-- Main Content Area -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <!-- Progress Bar -->
             <ProgressBar
@@ -187,6 +192,7 @@
             </LinearLayout>
 
         </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </LinearLayout>
 

@@ -17,6 +17,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.database.DataSnapshot;
@@ -38,6 +39,7 @@ public class AllStudents extends AppCompatActivity {
     private LinearLayout emptyStateLayout;
     private EditText searchEditText;
     private StudentAdapter studentAdapter;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     // Lists for search functionality
     private List<User> originalStudentList = new ArrayList<>();
@@ -55,6 +57,7 @@ public class AllStudents extends AppCompatActivity {
         });
 
         initializeViews();
+        setupSwipeRefresh();
         setupToolbar();
         setupSearchFunctionality();
         loadStudentsData();
@@ -64,12 +67,41 @@ public class AllStudents extends AppCompatActivity {
         recyclerView = findViewById(R.id.rv_all_students);
         emptyStateLayout = findViewById(R.id.empty_state_layout);
         searchEditText = findViewById(R.id.message_search);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Initialize adapter with empty list
         studentAdapter = new StudentAdapter(this, filteredStudentList);
         recyclerView.setAdapter(studentAdapter);
+    }
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set custom colors for the refresh indicator
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blue_500,
+                    R.color.green,
+                    R.color.red,
+                    R.color.yellow
+            );
+
+            // Set the listener for refresh action
+            swipeRefreshLayout.setOnRefreshListener(this::refreshStudentsData);
+        }
+    }
+
+    private void refreshStudentsData() {
+        // Clear existing data
+        originalStudentList.clear();
+        filteredStudentList.clear();
+
+        // If we have an adapter, notify it about the cleared data
+        if (studentAdapter != null) {
+            studentAdapter.notifyDataSetChanged();
+        }
+
+        // Then load fresh data
+        loadStudentsData();
     }
 
     private void setupToolbar() {
@@ -130,6 +162,9 @@ public class AllStudents extends AppCompatActivity {
         String companyId = getIntent().getStringExtra("COMPANY_ID");
         if (companyId == null) {
             showEmptyState();
+            if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
             return;
         }
 
@@ -169,18 +204,28 @@ public class AllStudents extends AppCompatActivity {
 
                                 // Initialize filtered list with all students
                                 filterStudents("");
+                                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
                             }
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
                                 showEmptyState();
+                                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                                    swipeRefreshLayout.setRefreshing(false);
+                                }
                             }
                         });
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
+
                         showEmptyState();
+                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
                     }
                 });
     }

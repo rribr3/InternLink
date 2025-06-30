@@ -134,17 +134,22 @@
             </LinearLayout>
         </com.google.android.material.appbar.AppBarLayout>
 
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
         <!-- Content Area with RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/announcement_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize"
             android:clipToPadding="false"
             android:paddingTop="8dp"
             android:paddingBottom="16dp"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             tools:listitem="@layout/announcement_item"/>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

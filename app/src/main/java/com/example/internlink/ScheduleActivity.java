@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -51,6 +52,7 @@ public class ScheduleActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private View emptyState;
     private TextInputEditText searchEditText;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private ChipGroup filterChips;
     private ShortlistedApplicantsAdapter adapter;
     private List<ShortlistedApplicant> applicantsList = new ArrayList<>();
@@ -67,6 +69,7 @@ public class ScheduleActivity extends AppCompatActivity {
         setContentView(R.layout.activity_schedule);
 
         initializeViews();
+        setupSwipeRefresh();
         setupDateFilter();
         setupToolbar();
         setupSearchAndFilters();
@@ -85,6 +88,7 @@ public class ScheduleActivity extends AppCompatActivity {
         tvSelectedDate = findViewById(R.id.tv_selected_date);
         btnPickDate = findViewById(R.id.btn_pick_date);
         btnClearDate = findViewById(R.id.btn_clear_date);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         // Setup RecyclerView with Grid Layout
         int spanCount = getResources().getConfiguration().screenWidthDp > 600 ? 2 : 1;
@@ -224,6 +228,33 @@ public class ScheduleActivity extends AppCompatActivity {
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set custom colors for the refresh indicator
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blue_500,
+                    R.color.green,
+                    R.color.red,
+                    R.color.yellow
+            );
+
+            // Set the listener for refresh action
+            swipeRefreshLayout.setOnRefreshListener(this::refreshShortlistedApplicants);
+        }
+    }
+
+    private void refreshShortlistedApplicants() {
+        // Clear existing data
+        applicantsList.clear();
+        filteredList.clear();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        // Load fresh data
+        loadShortlistedApplicants();
+    }
+
     public void loadShortlistedApplicants() {
         showLoading(true);
         String companyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -246,6 +277,9 @@ public class ScheduleActivity extends AppCompatActivity {
                         if (shortlistedApps.isEmpty()) {
                             showLoading(false);
                             showEmptyState(true);
+                            if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                                swipeRefreshLayout.setRefreshing(false);
+                            }
                             return;
                         }
 
@@ -274,6 +308,9 @@ public class ScheduleActivity extends AppCompatActivity {
 
                                     showLoading(false);
                                     showEmptyState(applicantsList.isEmpty());
+                                    if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                                        swipeRefreshLayout.setRefreshing(false);
+                                    }
                                 }
                             });
                         }
@@ -283,6 +320,9 @@ public class ScheduleActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         showLoading(false);
                         Toast.makeText(ScheduleActivity.this, "Failed to load applicants", Toast.LENGTH_SHORT).show();
+                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
                     }
                 });
     }

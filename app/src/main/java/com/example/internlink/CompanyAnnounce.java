@@ -47,6 +47,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAdapter.AnnouncementClickListener  {
 
@@ -57,6 +58,7 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
     private AnnouncementAdapter adapter;
     private MaterialToolbar toolbar;
     private List<Announcement> announcementList = new ArrayList<>();
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -70,6 +72,9 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        setupSwipeRefresh();
 
         recyclerView = findViewById(R.id.announcement_recycler_view);
         searchEditText = findViewById(R.id.search_edit_text);
@@ -108,6 +113,32 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
                 }
             }
         });
+    }
+
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set custom colors for the refresh indicator
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.blue_500,
+                    R.color.green,
+                    R.color.red,
+                    R.color.yellow
+            );
+
+            // Set the listener for refresh action
+            swipeRefreshLayout.setOnRefreshListener(this::refreshAnnouncements);
+        }
+    }
+
+    private void refreshAnnouncements() {
+        // Clear existing data
+        announcementList.clear();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        // Load fresh data
+        loadAllAnnouncements();
     }
 
     private void addAnnouncement(String announcementId, String title, String message, String date, boolean isRead, long timestamp) {
@@ -234,11 +265,17 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements_by_role").child("company"), readsSnapshot);
                 // Load warning announcements specifically for this user
                 loadWarningAnnouncements(readsSnapshot, userId);
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(CompanyAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         });
     }
@@ -297,11 +334,17 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
                 }
                 // Sort announcements after adding warnings
                 sortAnnouncementsByDate(false);
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(CompanyAnnounce.this, "Failed to load warnings", Toast.LENGTH_SHORT).show();
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         });
     }
@@ -353,11 +396,17 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
                 }
                 sortAnnouncementsByDate(false);
                 adapter.notifyDataSetChanged();
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(CompanyAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
+                if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
         });
     }
