@@ -17,6 +17,10 @@
             android:id="@+id/nav_applicant"
             android:icon="@drawable/ic_work"
             android:title="Applicants" />
+        <item
+            android:id="@+id/nav_certificate"
+            android:icon="@drawable/ic_certificate"
+            android:title="Certification" />
     </group>
 
     <item android:title="Communication">
