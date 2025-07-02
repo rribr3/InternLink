@@ -32,6 +32,10 @@ public class Project {
     // Empty constructor for Firebase
     public Project() {
     }
+    public Project(String projectId, String title) {
+        this.projectId = projectId;
+        this.title = title;
+    }
 
     // Getters and setters for all fields
     public String getTitle() {

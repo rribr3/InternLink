@@ -1751,8 +1751,13 @@ public class CompanyHomeActivity extends AppCompatActivity implements
         } else if (id == R.id.nav_applicant) {
             intent = new Intent(this, MyApplicants.class);
             startActivity(intent);
+        } else if (id == R.id.nav_certificate) {
+            intent = new Intent(this, CompanyCertificateActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_messages) {
-            Toast.makeText(this, "Messages", Toast.LENGTH_SHORT).show();
+            intent = new Intent(this, MessagesActivity.class);
+            intent.putExtra("companyId", companyId);
+            startActivity(intent);
         } else if (id == R.id.nav_notifications) {
             intent = new Intent(this, CompanyAnnounce.class);
             startActivity(intent);
