@@ -52,9 +52,13 @@ public class CertificateApplicantsAdapter extends RecyclerView.Adapter<Certifica
                     .into(holder.applicantImage);
         }
 
-        // Show/hide certificate preview based on whether certificate exists
-        holder.certificatePreviewLayout.setVisibility(
-                applicant.getCertificateUrl() != null ? View.VISIBLE : View.GONE);
+        boolean hasCertificate = applicant.getCertificateUrl() != null;
+        holder.certificatePreviewLayout.setVisibility(hasCertificate ? View.VISIBLE : View.GONE);
+        holder.btnViewCertificate.setVisibility(hasCertificate ? View.VISIBLE : View.GONE);
+        holder.btnDeleteCertificate.setVisibility(hasCertificate ? View.VISIBLE : View.GONE);
+
+        holder.btnSendCertificate.setVisibility(hasCertificate ? View.GONE : View.VISIBLE);
+        holder.certificateSentText.setVisibility(hasCertificate ? View.VISIBLE : View.GONE);
 
         holder.btnSendCertificate.setOnClickListener(v ->
                 listener.onAction(applicant, "send"));
@@ -85,9 +89,9 @@ public class CertificateApplicantsAdapter extends RecyclerView.Adapter<Certifica
         TextView projectTitle;
         Button btnSendCertificate;
         LinearLayout certificatePreviewLayout;
-        TextView certificateFileName;
         ImageButton btnViewCertificate;
         ImageButton btnDeleteCertificate;
+        TextView certificateSentText;
 
         ViewHolder(View view) {
             super(view);
@@ -96,9 +100,9 @@ public class CertificateApplicantsAdapter extends RecyclerView.Adapter<Certifica
             projectTitle = view.findViewById(R.id.projectTitle);
             btnSendCertificate = view.findViewById(R.id.btnSendCertificate);
             certificatePreviewLayout = view.findViewById(R.id.certificatePreviewLayout);
-            certificateFileName = view.findViewById(R.id.certificateFileName);
             btnViewCertificate = view.findViewById(R.id.btnViewCertificate);
             btnDeleteCertificate = view.findViewById(R.id.btnDeleteCertificate);
+            certificateSentText = view.findViewById(R.id.certificateSentText);
         }
     }
 }

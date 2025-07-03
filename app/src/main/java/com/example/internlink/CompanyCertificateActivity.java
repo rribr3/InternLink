@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -18,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -61,8 +63,9 @@ public class CompanyCertificateActivity extends AppCompatActivity {
     private List<Project> completedProjects = new ArrayList<>();
     private List<CompletedApplicant> completedApplicants = new ArrayList<>();
     private CertificateApplicantsAdapter adapter;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AF1FaJkBGm9geTN1gVYH76CH8UNh7wOjsGIEZcQt3IcMQRb8Htwea4qYTZftALp9jonkqr1iuTvno185bQsztcYttdc6Kk0eosKOYiNJbKSWerXRyKuWWlZ7lW7w5qNI_P_2pf26fWUjDRjLZImKuOslNQWVNrXa10e6WcmPS1Ouf4lOTT_nwwz9YkWrWgIT4eqm24TCyEai5yLYvgO5TUE-lTuRsu4DP1KQ3mMWMt0Wb_Sg0xvJ_z2l3_Ysssu4YcUZEt9mAcd7dhLMcy1PVJKQUizV9WoPZQA7mCaMpcAF-lWRICXSGWsLeAlFjKEcZa6-2O-DIkvm0f8fP4pk_v8QjTw2QJPEvXZN5H0DMhki5uqBKiAtWGkpey0fjOe87bKZ-oOJsdj4FlByoydgLpqQQpgL18Xf5j1FHn627Ou-p7AGzt_5pXPbzH3CxhfLfA8m-o-FR88mH5PAzv1i3fk7UeEp2P0m_H7gSYJcsMKTBtk1W7C8GLt1e1Co-UoHWJiYbev-oRMeW5NazpFrWPteuVJFo7IOCDhh44u78mBlTE-hCZho4PK8da5Fa0E9KHw1Ow_rB2hHvyzCXaOgKOydPB6aBHSFeLRtMkvB82RM939G84uSn353Z-sQ2AlgS2NHmiE3LITz_W_9xo55x-O5IzevwZOiOcj2yQUb1WTGB5j1Btyk4cJP2xmkS5ciTKGwgHYI5JMWTVatuY22UUhFsqM2pPESkTd9u3HLnO0d6wt4oDuGYTxe1CUyfTPpCD2x6-qw2jPAoQKkKKamR1dPkcvlfck2NGImECSdi3BpL72c1mXw6IAa9XYhr3KlIp8i4wMVQxm3Ymw2yddhOhY9QvXkYl7-kYyEvnkM9EHA36GXtz-dooSH6t00JiZv-TDP-heJGj4o434-2AAD-qUz5OyOhaP-q_SI-fAsHePdSo0gHN6Bti0YhJEXk0QpT-ChRpsvnlglpHmrWtEV9ThbtQB8asXHOQQ9Di8YhdKcMvg7x0Cj4Ig_6-Ebzsz9r358wmgPoeaboqZkDmq1lUvgkogWQwR9zUyTrq7lhL6absIRAAO5ca3lLWt1uvKDWEeWYiERPDxOmv8mF8t9rBj4gioGqTSQxGdPwNk46zIRbC494iP5QKJCBuciLfCsyuGtkjPafq_M7hZSzv90zDR-l76o9RYUJ50rRPHqILa4kVrJaXsaHdKf2naUfGO0RqKKOBRT1Gjo2aWPXPtwlBXEACAd8NYHnf7nm842yhCYeAMQQp0VGRxO3nCKd7tCPjuyIQ1tR3HaMQkHdRFH4YP0yxqNlVn8uI0MLCqdMWPOqz0vg_oU2HCPlpRsUM-iS0o9KaZ-PB9lF9Ers4rsU25UI1ucK4xZK6w-5ckTdJ-odSMmd7Gf3fbXJZ6THXDQML0H45ku4GP0GhiWUpHzPtFAfM_65Q2vp_5e44s6zWK_UA";
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AF3FxyijqEINfgWxoQRkP1RNh_7udJ1nQ_Dbfvs4_KRfo7Iw5eJt7DRnG04_BvsfqhjBAuZ-idT1j9PZgRmutC4Os5TFYlTUAPR7NuAyo8O-F5Zb7uAMZDO1bEIxFtet8xJfuYhX1XEktjBo008wExJi_gn_2hN2NtMVmp-g3625hdDE32o8jfzfn5ffu0gE3HCdgpbljfqGHw408Q-1Tr7W2DJAer0qIWOtjM550agMZqyRyus81k_UEx2razTDGDmZpkpBKpzZEnd4bs07D0DUG9goVvcYPhKe5jNx5oErkp-8E9Pb_J1HqVfDUkH7CHlhOH2UuM9t0L8QsiXQkxJbfx7EgC46_SwtyNm5MLeWHzzF-MIiJFKOXc91Rlgbm_v8vzxeoAL_Mcpu8aSd_Krqd-n71LB1uVxy5IaiKdl9A85uaA9rUICSn1Bf188UkUv_eRbzA5LiMVDZZIg8mDJ5iVblbOoOadD1F3Af5Tu6VSHJJykw_67KVcncNTFDX9wHiZDHZ9dIZYMqNH_gKfh35_2tFtMSTRKEYvkoLr3WnxpPpiCm5QpG9axT0eXkaTtsShwkAFZXBhSSbY7wTrz5Q3olOwEFHuTM4lLIXNr2O9EFjN72j-GVG9i4TSMPUPbli-9iBtJaIITozcGUVfoQZ2s2efuM9kkvf8clfinhYJ8qRFoU6SfQeNacORF7YB96NeHvY4L7XnWQWaz0uT6UevNxUUk782sU-N3hww87n6y76XcytkysKh-vMbhklhJnS-hlUJtkTu2p7i5je8Iyp2-CHl1VXuISpp7c37CQFvn1kUhGhJTKX2hXy-MxXLP--blWaMu7u9CmyVzBpmJ41hFHKCl0k7CCUM9yeAoQbxKhFtoQPAb5qX7mkLbDFk7F4aPY2Zsd9YQU5_0HEuL75H8rrrlKvW4mXyQMSH2RaoKQ36owvbgAVOYTepOToZj-Rr2XXwF4zmAF3598UfZyvU7nU44JZoaaEtB_v4WKo5JdXnV80jGMf7K713lJ7IMRZ3bRrtfaJmem0Pwk4nieqLhoheKcSPJHebpTX4jpXpYZX56Rs5re0y8RNKwd_r78gKK4ZW-tmfxkpCNd9H-9SwRskkydnVXVTTNarWrOWNs4HT9NPc581-8NBSEZ812HnRoQO70UrmalKlotBicoi_179WybPnINpZvWfPAZNCEl8OOfuHxoO8a4zE5LuHeJRfQgDEAUKNYGDmHpO96eWVrq1yfGNvcpbFuaqvNhln-Tc_BnvYNrUprxM-_g5fF2kAPbOcPDXxvt8eopjLhVoAotSwweCNeyl1-hN0w89Uu4I6iSh3gAqe7Nil93jD8shJ5kaJ7DXZ56Al7YWxv2uc1uTpb8SvFSXsSZD6rvNwhyoNXZpFhdw2KXsTfLuvYR7j455pDzVyS_b7VY0_smqAplFsvbnTeV1nlvqn5Xow";
 
     private final ActivityResultLauncher<String> pdfPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -84,6 +87,7 @@ public class CompanyCertificateActivity extends AppCompatActivity {
 
         initViews();
         setupFirebase();
+        setupRefreshLayout();
         loadCompletedProjects();
 
         topAppBar.setNavigationOnClickListener(v -> finish());
@@ -94,6 +98,7 @@ public class CompanyCertificateActivity extends AppCompatActivity {
         applicantsRecyclerView = findViewById(R.id.applicantsRecyclerView);
         emptyStateLayout = findViewById(R.id.emptyStateLayout);
         topAppBar = findViewById(R.id.topAppBar);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         applicantsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new CertificateApplicantsAdapter(completedApplicants, this::handleCertificateAction);
@@ -103,6 +108,26 @@ public class CompanyCertificateActivity extends AppCompatActivity {
             Project selectedProject = completedProjects.get(position);
             loadCompletedApplicants(selectedProject.getProjectId());
         });
+    }
+    private void setupRefreshLayout() {
+        swipeRefreshLayout.setColorSchemeResources(
+                R.color.blue_500,
+                R.color.green,
+                R.color.red,
+                R.color.yellow
+        );
+
+        swipeRefreshLayout.setOnRefreshListener(this::refreshData);
+    }
+
+    private void refreshData() {
+        // Clear existing data
+        completedProjects.clear();
+        completedApplicants.clear();
+        adapter.notifyDataSetChanged();
+
+        // Reload data
+        loadCompletedProjects();
     }
     private void sendCertificateAnnouncement(CompletedApplicant applicant, String certificateUrl) {
         DatabaseReference projectRef = FirebaseDatabase.getInstance()
@@ -173,12 +198,14 @@ public class CompanyCertificateActivity extends AppCompatActivity {
                         }
 
                         updateProjectSpinner();
+                        swipeRefreshLayout.setRefreshing(false);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(CompanyCertificateActivity.this,
                                 "Failed to load projects", Toast.LENGTH_SHORT).show();
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
     }
@@ -198,20 +225,28 @@ public class CompanyCertificateActivity extends AppCompatActivity {
     }
 
     private void loadCompletedApplicants(String projectId) {
+        // Show loading state or progress indicator if needed
+        completedApplicants.clear();
+        adapter.notifyDataSetChanged();
+
         applicationsRef.orderByChild("projectId").equalTo(projectId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        completedApplicants.clear();
+                        int expectedApplicants = 0;
                         for (DataSnapshot appSnap : snapshot.getChildren()) {
                             String status = appSnap.child("status").getValue(String.class);
                             if ("Accepted".equals(status)) {
+                                expectedApplicants++;
                                 String userId = appSnap.child("userId").getValue(String.class);
-                                loadApplicantDetails(userId, projectId);
+                                loadApplicantDetails(userId, projectId, expectedApplicants);
                             }
                         }
 
-                        updateUI();
+                        // If there are no accepted applicants at all
+                        if (expectedApplicants == 0) {
+                            updateUI();
+                        }
                     }
 
                     @Override
@@ -222,8 +257,13 @@ public class CompanyCertificateActivity extends AppCompatActivity {
                 });
     }
 
-    private void loadApplicantDetails(String userId, String projectId) {
+    private void loadApplicantDetails(String userId, String projectId, int expectedTotal) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        DatabaseReference certificateRef = FirebaseDatabase.getInstance()
+                .getReference("certificates")
+                .child(projectId)
+                .child(userId);
+
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -238,9 +278,30 @@ public class CompanyCertificateActivity extends AppCompatActivity {
                         profileUrl,
                         projectId
                 );
-                completedApplicants.add(applicant);
-                adapter.notifyDataSetChanged();
-                updateUI();
+
+                certificateRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot certificateSnapshot) {
+                        if (certificateSnapshot.exists()) {
+                            String certificateUrl = certificateSnapshot.child("certificateUrl").getValue(String.class);
+                            applicant.setCertificateUrl(certificateUrl);
+                        }
+
+                        completedApplicants.add(applicant);
+
+                        // Only update UI when all applicants are loaded
+                        if (completedApplicants.size() == expectedTotal) {
+                            adapter.notifyDataSetChanged();
+                            updateUI();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(CompanyCertificateActivity.this,
+                                "Failed to load certificate details", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
 
             @Override
@@ -408,6 +469,7 @@ public class CompanyCertificateActivity extends AppCompatActivity {
 
                                             certificateRef.setValue(certificateData)
                                                     .addOnSuccessListener(aVoid -> {
+                                                        applicant.setCertificateUrl(shareLink);
                                                         sendCertificateAnnouncement(applicant, shareLink);
                                                         sendCertificateEmail(
                                                                 applicant.getEmail(),
@@ -471,16 +533,18 @@ public class CompanyCertificateActivity extends AppCompatActivity {
             String currentDateTime = dateFormat.format(new Date());
 
             String subject = "InternLink - Project Completion Certificate: " + projectTitle;
+
+            // Create the email body with the friendly name for the certificate
             String body = String.format(
                     "Dear Student,\n\n" +
                             "Congratulations on completing the project \"%s\"!\n\n" +
-                            "Your certificate is available at:\n" +
-                            "%s\n\n" +
+                            "Your certificate: %s (%s)\n\n" +
                             "Certificate issued on: %s\n\n" +
                             "Best regards,\n" +
                             "%s",
                     projectTitle,
-                    certificateUrl,
+                    String.format("%s's Certificate.pdf", projectTitle), // Friendly name
+                    certificateUrl, // URL in parentheses
                     currentDateTime,
                     companyName);
 

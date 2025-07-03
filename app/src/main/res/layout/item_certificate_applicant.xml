@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginVertical="4dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
@@ -47,10 +48,19 @@
 
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/certificateSentText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Certificate sent"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSendCertificate"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="150dp"
                 android:layout_height="wrap_content"
                 android:text="Send Certificate" />
 
@@ -59,34 +69,33 @@
         <!-- Certificate Preview -->
         <LinearLayout
             android:id="@+id/certificatePreviewLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="4dp"
             android:orientation="horizontal"
+            android:layout_gravity="end"
+            android:gravity="center_vertical"
             android:visibility="gone">
-
-            <TextView
-                android:id="@+id/certificateFileName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btnViewCertificate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:src="@drawable/ic_eye_open" />
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                android:src="@drawable/cer_view" />
 
             <ImageButton
                 android:id="@+id/btnDeleteCertificate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:src="@drawable/ic_delete" />
+                android:padding="4dp"
+                android:scaleType="fitCenter"
+                android:visibility="visible"
+                android:src="@drawable/cer_delete" />
 
         </LinearLayout>
 
