@@ -405,6 +405,43 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Completed Projects Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Completed Projects"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/blue_500"
+                        android:layout_marginBottom="16dp"
+                        android:drawableStart="@drawable/ic_folder_open"
+                        android:drawablePadding="8dp"
+                        android:gravity="center_vertical" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_completed_projects"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
             <!-- Company Reviews Card -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/feedback_card"

@@ -7,16 +7,19 @@ public class CompletedApplicant {
     private String profileUrl;
     private String projectId;
     private String certificateUrl;
+    private String projectTitle;
 
-    public CompletedApplicant(String userId, String name, String email, String profileUrl, String projectId) {
+    public CompletedApplicant(String userId, String name, String email, String profileUrl, String projectId, String projectTitle) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.profileUrl = profileUrl;
         this.projectId = projectId;
+        this.projectTitle = projectTitle;
     }
 
     // Getters
+    public String getProjectTitle() { return projectTitle; }
     public String getUserId() { return userId; }
     public String getName() { return name; }
     public String getEmail() { return email; }

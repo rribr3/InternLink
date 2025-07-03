@@ -259,47 +259,62 @@ public class CompanyCertificateActivity extends AppCompatActivity {
 
     private void loadApplicantDetails(String userId, String projectId, int expectedTotal) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        DatabaseReference projectRef = FirebaseDatabase.getInstance().getReference("projects").child(projectId);
         DatabaseReference certificateRef = FirebaseDatabase.getInstance()
                 .getReference("certificates")
                 .child(projectId)
                 .child(userId);
 
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String name = snapshot.child("name").getValue(String.class);
-                String email = snapshot.child("email").getValue(String.class);
-                String profileUrl = snapshot.child("logoUrl").getValue(String.class);
+            public void onDataChange(@NonNull DataSnapshot projectSnapshot) {
+                String projectTitle = projectSnapshot.child("title").getValue(String.class);
 
-                CompletedApplicant applicant = new CompletedApplicant(
-                        userId,
-                        name,
-                        email,
-                        profileUrl,
-                        projectId
-                );
-
-                certificateRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(@NonNull DataSnapshot certificateSnapshot) {
-                        if (certificateSnapshot.exists()) {
-                            String certificateUrl = certificateSnapshot.child("certificateUrl").getValue(String.class);
-                            applicant.setCertificateUrl(certificateUrl);
-                        }
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String name = snapshot.child("name").getValue(String.class);
+                        String email = snapshot.child("email").getValue(String.class);
+                        String profileUrl = snapshot.child("logoUrl").getValue(String.class);
 
-                        completedApplicants.add(applicant);
+                        CompletedApplicant applicant = new CompletedApplicant(
+                                userId,
+                                name,
+                                email,
+                                profileUrl,
+                                projectId,
+                                projectTitle  // Add project title here
+                        );
 
-                        // Only update UI when all applicants are loaded
-                        if (completedApplicants.size() == expectedTotal) {
-                            adapter.notifyDataSetChanged();
-                            updateUI();
-                        }
+                        certificateRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot certificateSnapshot) {
+                                if (certificateSnapshot.exists()) {
+                                    String certificateUrl = certificateSnapshot.child("certificateUrl").getValue(String.class);
+                                    applicant.setCertificateUrl(certificateUrl);
+                                }
+
+                                completedApplicants.add(applicant);
+
+                                // Only update UI when all applicants are loaded
+                                if (completedApplicants.size() == expectedTotal) {
+                                    adapter.notifyDataSetChanged();
+                                    updateUI();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                Toast.makeText(CompanyCertificateActivity.this,
+                                        "Failed to load certificate details", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(CompanyCertificateActivity.this,
-                                "Failed to load certificate details", Toast.LENGTH_SHORT).show();
+                                "Failed to load applicant details", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -307,7 +322,7 @@ public class CompanyCertificateActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 Toast.makeText(CompanyCertificateActivity.this,
-                        "Failed to load applicant details", Toast.LENGTH_SHORT).show();
+                        "Failed to load project details", Toast.LENGTH_SHORT).show();
             }
         });
     }

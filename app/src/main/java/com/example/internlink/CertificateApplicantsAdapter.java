@@ -44,6 +44,7 @@ public class CertificateApplicantsAdapter extends RecyclerView.Adapter<Certifica
         CompletedApplicant applicant = applicants.get(position);
 
         holder.applicantName.setText(applicant.getName());
+        holder.projectTitle.setText(applicant.getProjectTitle());
 
         if (applicant.getProfileUrl() != null && !applicant.getProfileUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())

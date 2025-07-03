@@ -75,6 +75,9 @@ public class ApplicantProfileActivity extends AppCompatActivity {
     private List<StudentFeedback> feedbackList;
     private boolean canLeaveFeedback = false;
     private List<String> eligibleProjects = new ArrayList<>();
+    private RecyclerView rvCompletedProjects;
+    private CompletedProjectsAdapter completedProjectsAdapter;
+    private List<Project> completedProjects = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,6 +165,99 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         rvFeedback = findViewById(R.id.rv_feedback);
 
         Log.d(TAG, "✅ Views initialized successfully");
+
+        rvCompletedProjects = findViewById(R.id.rv_completed_projects);
+        rvCompletedProjects.setLayoutManager(new LinearLayoutManager(this));
+        completedProjectsAdapter = new CompletedProjectsAdapter(this, completedProjects,
+                project -> viewCertificate(project.getProjectId(), applicantId));
+        rvCompletedProjects.setAdapter(completedProjectsAdapter);
+    }
+
+    private void loadCompletedProjects() {
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance()
+                .getReference("applications");
+
+        applicationsRef.orderByChild("userId").equalTo(applicantId)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        completedProjects.clear();
+
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            String status = appSnap.child("status").getValue(String.class);
+                            if ("Accepted".equals(status)) {
+                                String projectId = appSnap.child("projectId").getValue(String.class);
+                                loadProjectDetails(projectId);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(ApplicantProfileActivity.this,
+                                "Failed to load completed projects", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void loadProjectDetails(String projectId) {
+        DatabaseReference projectRef = FirebaseDatabase.getInstance()
+                .getReference("projects").child(projectId);
+
+        projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists() && "completed".equals(snapshot.child("status").getValue(String.class))) {
+                    Project project = snapshot.getValue(Project.class);
+                    if (project != null) {
+                        project.setProjectId(snapshot.getKey());
+                        completedProjects.add(project);
+                        completedProjectsAdapter.notifyDataSetChanged();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ApplicantProfileActivity.this,
+                        "Failed to load project details", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Add method to view certificate
+    private void viewCertificate(String projectId, String studentId) {
+        DatabaseReference certificateRef = FirebaseDatabase.getInstance()
+                .getReference("certificates")
+                .child(projectId)
+                .child(studentId);
+
+        certificateRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String certificateUrl = snapshot.child("certificateUrl").getValue(String.class);
+                    if (certificateUrl != null && !certificateUrl.isEmpty()) {
+                        // Use PdfViewerActivity to display the certificate
+                        Intent intent = new Intent(ApplicantProfileActivity.this, PdfViewerActivity.class);
+                        intent.putExtra("pdf_url", certificateUrl);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(ApplicantProfileActivity.this,
+                                "Certificate not available", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(ApplicantProfileActivity.this,
+                            "Certificate not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(ApplicantProfileActivity.this,
+                        "Failed to load certificate", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void setupToolbar() {
