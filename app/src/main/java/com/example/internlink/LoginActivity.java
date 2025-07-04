@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Base64;
 import android.view.View;
@@ -24,6 +25,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -35,8 +37,10 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -124,14 +128,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
                 Toast.makeText(getApplicationContext(), "Authentication Successful", Toast.LENGTH_SHORT).show();
-
-                // Get saved email and proceed with automatic login
-                String savedEmail = biometricPrefs.getString(KEY_SAVED_EMAIL, "");
-                if (!savedEmail.isEmpty()) {
-                    proceedWithBiometricLogin(savedEmail);
-                } else {
-                    Toast.makeText(LoginActivity.this, "No saved credentials found", Toast.LENGTH_SHORT).show();
-                }
+                proceedWithBiometricLogin();
             }
 
             @Override
@@ -155,6 +152,10 @@ public class LoginActivity extends AppCompatActivity {
                 showLoginPopup();
             }
         });
+    }
+    private String getLastLoginEmail() {
+        SharedPreferences prefs = getSharedPreferences("login_prefs", MODE_PRIVATE);
+        return prefs.getString("last_login_email", "");
     }
 
     private void checkBiometricAvailability() {
@@ -194,26 +195,131 @@ public class LoginActivity extends AppCompatActivity {
         btnAuth.setVisibility(View.VISIBLE);
         Toast.makeText(this, "Biometric login enabled for future logins", Toast.LENGTH_SHORT).show();
     }
+    private String getDeviceIdentifier() {
+        return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
+    private void showAccountChoiceDialog(List<String> emails) {
+        String[] emailArray = emails.toArray(new String[0]);
+        new AlertDialog.Builder(this)
+                .setTitle("Choose Account")
+                .setItems(emailArray, (dialog, which) -> {
+                    showLoginPopupWithEmail(emailArray[which]);
+                })
+                .setNegativeButton("Use Different Account", (dialog, which) -> {
+                    showLoginPopup();
+                })
+                .setCancelable(true)
+                .show();
+    }
 
-    private void proceedWithBiometricLogin(String email) {
+    private void proceedWithBiometricLogin() {
         // Show loading dialog
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Authenticating...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        // Query Firebase for accounts associated with this device
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+        usersRef.orderByChild("lastLoginDevice")
+                .equalTo(getDeviceIdentifier())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists()) {
+                            progressDialog.dismiss();
+                            showLoginPopup();
+                            return;
+                        }
+
+                        List<String> savedEmails = new ArrayList<>();
+                        Map<String, String> userIds = new HashMap<>(); // Store user IDs with their emails
+
+                        for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                            String userEmail = userSnapshot.child("email").getValue(String.class);
+                            if (userEmail != null && !userEmail.isEmpty()) {
+                                savedEmails.add(userEmail);
+                                userIds.put(userEmail, userSnapshot.getKey());
+                            }
+                        }
+
+                        if (savedEmails.isEmpty()) {
+                            progressDialog.dismiss();
+                            showLoginPopup();
+                        } else if (savedEmails.size() == 1) {
+                            // Only one account found, log in directly
+                            String userId = userIds.get(savedEmails.get(0));
+                            if (userId != null) {
+                                directlyProceedToDashboard(userId, savedEmails.get(0));
+                            } else {
+                                progressDialog.dismiss();
+                                showLoginPopup();
+                            }
+                        } else {
+                            // Multiple accounts found, let user choose
+                            progressDialog.dismiss();
+                            showAccountChoiceDialogForDirectLogin(savedEmails, userIds);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressDialog.dismiss();
+                        showLoginPopup();
+                    }
+                });
+    }
+
+    private void showAccountChoiceDialogForDirectLogin(List<String> emails, Map<String, String> userIds) {
+        String[] emailArray = emails.toArray(new String[0]);
+        new AlertDialog.Builder(this)
+                .setTitle("Choose Account")
+                .setItems(emailArray, (dialog, which) -> {
+                    String selectedEmail = emailArray[which];
+                    String userId = userIds.get(selectedEmail);
+                    if (userId != null) {
+                        directlyProceedToDashboard(userId, selectedEmail);
+                    } else {
+                        showLoginPopup();
+                    }
+                })
+                .setNegativeButton("Use Different Account", (dialog, which) -> showLoginPopup())
+                .setCancelable(true)
+                .show();
+    }
+
+    private void directlyProceedToDashboard(String userId, String email) {
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Logging in...");
         progressDialog.setCancelable(false);
         progressDialog.show();
 
-        // Check if user is already signed in with Firebase
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null && auth.getCurrentUser().getEmail().equals(email)) {
-            // User is already authenticated, proceed to dashboard
-            progressDialog.dismiss();
-            proceedToDashboard(auth.getCurrentUser().getUid());
-        } else {
-            // For security, we should still require the user to enter password
-            // Biometric should only be used as a convenience for filling email
-            progressDialog.dismiss();
-            showLoginPopupWithEmail(email);
-        }
+        // Update the successful login data
+        onSuccessfulLogin(email);
+
+        // Update user activity
+        updateUserActivity();
+
+        // Proceed to dashboard
+        proceedToDashboard(userId);
+
+        progressDialog.dismiss();
+    }
+    private void onSuccessfulLogin(String email) {
+        // Save the device ID with the user account
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("lastLoginDevice", getDeviceIdentifier());  // Changed from getDeviceId()
+        updates.put("lastLoginTime", ServerValue.TIMESTAMP);
+
+        userRef.updateChildren(updates);
+
+        // Save last login email
+        SharedPreferences.Editor editor = getSharedPreferences("login_prefs", MODE_PRIVATE).edit();
+        editor.putString("last_login_email", email);
+        editor.apply();
     }
 
     private void showLoginPopupWithEmail(String email) {
@@ -306,7 +412,7 @@ public class LoginActivity extends AppCompatActivity {
                         loginConfirm.setEnabled(true);
 
                         if (task.isSuccessful()) {
-                            // Ask user if they want to enable biometric login
+                            onSuccessfulLogin(email);
                             if (!isBiometricEnabled() && canUseBiometric()) {
                                 showBiometricSetupDialog(email);
                             }
