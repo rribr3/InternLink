@@ -198,11 +198,14 @@
                         android:id="@+id/category_auto_complete"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="none"
+                        android:inputType="text"
                         android:padding="16dp"
+                        android:imeOptions="actionDone"
+                        android:completionThreshold="0"
                         android:textColor="#0F172A"
                         tools:ignore="SpeakableTextPresentCheck" />
                 </com.google.android.material.textfield.TextInputLayout>
+
 
                 <!-- Skills Required -->
                 <com.google.android.material.textfield.TextInputLayout

@@ -145,8 +145,21 @@ public class CreateProject extends AppCompatActivity {
     }
 
     private void setupDropdowns() {
-        // Categories from Firebase
+        categoryAutoComplete.setThreshold(0);
         loadCategoriesFromFirebase();
+
+        categoryAutoComplete.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                    (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                String customCategory = categoryAutoComplete.getText().toString().trim();
+                if (!customCategory.isEmpty()) {
+                    // Keep the custom category in the field
+                    categoryAutoComplete.setText(customCategory);
+                }
+                return true;
+            }
+            return false;
+        });
 
         // Locations
         String[] locations = getResources().getStringArray(R.array.project_locations);
@@ -196,6 +209,16 @@ public class CreateProject extends AppCompatActivity {
                         categories
                 );
                 categoryAutoComplete.setAdapter(categoryAdapter);
+
+                categoryAutoComplete.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (!hasFocus) {
+                        String customCategory = categoryAutoComplete.getText().toString().trim();
+                        if (!customCategory.isEmpty()) {
+                            // Keep the custom category
+                            categoryAutoComplete.setText(customCategory);
+                        }
+                    }
+                });
             }
 
             @Override
@@ -212,6 +235,16 @@ public class CreateProject extends AppCompatActivity {
                         localCategories
                 );
                 categoryAutoComplete.setAdapter(categoryAdapter);
+
+                categoryAutoComplete.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (!hasFocus) {
+                        String customCategory = categoryAutoComplete.getText().toString().trim();
+                        if (!customCategory.isEmpty()) {
+                            // Keep the custom category
+                            categoryAutoComplete.setText(customCategory);
+                        }
+                    }
+                });
             }
         });
     }
