@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="4dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
@@ -12,16 +12,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <!-- Company Logo -->
         <ImageView
             android:id="@+id/company_logo"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_company"
-            android:scaleType="centerCrop"/>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_company" />
 
         <!-- Project Info -->
         <LinearLayout
@@ -34,40 +34,41 @@
                 android:id="@+id/project_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                tools:text="Mobile App Development"/>
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Mobile App Development" />
 
             <TextView
                 android:id="@+id/company_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:layout_marginTop="1dp"
                 android:textColor="@color/text_secondary"
-                android:layout_marginTop="2dp"
-                tools:text="Tech Company"/>
+                android:textSize="12sp"
+                tools:text="Tech Company" />
 
             <TextView
                 android:id="@+id/completion_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:layout_marginTop="2dp"
                 android:textColor="@color/text_secondary"
-                android:layout_marginTop="4dp"
-                tools:text="Completed on Jun 15, 2025"/>
+                android:textSize="11sp"
+                tools:text="Completed on Jun 15, 2025" />
 
             <!-- View Certificate Button -->
             <Button
                 android:id="@+id/btn_view_certificate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="8dp"
                 android:text="View Certificate"
-                android:textSize="12sp"
-                android:layout_marginTop="8dp"
-                android:paddingHorizontal="12dp"
                 android:textColor="@color/blue_500"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>

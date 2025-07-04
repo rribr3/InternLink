@@ -12,6 +12,12 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,15 +29,31 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
     private List<Project> projects;
     private OnCertificateClickListener listener;
     private Context context;
+    private RecyclerView recyclerView;
+    private static final int MAX_VISIBLE_ITEMS = 3;
+    private static final int ITEM_HEIGHT_DP = 120;
 
     public interface OnCertificateClickListener {
         void onCertificateClick(Project project);
     }
 
-    public CompletedProjectsAdapter(Context context, List<Project> projects, OnCertificateClickListener listener) {
+    public CompletedProjectsAdapter(Context context, RecyclerView recyclerView, List<Project> projects, OnCertificateClickListener listener) {
         this.context = context;
+        this.recyclerView = recyclerView;
         this.projects = projects;
         this.listener = listener;
+
+        updateRecyclerViewHeight();
+    }
+    private void updateRecyclerViewHeight() {
+        if (recyclerView != null && projects.size() > MAX_VISIBLE_ITEMS) {
+            int maxHeightPx = (int) (MAX_VISIBLE_ITEMS * ITEM_HEIGHT_DP *
+                    context.getResources().getDisplayMetrics().density);
+            ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+            params.height = maxHeightPx;
+            recyclerView.setLayoutParams(params);
+            recyclerView.setNestedScrollingEnabled(true);
+        }
     }
 
     @NonNull
@@ -48,10 +70,12 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
 
         // Set project details
         holder.projectTitle.setText(project.getTitle());
-        holder.companyName.setText(project.getCompanyName());
 
-        // Format completion date using deadline
-        long completionDate = project.getDeadline(); // Using deadline as completion date
+        // Load company details including logo
+        loadCompanyDetails(project.getCompanyId(), holder);
+
+        Long deadline = project.getDeadline();
+        long completionDate = deadline != null ? deadline : 0L; // Use 0L as fallback value
         if (completionDate > 0) {
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             String completedDate = sdf.format(new Date(completionDate));
@@ -60,14 +84,6 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
             holder.completionDate.setText("Completion date not available");
         }
 
-        // Load company logo if available
-        if (project.getCompanyLogoUrl() != null && !project.getCompanyLogoUrl().isEmpty()) {
-            Glide.with(context)
-                    .load(project.getCompanyLogoUrl())
-                    .placeholder(R.drawable.ic_company)
-                    .error(R.drawable.ic_company)
-                    .into(holder.companyLogo);
-        }
 
         // Handle certificate button click
         holder.btnViewCertificate.setOnClickListener(v -> {
@@ -77,6 +93,55 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
         });
     }
 
+    private void loadCompanyDetails(String companyId, ViewHolder holder) {
+        if (companyId == null || companyId.isEmpty()) {
+            setDefaultCompanyDisplay(holder);
+            return;
+        }
+
+        DatabaseReference companyRef = FirebaseDatabase.getInstance()
+                .getReference("users").child(companyId);
+
+        companyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    // Set company name
+                    String companyName = snapshot.child("name").getValue(String.class);
+                    holder.companyName.setText(companyName != null ? companyName : "Company");
+
+                    // Load company logo
+                    String logoUrl = snapshot.child("logoUrl").getValue(String.class);
+                    if (logoUrl != null && !logoUrl.isEmpty()) {
+                        RequestOptions options = new RequestOptions()
+                                .placeholder(R.drawable.ic_company)
+                                .error(R.drawable.ic_company)
+                                .centerCrop();
+
+                        Glide.with(context)
+                                .load(logoUrl)
+                                .apply(options)
+                                .into(holder.companyLogo);
+                    } else {
+                        holder.companyLogo.setImageResource(R.drawable.ic_company);
+                    }
+                } else {
+                    setDefaultCompanyDisplay(holder);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                setDefaultCompanyDisplay(holder);
+            }
+        });
+    }
+
+    private void setDefaultCompanyDisplay(ViewHolder holder) {
+        holder.companyLogo.setImageResource(R.drawable.ic_company);
+        holder.companyName.setText("Company");
+    }
+
     @Override
     public int getItemCount() {
         return projects.size();
@@ -84,6 +149,22 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
 
     public void updateProjects(List<Project> newProjects) {
         this.projects = newProjects;
+
+        if (recyclerView != null) {
+            if (newProjects.size() > MAX_VISIBLE_ITEMS) {
+                int maxHeightPx = (int) (MAX_VISIBLE_ITEMS * ITEM_HEIGHT_DP *
+                        context.getResources().getDisplayMetrics().density);
+                ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                params.height = maxHeightPx;
+                recyclerView.setLayoutParams(params);
+                recyclerView.setNestedScrollingEnabled(true);
+            } else {
+                ViewGroup.LayoutParams params = recyclerView.getLayoutParams();
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                recyclerView.setLayoutParams(params);
+                recyclerView.setNestedScrollingEnabled(false);
+            }
+        }
         notifyDataSetChanged();
     }
 

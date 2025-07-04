@@ -116,6 +116,7 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         setupRecyclerView();
         loadCurrentCompanyInfo();
         loadApplicantProfile();
+        loadCompletedProjects();
         checkFeedbackEligibility();
     }
 
@@ -168,7 +169,7 @@ public class ApplicantProfileActivity extends AppCompatActivity {
 
         rvCompletedProjects = findViewById(R.id.rv_completed_projects);
         rvCompletedProjects.setLayoutManager(new LinearLayoutManager(this));
-        completedProjectsAdapter = new CompletedProjectsAdapter(this, completedProjects,
+        completedProjectsAdapter = new CompletedProjectsAdapter(this, rvCompletedProjects, completedProjects,
                 project -> viewCertificate(project.getProjectId(), applicantId));
         rvCompletedProjects.setAdapter(completedProjectsAdapter);
     }
@@ -177,17 +178,74 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         DatabaseReference applicationsRef = FirebaseDatabase.getInstance()
                 .getReference("applications");
 
+        // Create a temporary list to hold all completed projects
+        List<Project> loadedProjects = new ArrayList<>();
+
         applicationsRef.orderByChild("userId").equalTo(applicantId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        completedProjects.clear();
+                        // Clear the temporary list
+                        loadedProjects.clear();
+
+                        // Count how many projects we need to load
+                        final int[] totalProjects = {0};
+                        final int[] loadedCount = {0};
 
                         for (DataSnapshot appSnap : snapshot.getChildren()) {
                             String status = appSnap.child("status").getValue(String.class);
                             if ("Accepted".equals(status)) {
+                                totalProjects[0]++;
+                            }
+                        }
+
+                        if (totalProjects[0] == 0) {
+                            // No projects to load, update adapter with empty list
+                            completedProjectsAdapter.updateProjects(loadedProjects);
+                            return;
+                        }
+
+                        // Load each project's details
+                        for (DataSnapshot appSnap : snapshot.getChildren()) {
+                            String status = appSnap.child("status").getValue(String.class);
+                            if ("Accepted".equals(status)) {
                                 String projectId = appSnap.child("projectId").getValue(String.class);
-                                loadProjectDetails(projectId);
+                                DatabaseReference projectRef = FirebaseDatabase.getInstance()
+                                        .getReference("projects").child(projectId);
+
+                                projectRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists() &&
+                                                "completed".equals(snapshot.child("status").getValue(String.class))) {
+                                            Project project = snapshot.getValue(Project.class);
+                                            if (project != null) {
+                                                project.setProjectId(snapshot.getKey());
+                                                loadedProjects.add(project);
+                                            }
+                                        }
+
+                                        loadedCount[0]++;
+
+                                        // Check if all projects have been loaded
+                                        if (loadedCount[0] == totalProjects[0]) {
+                                            // Update adapter with all loaded projects at once
+                                            completedProjectsAdapter.updateProjects(loadedProjects);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                        loadedCount[0]++;
+                                        Toast.makeText(ApplicantProfileActivity.this,
+                                                "Failed to load project details", Toast.LENGTH_SHORT).show();
+
+                                        // Check if all projects have been attempted to load
+                                        if (loadedCount[0] == totalProjects[0]) {
+                                            completedProjectsAdapter.updateProjects(loadedProjects);
+                                        }
+                                    }
+                                });
                             }
                         }
                     }
@@ -196,6 +254,8 @@ public class ApplicantProfileActivity extends AppCompatActivity {
                     public void onCancelled(@NonNull DatabaseError error) {
                         Toast.makeText(ApplicantProfileActivity.this,
                                 "Failed to load completed projects", Toast.LENGTH_SHORT).show();
+                        // Update adapter with empty list in case of error
+                        completedProjectsAdapter.updateProjects(new ArrayList<>());
                     }
                 });
     }
