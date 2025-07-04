@@ -44,6 +44,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 
+import com.google.android.material.appbar.MaterialToolbar;
+
 public class CvGenerated extends AppCompatActivity {
 
 
@@ -55,11 +57,18 @@ public class CvGenerated extends AppCompatActivity {
 
     private Button btnGenerate;
     private ProgressDialog progressDialog;
+    private MaterialToolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cv_generated);
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Set up navigation (back button) click listener
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         initViews();
 

@@ -195,6 +195,8 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         TextView dateView = popupView.findViewById(R.id.announcement_date);
         ImageView closeIcon = popupView.findViewById(R.id.delete_icon);
 
+        closeIcon.setVisibility(View.VISIBLE);
+
         Announcement announcement = null;
         for (Announcement a : announcementList) {
             if (a.getId().equals(announcementId)) {
