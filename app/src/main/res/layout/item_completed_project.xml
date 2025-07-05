@@ -57,18 +57,6 @@
                 android:textSize="11sp"
                 tools:text="Completed on Jun 15, 2025" />
 
-            <!-- View Certificate Button -->
-            <Button
-                android:id="@+id/btn_view_certificate"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:minHeight="0dp"
-                android:paddingHorizontal="8dp"
-                android:text="View Certificate"
-                android:textColor="@color/blue_500"
-                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>

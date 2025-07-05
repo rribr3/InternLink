@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,7 +32,7 @@ public class ProjectDetailsActivity extends AppCompatActivity {
     private TextView projectCompensation, projectAmount, projectEducation, projectStudentsRequired, projectApplicants;
     private TextView projectStartDate, projectDuration, projectDeadline, projectSkills;
     private TextView quizTitle, quizInstructions, quizTimeLimit, quizPassingScore;
-    private Button viewQuizButton;
+    private MaterialButton viewQuizButton;
     private LinearLayout amountPaidSection;
     private ImageButton backButton;  // <-- Back button added here
 

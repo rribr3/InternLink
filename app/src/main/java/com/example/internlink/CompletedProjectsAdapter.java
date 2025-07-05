@@ -27,21 +27,16 @@ import java.util.Locale;
 public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProjectsAdapter.ViewHolder> {
 
     private List<Project> projects;
-    private OnCertificateClickListener listener;
     private Context context;
     private RecyclerView recyclerView;
     private static final int MAX_VISIBLE_ITEMS = 3;
     private static final int ITEM_HEIGHT_DP = 120;
 
-    public interface OnCertificateClickListener {
-        void onCertificateClick(Project project);
-    }
 
-    public CompletedProjectsAdapter(Context context, RecyclerView recyclerView, List<Project> projects, OnCertificateClickListener listener) {
+    public CompletedProjectsAdapter(Context context, RecyclerView recyclerView, List<Project> projects) {
         this.context = context;
         this.recyclerView = recyclerView;
         this.projects = projects;
-        this.listener = listener;
 
         updateRecyclerViewHeight();
     }
@@ -85,12 +80,6 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
         }
 
 
-        // Handle certificate button click
-        holder.btnViewCertificate.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onCertificateClick(project);
-            }
-        });
     }
 
     private void loadCompanyDetails(String companyId, ViewHolder holder) {
@@ -173,7 +162,6 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
         TextView projectTitle;
         TextView companyName;
         TextView completionDate;
-        Button btnViewCertificate;
 
         ViewHolder(View view) {
             super(view);
@@ -181,7 +169,6 @@ public class CompletedProjectsAdapter extends RecyclerView.Adapter<CompletedProj
             projectTitle = view.findViewById(R.id.project_title);
             companyName = view.findViewById(R.id.company_name);
             completionDate = view.findViewById(R.id.completion_date);
-            btnViewCertificate = view.findViewById(R.id.btn_view_certificate);
         }
     }
 }

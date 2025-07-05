@@ -502,8 +502,7 @@
                         <ImageView
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@drawable/ic_tip"
-                            app:tint="@color/colorPrimaryDark" />
+                            android:src="@drawable/ic_tip" />
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -589,16 +588,17 @@
                             android:textStyle="bold"/>
                     </LinearLayout>
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/view_quiz_button"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="8dp"
-                        android:background="@drawable/button_rounded"
                         android:text="View Quiz Questions"
                         android:textColor="@android:color/white"
                         android:textSize="16sp"
                         android:textAllCaps="false"
+                        app:backgroundTint="@null"
+                        app:background="@drawable/button_rounded"
                         android:stateListAnimator="@null"
                         android:elevation="0dp"/>
                     <LinearLayout

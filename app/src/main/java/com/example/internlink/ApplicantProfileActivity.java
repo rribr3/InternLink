@@ -169,8 +169,7 @@ public class ApplicantProfileActivity extends AppCompatActivity {
 
         rvCompletedProjects = findViewById(R.id.rv_completed_projects);
         rvCompletedProjects.setLayoutManager(new LinearLayoutManager(this));
-        completedProjectsAdapter = new CompletedProjectsAdapter(this, rvCompletedProjects, completedProjects,
-                project -> viewCertificate(project.getProjectId(), applicantId));
+        completedProjectsAdapter = new CompletedProjectsAdapter(this, rvCompletedProjects, completedProjects);
         rvCompletedProjects.setAdapter(completedProjectsAdapter);
     }
 
@@ -285,40 +284,6 @@ public class ApplicantProfileActivity extends AppCompatActivity {
         });
     }
 
-    // Add method to view certificate
-    private void viewCertificate(String projectId, String studentId) {
-        DatabaseReference certificateRef = FirebaseDatabase.getInstance()
-                .getReference("certificates")
-                .child(projectId)
-                .child(studentId);
-
-        certificateRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String certificateUrl = snapshot.child("certificateUrl").getValue(String.class);
-                    if (certificateUrl != null && !certificateUrl.isEmpty()) {
-                        // Use PdfViewerActivity to display the certificate
-                        Intent intent = new Intent(ApplicantProfileActivity.this, PdfViewerActivity.class);
-                        intent.putExtra("pdf_url", certificateUrl);
-                        startActivity(intent);
-                    } else {
-                        Toast.makeText(ApplicantProfileActivity.this,
-                                "Certificate not available", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(ApplicantProfileActivity.this,
-                            "Certificate not found", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(ApplicantProfileActivity.this,
-                        "Failed to load certificate", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
     private void setupToolbar() {
         setSupportActionBar(toolbar);
