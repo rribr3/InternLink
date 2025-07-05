@@ -1,8 +1,11 @@
 package com.example.internlink;
 
+import android.app.Dialog;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -93,38 +96,7 @@ public class ProjectDetailsActivity extends AppCompatActivity {
                         return;
                     }
 
-                    StringBuilder quizContent = new StringBuilder();
-                    String quizTitleText = quizSnapshot.child("title").getValue(String.class);
-
-                    int i = 1;
-                    for (DataSnapshot questionSnap : quizSnapshot.child("questions").getChildren()) {
-                        String questionText = questionSnap.child("text").getValue(String.class);
-                        String questionType = questionSnap.child("type").getValue(String.class);
-
-                        quizContent.append("Q").append(i).append(": ").append(questionText).append("\n");
-                        quizContent.append("Type: ").append(questionType).append("\n");
-
-                        if ("Multiple Choice".equalsIgnoreCase(questionType)) {
-                            for (DataSnapshot optionSnap : questionSnap.child("options").getChildren()) {
-                                String optionText = optionSnap.child("text").getValue(String.class);
-                                Boolean isCorrect = optionSnap.child("correct").getValue(Boolean.class);
-                                quizContent.append("  - ").append(optionText);
-                                if (Boolean.TRUE.equals(isCorrect)) {
-                                    quizContent.append(" (Correct)");
-                                }
-                                quizContent.append("\n");
-                            }
-                        }
-
-                        quizContent.append("\n");
-                        i++;
-                    }
-
-                    new androidx.appcompat.app.AlertDialog.Builder(ProjectDetailsActivity.this)
-                            .setTitle(quizTitleText != null ? quizTitleText : "Quiz")
-                            .setMessage(quizContent.toString())
-                            .setPositiveButton("Close", null)
-                            .show();
+                    showQuizDetails(quizSnapshot);
                 }
 
                 @Override
@@ -135,6 +107,106 @@ public class ProjectDetailsActivity extends AppCompatActivity {
         });
 
 
+    }
+    private void showQuizDetails(DataSnapshot quizSnapshot) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_quiz_review);
+
+        // Initialize views
+        TextView titleView = dialog.findViewById(R.id.quiz_title);
+        TextView timeLimitView = dialog.findViewById(R.id.quiz_time_limit);
+        TextView passingScoreView = dialog.findViewById(R.id.quiz_passing_score);
+        LinearLayout questionsContainer = dialog.findViewById(R.id.questions_container);
+        ImageButton closeButton = dialog.findViewById(R.id.btn_close_quiz);
+
+        // Set quiz details
+        String title = quizSnapshot.child("title").getValue(String.class);
+        Long timeLimit = quizSnapshot.child("timeLimit").getValue(Long.class);
+        Long passingScore = quizSnapshot.child("passingScore").getValue(Long.class);
+
+        titleView.setText(title != null ? title + " - Answer Key" : "Quiz Answer Key");
+        timeLimitView.setText(timeLimit != null ? timeLimit + " minutes" : "No time limit");
+        passingScoreView.setText(passingScore != null ? "Pass: " + passingScore + "%" : "No passing score set");
+
+        // Add questions
+        int questionNum = 1;
+        for (DataSnapshot questionSnap : quizSnapshot.child("questions").getChildren()) {
+            View questionView = createQuestionReviewView(questionNum++, questionSnap);
+            questionsContainer.addView(questionView);
+        }
+
+        // Setup close button
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+
+        // Show dialog
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+        dialog.show();
+    }
+
+    private View createQuestionReviewView(int number, DataSnapshot questionSnap) {
+        View view = getLayoutInflater().inflate(R.layout.item_quiz_question_review, null);
+
+        TextView numberView = view.findViewById(R.id.question_number);
+        TextView textView = view.findViewById(R.id.question_text);
+        TextView typeView = view.findViewById(R.id.question_type);
+        LinearLayout optionsContainer = view.findViewById(R.id.options_container);
+
+        String text = questionSnap.child("text").getValue(String.class);
+        String type = questionSnap.child("type").getValue(String.class);
+
+        numberView.setText("Question " + number);
+        textView.setText(text != null ? text : "");
+        typeView.setText(type != null ? type : "");
+
+        if ("Multiple Choice".equals(type)) {
+            for (DataSnapshot optionSnap : questionSnap.child("options").getChildren()) {
+                View optionView = createOptionReviewView(optionSnap);
+                optionsContainer.addView(optionView);
+            }
+            optionsContainer.setVisibility(View.VISIBLE);
+        } else if ("True/False".equals(type)) {
+            // Handle True/False question
+            DataSnapshot optionsSnap = questionSnap.child("options");
+            if (optionsSnap.exists()) {
+                for (DataSnapshot optionSnap : optionsSnap.getChildren()) {
+                    Boolean isCorrect = optionSnap.child("correct").getValue(Boolean.class);
+                    String optionText = optionSnap.child("text").getValue(String.class);
+                    if (Boolean.TRUE.equals(isCorrect)) {
+                        View tfView = getLayoutInflater().inflate(R.layout.item_quiz_question_tf, null);
+                        TextView answerText = tfView.findViewById(R.id.answer_text);
+                        answerText.setText(optionText);
+                        optionsContainer.addView(tfView);
+                        break;
+                    }
+                }
+            }
+            optionsContainer.setVisibility(View.VISIBLE);
+        } else {
+            optionsContainer.setVisibility(View.GONE);
+        }
+
+        return view;
+    }
+
+    private View createOptionReviewView(DataSnapshot optionSnap) {
+        View view = getLayoutInflater().inflate(R.layout.item_quiz_option_review, null);
+
+        TextView textView = view.findViewById(R.id.option_text);
+        TextView correctLabel = view.findViewById(R.id.correct_answer_label);
+
+        String text = optionSnap.child("text").getValue(String.class);
+        Boolean isCorrect = optionSnap.child("correct").getValue(Boolean.class);
+
+        textView.setText(text != null ? text : "");
+        correctLabel.setVisibility(Boolean.TRUE.equals(isCorrect) ? View.VISIBLE : View.GONE);
+
+        return view;
     }
 
     private void loadProjectDetails(String projectId) {
