@@ -3,6 +3,7 @@ package com.example.internlink;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -26,6 +27,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -45,6 +47,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -684,8 +687,8 @@ public class StudentHomeActivity extends AppCompatActivity
 
         addTipsToSection(networkingTipsContainer, Arrays.asList(
                 new SimpleTip("Build LinkedIn Profile", "Connect with industry professionals", "#607D8B"),
-                new SimpleTip("Engage with Companies", "Follow and interact with target companies", "#FF5722"),
-                new SimpleTip("Attend Virtual Events", "Join career fairs and webinars", "#8BC34A")
+                new SimpleTip("Engage with Companies", "Interact with target companies", "#FF5722"),
+                new SimpleTip("Attend Virtual Events", "Check your email for career fairs and webinars sent by companies you're working with", "#8BC34A")
         ));
 
         addTipsToSection(careerTipsContainer, Arrays.asList(
@@ -727,11 +730,13 @@ public class StudentHomeActivity extends AppCompatActivity
 
             titleView.setText(tip.title);
             descriptionView.setText(tip.description);
+            cardView.setCardBackgroundColor(Color.WHITE);
 
             // Set card stroke color
             try {
                 cardView.setStrokeColor(Color.parseColor(tip.colorHex));
                 cardView.setStrokeWidth(2);
+                cardView.setCardElevation(2);
             } catch (IllegalArgumentException e) {
                 cardView.setStrokeColor(Color.GRAY);
             }
@@ -792,19 +797,69 @@ public class StudentHomeActivity extends AppCompatActivity
     }
 
     private void handleTipClick(Tip tip) {
-        Intent intent = null;
+        // Show tip details dialog
+        showTipDetailsDialog(tip);
 
-        if (tip.title.contains("Profile") || tip.title.contains("CV") || tip.title.contains("Skills")) {
-            intent = new Intent(this, StudentProfileActivity.class);
-        } else if (tip.title.contains("Track") || tip.title.contains("Application")) {
-            showAllApplications();
+
+    }
+
+    private void showTipDetailsDialog(Tip tip) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_tip_details);
+
+        // Set up views
+        ImageView iconView = dialog.findViewById(R.id.tip_icon);
+        TextView titleView = dialog.findViewById(R.id.tip_title);
+        TextView descriptionView = dialog.findViewById(R.id.tip_description);
+        MaterialButton actionButton = dialog.findViewById(R.id.btn_tip_action);
+        ImageButton closeButton = dialog.findViewById(R.id.btn_close_tip_dialog);
+
+        // Set content
+        iconView.setImageResource(tip.iconResId);
+        iconView.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(tip.colorHex)));
+        titleView.setText(tip.title);
+        descriptionView.setText(tip.description);
+
+        // Customize action button based on tip type
+        if (tip.title.contains("Profile") || tip.title.contains("CV")) {
+            actionButton.setText("Update Profile");
+        } else if (tip.title.contains("Skills")) {
+            actionButton.setText("Add Skills");
+        } else if (tip.title.contains("LinkedIn")) {
+            actionButton.setText("Connect LinkedIn");
+        } else if (tip.title.contains("GitHub")) {
+            actionButton.setText("Add GitHub");
         } else if (tip.title.contains("Interview")) {
-            intent = new Intent(this, StudentScheduleActivity.class);
+            actionButton.setText("View Schedule");
+        } else {
+            actionButton.setText("Take Action");
         }
 
-        if (intent != null) {
-            startActivity(intent);
+        // Set up click listeners
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+        actionButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            // Handle the action based on tip type
+            if (tip.title.contains("Profile") || tip.title.contains("CV") ||
+                    tip.title.contains("Skills") || tip.title.contains("LinkedIn") || tip.title.contains("Github") || tip.title.contains("Portfolio"))  {
+                startActivity(new Intent(this, StudentProfileActivity.class));
+            } else if (tip.title.contains("Track") || tip.title.contains("Application")) {
+                showAllApplications();
+            } else if (tip.title.contains("Interview")) {
+                startActivity(new Intent(this, StudentScheduleActivity.class));
+            }
+        });
+
+        // Style dialog window
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
         }
+
+        dialog.show();
     }
 
     private void setupEnhancedSearch() {

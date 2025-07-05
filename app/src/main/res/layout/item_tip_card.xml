@@ -9,6 +9,7 @@
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
     app:strokeWidth="2dp"
+    app:cardBackgroundColor="@android:color/white"
     android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
