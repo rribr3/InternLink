@@ -169,7 +169,7 @@ public class CompanyProfileViewActivity extends AppCompatActivity {
         // Projects RecyclerView
         projectsList = new ArrayList<>();
         projectAdapter = new ProjectAdapterHome(projectsList, project -> {
-            Intent intent = new Intent(this, ProjectDetailsActivity.class);
+            Intent intent = new Intent(this, ApplyNowActivity.class);
             intent.putExtra("PROJECT_ID", project.getProjectId());
             startActivity(intent);
         }, false);

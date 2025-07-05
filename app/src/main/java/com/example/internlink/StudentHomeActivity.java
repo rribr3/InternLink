@@ -1943,7 +1943,7 @@ public class StudentHomeActivity extends AppCompatActivity
                                 filteredProjects.addAll(allProjects);
                                 ProjectVerticalAdapter adapter = new ProjectVerticalAdapter(filteredProjects, project -> {
                                     // Handle project click - open project details
-                                    Intent intent = new Intent(StudentHomeActivity.this, ProjectDetailsActivity.class);
+                                    Intent intent = new Intent(StudentHomeActivity.this, ApplyNowActivity.class);
                                     intent.putExtra("PROJECT_ID", project.getProjectId());
                                     startActivity(intent);
                                 }, false);

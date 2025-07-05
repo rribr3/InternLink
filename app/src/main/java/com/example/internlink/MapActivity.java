@@ -632,14 +632,13 @@ public class MapActivity extends AppCompatActivity {
     private void openProjectDetails(String projectId) {
         try {
             // Navigate to project details activity
-            Intent intent = new Intent(this, ProjectDetailsActivity.class);
+            Intent intent = new Intent(this, ApplyNowActivity.class);
             intent.putExtra("PROJECT_ID", projectId);
             startActivity(intent);
             hideProjectDetails();
         } catch (Exception e) {
-            // If ProjectDetailsActivity doesn't exist, show a toast
             Toast.makeText(this, "Project details: " + projectId, Toast.LENGTH_SHORT).show();
-            Log.w(TAG, "ProjectDetailsActivity not found, add it to navigate to project details");
+            Log.w(TAG, "ApplyNow not found, add it to navigate to project details");
         }
     }
     private void applyToProject(String projectId) {

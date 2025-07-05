@@ -2,7 +2,11 @@ package com.example.internlink;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -34,6 +38,11 @@ public class SavedProjectsActivity extends AppCompatActivity {
     private LinearLayout emptyStateLayout;
     private SwipeRefreshLayout swipeRefreshLayout;
     private String studentId;
+    private EditText searchEditText;
+    private ImageButton clearSearchButton;
+    private List<Project> allSavedProjects; // Store all projects for filtering
+    private TextView emptyStateTitle;
+    private TextView emptyStateMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +54,15 @@ public class SavedProjectsActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         emptyStateLayout = findViewById(R.id.empty_state_layout);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
+        searchEditText = findViewById(R.id.search_edit_text);
+        clearSearchButton = findViewById(R.id.clear_search_button);
+        emptyStateTitle = findViewById(R.id.empty_state_title);
+        emptyStateMessage = findViewById(R.id.empty_state_message);
+
+        savedProjects = new ArrayList<>();
+        allSavedProjects = new ArrayList<>();
+
+        setupSearch();
 
         // Set up back button
         ImageButton btnBack = findViewById(R.id.btn_back);
@@ -58,7 +76,7 @@ public class SavedProjectsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ProjectVerticalAdapter(savedProjects, project -> {
             // Handle project click - navigate to project details
-            Intent intent = new Intent(this, ProjectDetailsActivity.class);
+            Intent intent = new Intent(this, ApplyNowActivity.class);
             intent.putExtra("PROJECT_ID", project.getProjectId());
             startActivity(intent);
         }, false);
@@ -70,6 +88,110 @@ public class SavedProjectsActivity extends AppCompatActivity {
         // Load saved projects
         loadSavedProjects();
     }
+    private void setupSearch() {
+        // Setup clear button
+        clearSearchButton.setOnClickListener(v -> {
+            searchEditText.setText("");
+            clearSearchButton.setVisibility(View.GONE);
+            filterProjects("");
+        });
+
+        // Setup search input listener
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                clearSearchButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                filterProjects(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Setup keyboard search action
+        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                filterProjects(searchEditText.getText().toString());
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private void filterProjects(String query) {
+        query = query.toLowerCase().trim();
+
+        if (query.isEmpty()) {
+            savedProjects.clear();
+            savedProjects.addAll(allSavedProjects);
+        } else {
+            List<Project> filteredList = new ArrayList<>();
+
+            for (Project project : allSavedProjects) {
+                if (matchesSearchCriteria(project, query)) {
+                    filteredList.add(project);
+                }
+            }
+
+            savedProjects.clear();
+            savedProjects.addAll(filteredList);
+        }
+
+        adapter.notifyDataSetChanged();
+        updateEmptyState(query);
+    }
+
+    private boolean matchesSearchCriteria(Project project, String query) {
+        // Check title
+        if (project.getTitle() != null &&
+                project.getTitle().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        // Check description
+        if (project.getDescription() != null &&
+                project.getDescription().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        // Check category
+        if (project.getCategory() != null &&
+                project.getCategory().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        // Check skills
+        if (project.getSkills() != null) {
+            for (String skill : project.getSkills()) {
+                if (skill.toLowerCase().contains(query)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void updateEmptyState(String query) {
+        if (savedProjects.isEmpty()) {
+            if (query.isEmpty()) {
+                emptyStateTitle.setText("No Saved Projects");
+                emptyStateMessage.setText("Projects you save will appear here");
+            } else {
+                emptyStateTitle.setText("No Results Found");
+                emptyStateMessage.setText("Try different keywords or filters");
+            }
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyStateLayout.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+    }
+
 
     private void loadSavedProjects() {
         progressBar.setVisibility(View.VISIBLE);
@@ -84,6 +206,7 @@ public class SavedProjectsActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 savedProjects.clear();
+                allSavedProjects = new ArrayList<>(); // Clear the full list
                 List<String> projectIds = new ArrayList<>();
 
                 // First, get all saved project IDs
@@ -114,6 +237,7 @@ public class SavedProjectsActivity extends AppCompatActivity {
                                 if (project != null) {
                                     project.setProjectId(projectSnap.getKey());
                                     savedProjects.add(project);
+                                    allSavedProjects.add(project); // Add to full list
                                 }
                             }
 
@@ -122,7 +246,13 @@ public class SavedProjectsActivity extends AppCompatActivity {
                                 if (savedProjects.isEmpty()) {
                                     showEmptyState();
                                 } else {
-                                    adapter.notifyDataSetChanged();
+                                    // Apply any existing search filter
+                                    String currentQuery = searchEditText.getText().toString();
+                                    if (!currentQuery.isEmpty()) {
+                                        filterProjects(currentQuery);
+                                    } else {
+                                        adapter.notifyDataSetChanged();
+                                    }
                                     recyclerView.setVisibility(View.VISIBLE);
                                     emptyStateLayout.setVisibility(View.GONE);
                                 }

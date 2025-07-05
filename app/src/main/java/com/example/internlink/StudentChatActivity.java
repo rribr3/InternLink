@@ -932,7 +932,7 @@ public class StudentChatActivity extends AppCompatActivity {
 
     private void viewProjectDetails() {
         if (projectId != null) {
-            Intent intent = new Intent(this, ProjectDetailsActivity.class);
+            Intent intent = new Intent(this, ApplyNowActivity.class);
             intent.putExtra("PROJECT_ID", projectId);
             startActivity(intent);
         } else {

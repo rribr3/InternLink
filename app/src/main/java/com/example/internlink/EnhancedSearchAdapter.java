@@ -62,9 +62,9 @@ public class EnhancedSearchAdapter extends RecyclerView.Adapter<EnhancedSearchAd
         holder.cardView.setOnClickListener(v -> {
             if ("PROJECT".equals(result.type)) {
                 // Handle project click - you can navigate to project details or apply
-                // Intent intent = new Intent(context, ProjectDetailsActivity.class);
-                // intent.putExtra("PROJECT_ID", result.projectId);
-                // context.startActivity(intent);
+                Intent intent = new Intent(context, ApplyNowActivity.class);
+                intent.putExtra("PROJECT_ID", result.projectId);
+                context.startActivity(intent);
 
                 // For now, just show a toast
                 android.widget.Toast.makeText(context, "Selected project: " + result.project.getTitle(), android.widget.Toast.LENGTH_SHORT).show();
