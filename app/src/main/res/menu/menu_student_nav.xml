@@ -12,6 +12,10 @@
             android:id="@+id/nav_projects"
             android:icon="@drawable/ic_project"
             android:title="Projects" />
+        <item
+            android:id="@+id/nav_saved"
+            android:icon="@drawable/ic_bookmark_filled"
+            android:title="Saved Projects" />
 
         <item
             android:id="@+id/nav_applications"
@@ -20,7 +24,7 @@
             android:title="My Applications" />
         <item
             android:id="@+id/nav_schedule"
-            android:icon="@drawable/ic_schedule"
+            android:icon="@drawable/interview_schedule"
             android:iconTint="@color/black"
             android:title="Interview Schedule" />
     </group>

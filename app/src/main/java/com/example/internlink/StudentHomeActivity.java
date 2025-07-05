@@ -48,7 +48,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.search.SearchBar;
 import com.google.android.material.search.SearchView;
@@ -1033,21 +1032,11 @@ public class StudentHomeActivity extends AppCompatActivity
         LinearLayout emptyHistoryState = findViewById(R.id.empty_history_state);
         TextView clearHistoryBtn = findViewById(R.id.tv_clear_history);
 
-        if (historyRecyclerView != null && emptyHistoryState != null) {
-            if (searchHistory.isEmpty()) {
-                historyRecyclerView.setVisibility(View.GONE);
-                emptyHistoryState.setVisibility(View.VISIBLE);
-                if (clearHistoryBtn != null) clearHistoryBtn.setVisibility(View.GONE);
-            } else {
-                historyRecyclerView.setVisibility(View.VISIBLE);
-                emptyHistoryState.setVisibility(View.GONE);
-                if (clearHistoryBtn != null) clearHistoryBtn.setVisibility(View.VISIBLE);
-
-                // Setup RecyclerView
-                if (historyRecyclerView.getAdapter() == null) {
-                    historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                    searchHistoryAdapter = new SearchHistoryAdapter(searchHistory, new SearchHistoryAdapter.OnHistoryItemClickListener() {
-                        @Override
+        // In updateSearchHistoryDisplay() method
+        if (historyRecyclerView.getAdapter() == null) {
+            historyRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            searchHistoryAdapter = new SearchHistoryAdapter(searchHistory,
+                    new SearchHistoryAdapter.OnHistoryItemClickListener() {
                         public void onHistoryClick(String query) {
                             searchView.getEditText().setText(query);
                             addToSearchHistory(query);
@@ -1055,18 +1044,17 @@ public class StudentHomeActivity extends AppCompatActivity
                             searchView.hide();
                         }
 
-                        @Override
                         public void onHistoryDelete(String query) {
                             searchHistory.remove(query);
                             saveSearchHistory();
                             updateSearchHistoryDisplay();
 
                             if (searchHistory.isEmpty()) {
-                                Toast.makeText(StudentHomeActivity.this, "Search history cleared", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(StudentHomeActivity.this,
+                                        "Search history cleared", Toast.LENGTH_SHORT).show();
                             }
                         }
 
-                        @Override
                         public void onClearAllHistory() {
                             new AlertDialog.Builder(StudentHomeActivity.this)
                                     .setTitle("Clear Search History")
@@ -1075,17 +1063,14 @@ public class StudentHomeActivity extends AppCompatActivity
                                         searchHistory.clear();
                                         saveSearchHistory();
                                         updateSearchHistoryDisplay();
-                                        Toast.makeText(StudentHomeActivity.this, "Search history cleared", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(StudentHomeActivity.this,
+                                                "Search history cleared", Toast.LENGTH_SHORT).show();
                                     })
                                     .setNegativeButton("Cancel", null)
                                     .show();
                         }
                     });
-                    historyRecyclerView.setAdapter(searchHistoryAdapter);
-                } else {
-                    searchHistoryAdapter.notifyDataSetChanged();
-                }
-            }
+            historyRecyclerView.setAdapter(searchHistoryAdapter);
         }
     }
 
@@ -1956,7 +1941,7 @@ public class StudentHomeActivity extends AppCompatActivity
 
                                 // Set up adapter with all projects initially
                                 filteredProjects.addAll(allProjects);
-                                ProjectAdapterHome adapter = new ProjectAdapterHome(filteredProjects, project -> {
+                                ProjectVerticalAdapter adapter = new ProjectVerticalAdapter(filteredProjects, project -> {
                                     // Handle project click - open project details
                                     Intent intent = new Intent(StudentHomeActivity.this, ProjectDetailsActivity.class);
                                     intent.putExtra("PROJECT_ID", project.getProjectId());
@@ -2106,7 +2091,7 @@ public class StudentHomeActivity extends AppCompatActivity
                                          List<Project> ongoingProjects,
                                          List<Project> acceptableProjects,
                                          List<Project> completedProjects,
-                                         ProjectAdapterHome adapter,
+                                         ProjectVerticalAdapter adapter,
                                          List<Project> filteredProjects,
                                          LinearLayout emptyStateLayout,
                                          TextView emptyStateTitle,
@@ -2478,7 +2463,12 @@ public class StudentHomeActivity extends AppCompatActivity
             showAllApplications();
         } else if (id == R.id.nav_projects) {
             showAllProjectsPopup();
-        } else if (id == R.id.nav_messages) {
+        } else if (id == R.id.nav_saved) {
+            Intent intent = new Intent(this, SavedProjectsActivity.class);
+            startActivity(intent);
+            return true;
+        }
+        else if (id == R.id.nav_messages) {
             // ✅ FIXED: Ensure we have a valid student ID before navigating
             if (studentId != null && !studentId.isEmpty()) {
                 Intent intent = new Intent(this, MessagesActivity.class); // Use MessagesActivity instead of StudentChatActivity

@@ -15,7 +15,8 @@ public class SearchHistoryAdapter extends RecyclerView.Adapter<SearchHistoryAdap
     private final List<String> searchHistory;
     private final OnHistoryItemClickListener listener;
 
-    public interface OnHistoryItemClickListener {
+    // Make the interface public and static
+    public static interface OnHistoryItemClickListener {
         void onHistoryClick(String query);
         void onHistoryDelete(String query);
         void onClearAllHistory();

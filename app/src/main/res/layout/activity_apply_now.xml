@@ -27,6 +27,7 @@
                 android:layout_marginBottom="16dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
+
                 <!-- Back Button -->
                 <ImageButton
                     android:id="@+id/btn_back"
@@ -49,8 +50,21 @@
                     android:lineSpacingExtra="4dp"
                     android:textAlignment="textStart"
                     android:textColor="@android:color/white"
-                    android:textSize="26sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
+
+                <!-- Save Button -->
+                <ImageButton
+                    android:id="@+id/btn_save_project"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/pill_background"
+                    android:contentDescription="Save Project"
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_bookmark_border"
+                    app:tint="@color/black" />
 
                 <!-- Company Profile Button -->
                 <ImageButton

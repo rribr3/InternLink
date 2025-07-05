@@ -52,6 +52,8 @@ public class ApplyNowActivity extends AppCompatActivity {
     private boolean hasResume = false; // Set based on project requirements
     private String resumeUrl = null;
     private boolean isReapplying = false;
+    private ImageButton btnSaveProject;
+    private boolean isProjectSaved = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,7 @@ public class ApplyNowActivity extends AppCompatActivity {
         initViews();
         loadProjectData(projectId);
         setupClickListeners();
+        checkIfProjectIsSaved();
     }
 
     private void initViews() {
@@ -85,6 +88,7 @@ public class ApplyNowActivity extends AppCompatActivity {
         applicantsText = findViewById(R.id.project_applicants);
         studentsRequiredText = findViewById(R.id.project_students_required);
         skillsText = findViewById(R.id.project_skills);
+        btnSaveProject = findViewById(R.id.btn_save_project);
 
         quizSection = findViewById(R.id.quiz_section);
         quizTitle = findViewById(R.id.quiz_title);
@@ -107,8 +111,37 @@ public class ApplyNowActivity extends AppCompatActivity {
 
         return currentTime > endDate;
     }
+    private void checkIfProjectIsSaved() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        DatabaseReference savedRef = FirebaseDatabase.getInstance()
+                .getReference("saved_projects")
+                .child(user.getUid())
+                .child(projectId);
+
+        savedRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                isProjectSaved = snapshot.exists();
+                updateSaveButtonIcon();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("ApplyNowActivity", "Error checking saved status", error.toException());
+            }
+        });
+    }
+
+    private void updateSaveButtonIcon() {
+        btnSaveProject.setImageResource(isProjectSaved ?
+                R.drawable.ic_bookmark_filled :
+                R.drawable.ic_bookmark_border);
+    }
 
     private void setupClickListeners() {
+        btnSaveProject.setOnClickListener(v -> toggleSaveProject());
         // Back button click listener
         btnBack.setOnClickListener(v -> {
             // Navigate back to StudentHomeActivity
@@ -145,6 +178,54 @@ public class ApplyNowActivity extends AppCompatActivity {
                 Toast.makeText(this, "Company information not available", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void toggleSaveProject() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            showLoginRequiredDialog();
+            return;
+        }
+
+        DatabaseReference savedRef = FirebaseDatabase.getInstance()
+                .getReference("saved_projects")
+                .child(user.getUid())
+                .child(projectId);
+
+        if (isProjectSaved) {
+            // Remove from saved projects
+            savedRef.removeValue()
+                    .addOnSuccessListener(aVoid -> {
+                        isProjectSaved = false;
+                        updateSaveButtonIcon();
+                        Toast.makeText(ApplyNowActivity.this,
+                                "Project removed from saved",
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(ApplyNowActivity.this,
+                                    "Failed to remove project",
+                                    Toast.LENGTH_SHORT).show());
+        } else {
+            // Add to saved projects
+            Map<String, Object> savedProject = new HashMap<>();
+            savedProject.put("projectId", projectId);
+            savedProject.put("savedAt", System.currentTimeMillis());
+            savedProject.put("title", currentProject.getTitle());
+            savedProject.put("companyId", currentProject.getCompanyId());
+
+            savedRef.setValue(savedProject)
+                    .addOnSuccessListener(aVoid -> {
+                        isProjectSaved = true;
+                        updateSaveButtonIcon();
+                        Toast.makeText(ApplyNowActivity.this,
+                                "Project saved successfully",
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(ApplyNowActivity.this,
+                                    "Failed to save project",
+                                    Toast.LENGTH_SHORT).show());
+        }
     }
 
     // Override the back button behavior
