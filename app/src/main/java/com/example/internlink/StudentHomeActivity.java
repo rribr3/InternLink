@@ -971,6 +971,30 @@ public class StudentHomeActivity extends AppCompatActivity
                 updateSearchViewVisibility(true);
             });
 
+            EnhancedSearchManager searchManager = new EnhancedSearchManager(this);
+            searchManager.loadSearchCategories(categories -> {
+                ChipGroup categoryChips = findViewById(R.id.search_categories_chips);
+                if (categoryChips != null) {
+                    categoryChips.removeAllViews();
+
+                    // Add chips for each category
+                    for (String category : categories) {
+                        Chip chip = new Chip(this);
+                        chip.setText(category);
+                        chip.setCheckable(true);
+                        chip.setClickable(true);
+
+                        chip.setOnClickListener(v -> {
+                            searchView.getEditText().setText(category);
+                            performEnhancedSearch(category);
+                            searchView.hide();
+                        });
+
+                        categoryChips.addView(chip);
+                    }
+                }
+            });
+
             // Configure the SearchView's EditText
             EditText editText = searchView.getEditText();
             if (editText != null) {

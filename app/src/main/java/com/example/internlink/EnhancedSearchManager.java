@@ -3,12 +3,21 @@ package com.example.internlink;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * Enhanced Search Manager to handle search history and search suggestions
@@ -23,6 +32,12 @@ public class EnhancedSearchManager {
     private final SharedPreferences prefs;
     private List<String> searchHistory;
     private List<SearchSuggestion> popularSearches;
+    private List<String> searchCategories = new ArrayList<>();
+    private CategoryLoadCallback categoryLoadCallback;
+
+    public interface CategoryLoadCallback {
+        void onCategoriesLoaded(List<String> categories);
+    }
 
     public static class SearchSuggestion {
         public String query;
@@ -65,6 +80,38 @@ public class EnhancedSearchManager {
 
         // Load popular searches
         loadPopularSearches();
+    }
+
+    public void loadSearchCategories(CategoryLoadCallback callback) {
+        this.categoryLoadCallback = callback;
+        DatabaseReference categoriesRef = FirebaseDatabase.getInstance().getReference("categories");
+
+        categoriesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                searchCategories.clear();
+                for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+                    // Only add categories that are marked as true
+                    Boolean isActive = categorySnapshot.getValue(Boolean.class);
+                    if (isActive != null && isActive) {
+                        searchCategories.add(categorySnapshot.getKey());
+                    }
+                }
+                // Sort categories alphabetically for better display
+                Collections.sort(searchCategories);
+                if (categoryLoadCallback != null) {
+                    categoryLoadCallback.onCategoriesLoaded(searchCategories);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // In case of error, return an empty list
+                if (categoryLoadCallback != null) {
+                    categoryLoadCallback.onCategoriesLoaded(new ArrayList<>());
+                }
+            }
+        });
     }
 
     private void loadSearchHistory() {
@@ -252,20 +299,7 @@ public class EnhancedSearchManager {
      * Get predefined search categories/tags
      */
     public List<String> getSearchCategories() {
-        List<String> categories = new ArrayList<>();
-        categories.add("Software Development");
-        categories.add("Data Science");
-        categories.add("Machine Learning");
-        categories.add("Web Development");
-        categories.add("Mobile Development");
-        categories.add("UI/UX Design");
-        categories.add("Digital Marketing");
-        categories.add("Business Analysis");
-        categories.add("Project Management");
-        categories.add("Cybersecurity");
-        categories.add("Cloud Computing");
-        categories.add("DevOps");
-        return categories;
+        return new ArrayList<>(searchCategories);
     }
 
     /**
@@ -286,6 +320,7 @@ public class EnhancedSearchManager {
         if (popularSearches.isEmpty()) return null;
         return popularSearches.get(0).query;
     }
+
 
     /**
      * Check if a query exists in history
