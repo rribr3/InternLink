@@ -550,7 +550,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 .getReference("announcements_by_role")
                 .child("student");
 
-        warningsRef.orderByChild("targetUserId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+        warningsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 for (DataSnapshot snap : snapshot.getChildren()) {
@@ -563,11 +563,41 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
 
                         String category = snap.child("category").getValue(String.class);
                         if ("disciplinary_action".equals(category)) {
+                            // FIXED: Check if this warning is specifically targeted to this user
+                            String targetUserId = snap.child("targetUserId").getValue(String.class);
+                            String targetType = snap.child("targetType").getValue(String.class);
+
+                            // Only show warnings that are specifically targeted to this user
+                            if (targetUserId == null || !targetUserId.equals(userId)) {
+                                Log.d("StudentAnnounce", "Skipping warning " + id + " - not targeted to current user");
+                                continue;
+                            }
+
+                            // Additional check for target type if present
+                            if (targetType != null && !"specific_user".equals(targetType)) {
+                                Log.d("StudentAnnounce", "Skipping warning " + id + " - not specific user type");
+                                continue;
+                            }
+
                             String title = snap.child("title").getValue(String.class);
                             String message = snap.child("message").getValue(String.class);
 
                             if (title == null || message == null) {
                                 Log.w("StudentAnnounce", "Warning announcement " + id + " missing required fields, skipping");
+                                continue;
+                            }
+
+                            // Check for duplicates before adding
+                            boolean alreadyExists = false;
+                            for (Announcement existing : announcementList) {
+                                if (existing.getId().equals(id)) {
+                                    alreadyExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (alreadyExists) {
+                                Log.d("StudentAnnounce", "Warning " + id + " already exists, skipping");
                                 continue;
                             }
 
@@ -587,8 +617,8 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                 announcement.setPriority(priority);
                             }
 
-                            Log.d("StudentAnnounce", String.format("Adding warning announcement: id=%s, title=%s, timestamp=%d",
-                                    id, title, timestampLong));
+                            Log.d("StudentAnnounce", String.format("Adding warning announcement for user %s: id=%s, title=%s, timestamp=%d",
+                                    userId, id, title, timestampLong));
 
                             announcementList.add(announcement);
                         }
