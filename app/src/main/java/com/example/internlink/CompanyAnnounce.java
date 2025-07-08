@@ -354,20 +354,86 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
     private void loadAnnouncementsFromRef(DatabaseReference ref, DataSnapshot readsSnapshot) {
         // Get current company's ID
         String currentCompanyId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        Log.d("CompanyAnnounce", "Loading announcements for company ID: " + currentCompanyId);
 
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @SuppressLint("RestrictedApi")
             @Override
             public void onDataChange(DataSnapshot snapshot) {
+                Log.d("CompanyAnnounce", "Found " + snapshot.getChildrenCount() + " announcements in " + ref.getPath().toString());
+
                 for (DataSnapshot snap : snapshot.getChildren()) {
                     try {
                         String id = snap.getKey();
+                        Log.d("CompanyAnnounce", "Processing announcement: " + id);
 
                         // For company-specific announcements, check if this announcement is for the current company
                         if (ref.getPath().toString().contains("announcements_by_role/company")) {
-                            String targetCompanyId = snap.child("companyId").getValue(String.class);
-                            // Skip if this announcement is not for this company
-                            if (targetCompanyId != null && !targetCompanyId.equals(currentCompanyId)) {
+                            boolean shouldShowAnnouncement = false;
+
+                            // Check if announcement has a specific company target via companyId
+                            if (snap.hasChild("companyId")) {
+                                String targetCompanyId = snap.child("companyId").getValue(String.class);
+                                Log.d("CompanyAnnounce", "Found companyId: " + targetCompanyId);
+                                if (targetCompanyId != null && targetCompanyId.equals(currentCompanyId)) {
+                                    shouldShowAnnouncement = true;
+                                    Log.d("CompanyAnnounce", "✓ Showing due to companyId match");
+                                }
+                            }
+
+                            // Check if announcement targets this specific user via targetUserId
+                            if (snap.hasChild("targetUserId")) {
+                                String targetUserId = snap.child("targetUserId").getValue(String.class);
+                                Log.d("CompanyAnnounce", "Found targetUserId: " + targetUserId);
+                                if (targetUserId != null && targetUserId.equals(currentCompanyId)) {
+                                    shouldShowAnnouncement = true;
+                                    Log.d("CompanyAnnounce", "✓ Showing due to targetUserId match");
+                                }
+                            }
+
+                            // Check for targetType to handle announcements sent to all companies
+                            if (snap.hasChild("targetType")) {
+                                String targetType = snap.child("targetType").getValue(String.class);
+                                Log.d("CompanyAnnounce", "Found targetType: " + targetType);
+                                if ("company".equals(targetType) || "all_users".equals(targetType)) {
+                                    shouldShowAnnouncement = true;
+                                    Log.d("CompanyAnnounce", "✓ Showing due to targetType: " + targetType);
+                                }
+                            }
+
+                            // Check if it's created by the current company (their own announcements)
+                            if (snap.hasChild("createdBy")) {
+                                String createdBy = snap.child("createdBy").getValue(String.class);
+                                Log.d("CompanyAnnounce", "Found createdBy: " + createdBy);
+                                if (currentCompanyId.equals(createdBy)) {
+                                    shouldShowAnnouncement = true;
+                                    Log.d("CompanyAnnounce", "✓ Showing due to createdBy match");
+                                }
+                            }
+
+                            // Check for application notifications
+                            if (snap.hasChild("type")) {
+                                String type = snap.child("type").getValue(String.class);
+                                Log.d("CompanyAnnounce", "Found type: " + type);
+                                if ("application".equals(type)) {
+                                    shouldShowAnnouncement = true;
+                                    Log.d("CompanyAnnounce", "✓ Showing due to application type");
+                                }
+                            }
+
+                            // If no specific targeting info, assume it's a general company announcement
+                            if (!snap.hasChild("companyId") && !snap.hasChild("targetUserId") &&
+                                    !snap.hasChild("targetType") && !snap.hasChild("createdBy") &&
+                                    !snap.hasChild("type")) {
+                                shouldShowAnnouncement = true;
+                                Log.d("CompanyAnnounce", "✓ Showing - no specific targeting");
+                            }
+
+                            Log.d("CompanyAnnounce", "Final decision for " + id + ": " + shouldShowAnnouncement);
+
+                            // Skip if this announcement shouldn't be shown to this company
+                            if (!shouldShowAnnouncement) {
+                                Log.d("CompanyAnnounce", "✗ Skipping announcement " + id);
                                 continue;
                             }
                         }
@@ -392,10 +458,13 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
                         }
 
                         announcementList.add(announcement);
+                        Log.d("CompanyAnnounce", "✓ Added announcement: " + title);
                     } catch (Exception e) {
                         Log.e("CompanyAnnounce", "Error processing announcement: " + snap.getKey(), e);
                     }
                 }
+
+                Log.d("CompanyAnnounce", "Total announcements added: " + announcementList.size());
                 sortAnnouncementsByDate(false);
                 adapter.notifyDataSetChanged();
                 if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
@@ -405,6 +474,7 @@ public class CompanyAnnounce extends AppCompatActivity implements AnnouncementAd
 
             @Override
             public void onCancelled(DatabaseError error) {
+                Log.e("CompanyAnnounce", "Failed to load announcements", error.toException());
                 Toast.makeText(CompanyAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
                 if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);

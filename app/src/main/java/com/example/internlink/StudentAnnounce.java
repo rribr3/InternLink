@@ -60,7 +60,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
     private MaterialToolbar toolbar;
     private List<Announcement> announcementList = new ArrayList<>();
 
-    // ADD: Loading coordination variables
+    // Loading coordination variables
     private int loadingOperationsCount = 0;
     private final Object loadingLock = new Object();
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -81,7 +81,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         recyclerView = findViewById(R.id.announcement_recycler_view);
         searchEditText = findViewById(R.id.search_edit_text);
         chipGroup = findViewById(R.id.filter_chip_group);
-        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout); // Add this line
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
         setupSwipeRefresh();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -126,49 +126,41 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             }
         });
     }
+
     private void setupSwipeRefresh() {
         if (swipeRefreshLayout != null) {
-            // Set custom colors for the refresh indicator
             swipeRefreshLayout.setColorSchemeResources(
                     R.color.blue_500,
                     R.color.green,
                     R.color.red,
                     R.color.yellow
             );
-
-            // Set the listener for refresh action
             swipeRefreshLayout.setOnRefreshListener(this::refreshAnnouncements);
         }
     }
 
     private void refreshAnnouncements() {
-        // Reset loading counter
         synchronized (loadingLock) {
             loadingOperationsCount = 0;
         }
 
-        // Clear existing data
         announcementList.clear();
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
 
-        // Load fresh data
         loadAllAnnouncements();
     }
 
-    // ADD: Method to coordinate loading completion
     private void checkAndFinalizeLoading() {
         synchronized (loadingLock) {
             loadingOperationsCount--;
             Log.d("StudentAnnounce", "Loading operation completed. Remaining: " + loadingOperationsCount);
 
             if (loadingOperationsCount <= 0) {
-                // All operations complete, finalize the UI on main thread
                 runOnUiThread(() -> {
                     Log.d("StudentAnnounce", "All announcements loaded. Total count: " + announcementList.size());
                     sortAnnouncementsByDate(false);
-                    // CRITICAL FIX: Refresh the adapter's filtered list after all data is loaded
                     adapter.filterChip("All");
                     if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
                         swipeRefreshLayout.setRefreshing(false);
@@ -283,14 +275,14 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 });
     }
 
-    // UPDATED: Coordinate all async operations with proper completion handling
+    // FIXED: Updated to properly load all student announcements
     private void loadAllAnnouncements() {
         announcementList.clear();
         adapter.notifyDataSetChanged();
 
-        // Initialize loading counter for 3 async operations
+        // Initialize loading counter for 5 async operations (was 3)
         synchronized (loadingLock) {
-            loadingOperationsCount = 3;
+            loadingOperationsCount = 5;
         }
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -299,82 +291,25 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         userReadsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot readsSnapshot) {
-                // Load general announcements
+                // 1. Load general announcements
                 loadAnnouncementsFromRef(FirebaseDatabase.getInstance().getReference("announcements"), readsSnapshot);
 
-                // Load student-specific announcements
-                DatabaseReference studentAnnouncementsRef = FirebaseDatabase.getInstance()
-                        .getReference("announcements_by_role")
-                        .child("student");
+                // 2. Load all student-targeted announcements from announcements_by_role/student
+                loadAllStudentAnnouncements(readsSnapshot, userId);
 
-                studentAnnouncementsRef.orderByChild("recipientId")
-                        .equalTo(userId)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot snapshot) {
-                                for (DataSnapshot snap : snapshot.getChildren()) {
-                                    try {
-                                        String id = snap.getKey();
-                                        String title = snap.child("title").getValue(String.class);
-                                        String body = snap.child("message").getValue(String.class);
-
-                                        long timestampLong = 0;
-                                        Object timestampObj = snap.child("timestamp").getValue();
-                                        if (timestampObj != null) {
-                                            if (timestampObj instanceof Long) {
-                                                timestampLong = (Long) timestampObj;
-                                            } else if (timestampObj instanceof String) {
-                                                try {
-                                                    timestampLong = Long.parseLong((String) timestampObj);
-                                                } catch (NumberFormatException e) {
-                                                    try {
-                                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                                        Date date = sdf.parse((String) timestampObj);
-                                                        if (date != null) {
-                                                            timestampLong = date.getTime();
-                                                        }
-                                                    } catch (ParseException pe) {
-                                                        pe.printStackTrace();
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        String date = formatTimestamp(timestampLong);
-                                        boolean isRead = readsSnapshot.hasChild(id);
-
-                                        Announcement announcement = new Announcement(id, title, body, date, isRead);
-                                        announcement.setTimestamp(timestampLong);
-
-                                        if (snap.hasChild("applicant_status")) {
-                                            announcement.setCategory("application_status");
-                                        }
-
-                                        announcementList.add(announcement);
-                                    } catch (Exception e) {
-                                        Log.e("StudentAnnounce", "Error processing student announcement: " + snap.getKey(), e);
-                                    }
-                                }
-                                // REMOVED: Individual sorting and notify - now handled centrally
-                                checkAndFinalizeLoading();
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError error) {
-                                Toast.makeText(StudentAnnounce.this, "Failed to load student announcements", Toast.LENGTH_SHORT).show();
-                                checkAndFinalizeLoading();
-                            }
-                        });
-
-                // Load warning announcements specifically for this user
+                // 3. Load warning announcements specifically for this user
                 loadWarningAnnouncements(readsSnapshot, userId);
+
+                // 4. Load specific student announcements (targeted to this student)
+                loadSpecificStudentAnnouncements(readsSnapshot, userId);
+
+                // 5. Load announcements from notifications (these might be student-specific)
+                loadNotificationAnnouncements(readsSnapshot, userId);
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load data", Toast.LENGTH_SHORT).show();
-                // Handle complete failure
                 synchronized (loadingLock) {
                     loadingOperationsCount = 0;
                     runOnUiThread(() -> adapter.filterChip("All"));
@@ -386,7 +321,230 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
         });
     }
 
-    // UPDATED: Remove individual UI updates
+    // NEW: Load all announcements from announcements_by_role/student
+    private void loadAllStudentAnnouncements(DataSnapshot readsSnapshot, String userId) {
+        DatabaseReference studentAnnouncementsRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("student");
+
+        studentAnnouncementsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                Log.d("StudentAnnounce", "Loading student announcements. Count: " + snapshot.getChildrenCount());
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    try {
+                        String id = snap.getKey();
+                        String title = snap.child("title").getValue(String.class);
+                        String message = snap.child("message").getValue(String.class);
+                        String targetType = snap.child("targetType").getValue(String.class);
+                        String targetUserId = snap.child("targetUserId").getValue(String.class);
+                        String recipientId = snap.child("recipientId").getValue(String.class);
+
+                        // Skip if this is targeted to a specific user and it's not this user
+                        if ("specific_user".equals(targetType) && targetUserId != null && !targetUserId.equals(userId)) {
+                            continue;
+                        }
+
+                        // Skip if this has a recipientId and it's not this user
+                        if (recipientId != null && !recipientId.equals(userId)) {
+                            continue;
+                        }
+
+                        long timestampLong = extractTimestamp(snap);
+                        String date = formatTimestamp(timestampLong);
+                        boolean isRead = readsSnapshot.hasChild(id);
+
+                        Announcement announcement = new Announcement(id, title, message, date, isRead);
+                        announcement.setTimestamp(timestampLong);
+
+                        // Set category based on content
+                        if (snap.hasChild("applicant_status")) {
+                            announcement.setCategory("application_status");
+                        } else if (snap.hasChild("category")) {
+                            String category = snap.child("category").getValue(String.class);
+                            announcement.setCategory(category);
+                        }
+
+                        announcementList.add(announcement);
+                        Log.d("StudentAnnounce", "Added student announcement: " + title);
+
+                    } catch (Exception e) {
+                        Log.e("StudentAnnounce", "Error processing student announcement: " + snap.getKey(), e);
+                    }
+                }
+                checkAndFinalizeLoading();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("StudentAnnounce", "Failed to load student announcements", error.toException());
+                Toast.makeText(StudentAnnounce.this, "Failed to load student announcements", Toast.LENGTH_SHORT).show();
+                checkAndFinalizeLoading();
+            }
+        });
+    }
+
+    // NEW: Load specific student announcements (those with recipientId)
+    private void loadSpecificStudentAnnouncements(DataSnapshot readsSnapshot, String userId) {
+        DatabaseReference studentSpecificRef = FirebaseDatabase.getInstance()
+                .getReference("announcements_by_role")
+                .child("student");
+
+        studentSpecificRef.orderByChild("recipientId").equalTo(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        Log.d("StudentAnnounce", "Loading specific student announcements for user: " + userId + ". Count: " + snapshot.getChildrenCount());
+
+                        for (DataSnapshot snap : snapshot.getChildren()) {
+                            try {
+                                String id = snap.getKey();
+
+                                // Check if already added to avoid duplicates
+                                boolean alreadyExists = false;
+                                for (Announcement existing : announcementList) {
+                                    if (existing.getId().equals(id)) {
+                                        alreadyExists = true;
+                                        break;
+                                    }
+                                }
+
+                                if (alreadyExists) {
+                                    continue;
+                                }
+
+                                String title = snap.child("title").getValue(String.class);
+                                String message = snap.child("message").getValue(String.class);
+
+                                long timestampLong = extractTimestamp(snap);
+                                String date = formatTimestamp(timestampLong);
+                                boolean isRead = readsSnapshot.hasChild(id);
+
+                                Announcement announcement = new Announcement(id, title, message, date, isRead);
+                                announcement.setTimestamp(timestampLong);
+
+                                if (snap.hasChild("applicant_status")) {
+                                    announcement.setCategory("application_status");
+                                }
+
+                                announcementList.add(announcement);
+                                Log.d("StudentAnnounce", "Added specific student announcement: " + title);
+
+                            } catch (Exception e) {
+                                Log.e("StudentAnnounce", "Error processing specific student announcement: " + snap.getKey(), e);
+                            }
+                        }
+                        checkAndFinalizeLoading();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Log.e("StudentAnnounce", "Failed to load specific student announcements", error.toException());
+                        checkAndFinalizeLoading();
+                    }
+                });
+    }
+
+    // NEW: Load announcements from notifications node
+    private void loadNotificationAnnouncements(DataSnapshot readsSnapshot, String userId) {
+        DatabaseReference notificationsRef = FirebaseDatabase.getInstance()
+                .getReference("notifications")
+                .child(userId);
+
+        notificationsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                Log.d("StudentAnnounce", "Loading notification announcements for user: " + userId + ". Count: " + snapshot.getChildrenCount());
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    try {
+                        String type = snap.child("type").getValue(String.class);
+
+                        // Only process announcement type notifications
+                        if (!"announcement".equals(type)) {
+                            continue;
+                        }
+
+                        String id = snap.getKey();
+
+                        // Check if already added to avoid duplicates
+                        boolean alreadyExists = false;
+                        for (Announcement existing : announcementList) {
+                            if (existing.getId().equals(id)) {
+                                alreadyExists = true;
+                                break;
+                            }
+                        }
+
+                        if (alreadyExists) {
+                            continue;
+                        }
+
+                        String title = snap.child("title").getValue(String.class);
+                        String message = snap.child("message").getValue(String.class);
+
+                        long timestampLong = 0;
+                        Object timestampObj = snap.child("timestamp").getValue();
+                        if (timestampObj instanceof Long) {
+                            timestampLong = (Long) timestampObj;
+                        }
+
+                        String date = formatTimestamp(timestampLong);
+                        boolean isRead = snap.child("isRead").getValue(Boolean.class) != null ?
+                                snap.child("isRead").getValue(Boolean.class) : false;
+
+                        Announcement announcement = new Announcement(id, title, message, date, isRead);
+                        announcement.setTimestamp(timestampLong);
+                        announcement.setCategory("notification");
+
+                        announcementList.add(announcement);
+                        Log.d("StudentAnnounce", "Added notification announcement: " + title);
+
+                    } catch (Exception e) {
+                        Log.e("StudentAnnounce", "Error processing notification announcement: " + snap.getKey(), e);
+                    }
+                }
+                checkAndFinalizeLoading();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("StudentAnnounce", "Failed to load notification announcements", error.toException());
+                checkAndFinalizeLoading();
+            }
+        });
+    }
+
+    // HELPER: Extract timestamp from various formats
+    private long extractTimestamp(DataSnapshot snap) {
+        long timestampLong = 0;
+        Object timestampObj = snap.child("timestamp").getValue();
+
+        if (timestampObj != null) {
+            if (timestampObj instanceof Long) {
+                timestampLong = (Long) timestampObj;
+            } else if (timestampObj instanceof String) {
+                try {
+                    timestampLong = Long.parseLong((String) timestampObj);
+                } catch (NumberFormatException e) {
+                    try {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        Date date = sdf.parse((String) timestampObj);
+                        if (date != null) {
+                            timestampLong = date.getTime();
+                        }
+                    } catch (ParseException pe) {
+                        pe.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        return timestampLong;
+    }
+
     private void loadWarningAnnouncements(DataSnapshot readsSnapshot, String userId) {
         DatabaseReference warningsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
@@ -413,25 +571,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                 continue;
                             }
 
-                            long timestampLong = 0;
-                            Object timestampObj = snap.child("timestamp").getValue();
-                            if (timestampObj != null) {
-                                if (timestampObj instanceof Long) {
-                                    timestampLong = (Long) timestampObj;
-                                } else if (timestampObj instanceof String) {
-                                    try {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                        Date date = sdf.parse((String) timestampObj);
-                                        if (date != null) {
-                                            timestampLong = date.getTime();
-                                        }
-                                    } catch (ParseException e) {
-                                        Log.e("StudentAnnounce", "Error parsing timestamp for warning " + id, e);
-                                    }
-                                }
-                            }
-
+                            long timestampLong = extractTimestamp(snap);
                             String severity = snap.child("severity").getValue(String.class);
                             String priority = snap.child("priority").getValue(String.class);
                             boolean isRead = readsSnapshot.hasChild(id);
@@ -451,13 +591,11 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                                     id, title, timestampLong));
 
                             announcementList.add(announcement);
-                            // REMOVED: Individual notifyItemInserted
                         }
                     } catch (Exception e) {
                         Log.e("StudentAnnounce", "Error processing warning announcement: " + snap.getKey(), e);
                     }
                 }
-                // REMOVED: Individual sorting - now handled centrally
                 checkAndFinalizeLoading();
             }
 
@@ -467,18 +605,10 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                 Log.e("StudentAnnounce", errorMsg, error.toException());
                 Toast.makeText(StudentAnnounce.this, errorMsg, Toast.LENGTH_SHORT).show();
                 checkAndFinalizeLoading();
-                synchronized (loadingLock) {
-                    if (loadingOperationsCount <= 1) {
-                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-                            swipeRefreshLayout.setRefreshing(false);
-                        }
-                    }
-                }
             }
         });
     }
 
-    // UPDATED: Remove individual UI updates
     private void loadAnnouncementsFromRef(DatabaseReference ref, DataSnapshot readsSnapshot) {
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -489,33 +619,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         String title = snap.child("title").getValue(String.class);
                         String body = snap.child("message").getValue(String.class);
 
-                        long timestampLong = 0;
-                        DataSnapshot timestampSnap = snap.child("timestamp");
-                        if (timestampSnap.exists()) {
-                            Object timestampValue = timestampSnap.getValue();
-                            if (timestampValue instanceof Long) {
-                                timestampLong = (Long) timestampValue;
-                            } else if (timestampValue instanceof String) {
-                                String timestampStr = (String) timestampValue;
-                                try {
-                                    if (timestampStr.contains("T")) {
-                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-                                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                                        Date date = sdf.parse(timestampStr);
-                                        if (date != null) {
-                                            timestampLong = date.getTime();
-                                        }
-                                    } else {
-                                        timestampLong = Long.parseLong(timestampStr);
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            } else if (timestampValue instanceof Double) {
-                                timestampLong = ((Double) timestampValue).longValue();
-                            }
-                        }
-
+                        long timestampLong = extractTimestamp(snap);
                         String date = formatTimestamp(timestampLong);
                         boolean isRead = readsSnapshot.hasChild(id);
 
@@ -534,7 +638,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                     }
                 }
 
-                // REMOVED: Individual sorting and UI updates - now handled centrally
                 checkAndFinalizeLoading();
             }
 
@@ -542,13 +645,6 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(StudentAnnounce.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
                 checkAndFinalizeLoading();
-                synchronized (loadingLock) {
-                    if (loadingOperationsCount <= 1) {
-                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-                            swipeRefreshLayout.setRefreshing(false);
-                        }
-                    }
-                }
             }
         });
     }
