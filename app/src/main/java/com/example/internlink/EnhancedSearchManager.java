@@ -2,6 +2,7 @@ package com.example.internlink;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -11,6 +12,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import com.google.firebase.database.DatabaseError;
@@ -23,6 +25,7 @@ import com.google.firebase.database.ValueEventListener;
  * Enhanced Search Manager to handle search history and search suggestions
  */
 public class EnhancedSearchManager {
+    private static final String TAG = "EnhancedSearchManager";
     private static final String SEARCH_PREFS = "enhanced_search_prefs";
     private static final String SEARCH_HISTORY_KEY = "search_history";
     private static final String POPULAR_SEARCHES_KEY = "popular_searches";
@@ -90,28 +93,95 @@ public class EnhancedSearchManager {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 searchCategories.clear();
-                for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
-                    // Only add categories that are marked as true
-                    Boolean isActive = categorySnapshot.getValue(Boolean.class);
-                    if (isActive != null && isActive) {
-                        searchCategories.add(categorySnapshot.getKey());
+
+                try {
+                    for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+                        // ✅ FIXED: Safe type checking instead of direct Boolean.class conversion
+                        Object categoryValue = categorySnapshot.getValue();
+                        boolean isActive = false;
+
+                        if (categoryValue instanceof Boolean) {
+                            isActive = (Boolean) categoryValue;
+                        } else if (categoryValue instanceof String) {
+                            String strValue = (String) categoryValue;
+                            isActive = "true".equalsIgnoreCase(strValue) || "1".equals(strValue) || "active".equalsIgnoreCase(strValue);
+                        } else if (categoryValue instanceof Number) {
+                            Number numValue = (Number) categoryValue;
+                            isActive = numValue.intValue() != 0;
+                        } else if (categoryValue instanceof HashMap) {
+                            // Handle case where category is stored as a map
+                            HashMap<String, Object> categoryMap = (HashMap<String, Object>) categoryValue;
+                            Object activeValue = categoryMap.get("active");
+                            if (activeValue instanceof Boolean) {
+                                isActive = (Boolean) activeValue;
+                            } else if (activeValue instanceof String) {
+                                isActive = "true".equalsIgnoreCase((String) activeValue);
+                            }
+                            // If no "active" field, assume it's active if the map exists
+                            else if (activeValue == null) {
+                                isActive = true;
+                            }
+                        } else if (categoryValue != null) {
+                            // If it's any other non-null value, consider it active
+                            isActive = true;
+                        }
+
+                        // Only add categories that are marked as active
+                        if (isActive) {
+                            String categoryKey = categorySnapshot.getKey();
+                            if (categoryKey != null && !categoryKey.trim().isEmpty()) {
+                                searchCategories.add(categoryKey);
+                            }
+                        }
                     }
+
+                    // If no categories found from Firebase, add default categories
+                    if (searchCategories.isEmpty()) {
+                        addDefaultCategories();
+                    }
+
+                    // Sort categories alphabetically for better display
+                    Collections.sort(searchCategories);
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Error processing categories: " + e.getMessage());
+                    // Fallback to default categories
+                    addDefaultCategories();
                 }
-                // Sort categories alphabetically for better display
-                Collections.sort(searchCategories);
+
                 if (categoryLoadCallback != null) {
-                    categoryLoadCallback.onCategoriesLoaded(searchCategories);
+                    categoryLoadCallback.onCategoriesLoaded(new ArrayList<>(searchCategories));
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // In case of error, return an empty list
+                Log.e(TAG, "Categories loading cancelled: " + error.getMessage());
+                // In case of error, return default categories
+                addDefaultCategories();
                 if (categoryLoadCallback != null) {
-                    categoryLoadCallback.onCategoriesLoaded(new ArrayList<>());
+                    categoryLoadCallback.onCategoriesLoaded(new ArrayList<>(searchCategories));
                 }
             }
         });
+    }
+
+    /**
+     * Add default search categories when Firebase data is unavailable
+     */
+    private void addDefaultCategories() {
+        searchCategories.clear();
+        searchCategories.add("Technology");
+        searchCategories.add("Engineering");
+        searchCategories.add("Marketing");
+        searchCategories.add("Finance");
+        searchCategories.add("Design");
+        searchCategories.add("Data Science");
+        searchCategories.add("Business");
+        searchCategories.add("Healthcare");
+        searchCategories.add("Education");
+        searchCategories.add("Research");
+        Collections.sort(searchCategories);
     }
 
     private void loadSearchHistory() {
@@ -120,9 +190,13 @@ public class EnhancedSearchManager {
             JSONArray jsonArray = new JSONArray(historyJson);
             searchHistory = new ArrayList<>();
             for (int i = 0; i < jsonArray.length(); i++) {
-                searchHistory.add(jsonArray.getString(i));
+                String query = jsonArray.getString(i);
+                if (query != null && !query.trim().isEmpty()) {
+                    searchHistory.add(query);
+                }
             }
         } catch (JSONException e) {
+            Log.e(TAG, "Error loading search history: " + e.getMessage());
             searchHistory = new ArrayList<>();
         }
     }
@@ -134,9 +208,13 @@ public class EnhancedSearchManager {
             popularSearches = new ArrayList<>();
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject suggestionJson = jsonArray.getJSONObject(i);
-                popularSearches.add(SearchSuggestion.fromJson(suggestionJson));
+                SearchSuggestion suggestion = SearchSuggestion.fromJson(suggestionJson);
+                if (suggestion != null && suggestion.query != null && !suggestion.query.trim().isEmpty()) {
+                    popularSearches.add(suggestion);
+                }
             }
         } catch (JSONException e) {
+            Log.e(TAG, "Error loading popular searches: " + e.getMessage());
             popularSearches = new ArrayList<>();
         }
     }
@@ -146,50 +224,60 @@ public class EnhancedSearchManager {
 
         query = query.trim();
 
-        // Update search history
-        searchHistory.remove(query); // Remove if exists to move to top
-        searchHistory.add(0, query); // Add to beginning
+        try {
+            // Update search history
+            searchHistory.remove(query); // Remove if exists to move to top
+            searchHistory.add(0, query); // Add to beginning
 
-        // Limit history size
-        if (searchHistory.size() > MAX_HISTORY_SIZE) {
-            searchHistory = searchHistory.subList(0, MAX_HISTORY_SIZE);
+            // Limit history size
+            if (searchHistory.size() > MAX_HISTORY_SIZE) {
+                searchHistory = searchHistory.subList(0, MAX_HISTORY_SIZE);
+            }
+
+            // Update popular searches
+            updatePopularSearches(query);
+
+            // Save data
+            saveSearchData();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding search query: " + e.getMessage());
         }
-
-        // Update popular searches
-        updatePopularSearches(query);
-
-        // Save data
-        saveSearchData();
     }
 
     private void updatePopularSearches(String query) {
-        SearchSuggestion existing = null;
-        for (SearchSuggestion suggestion : popularSearches) {
-            if (suggestion.query.equalsIgnoreCase(query)) {
-                existing = suggestion;
-                break;
+        try {
+            SearchSuggestion existing = null;
+            for (SearchSuggestion suggestion : popularSearches) {
+                if (suggestion.query.equalsIgnoreCase(query)) {
+                    existing = suggestion;
+                    break;
+                }
             }
-        }
 
-        if (existing != null) {
-            existing.frequency++;
-            existing.lastUsed = System.currentTimeMillis();
-        } else {
-            popularSearches.add(new SearchSuggestion(query, 1, System.currentTimeMillis()));
-        }
-
-        // Sort by frequency (descending) and then by recency
-        popularSearches.sort((a, b) -> {
-            if (a.frequency != b.frequency) {
-                return Integer.compare(b.frequency, a.frequency);
+            if (existing != null) {
+                existing.frequency++;
+                existing.lastUsed = System.currentTimeMillis();
             } else {
-                return Long.compare(b.lastUsed, a.lastUsed);
+                popularSearches.add(new SearchSuggestion(query, 1, System.currentTimeMillis()));
             }
-        });
 
-        // Limit popular searches size
-        if (popularSearches.size() > MAX_POPULAR_SIZE) {
-            popularSearches = popularSearches.subList(0, MAX_POPULAR_SIZE);
+            // Sort by frequency (descending) and then by recency
+            popularSearches.sort((a, b) -> {
+                if (a.frequency != b.frequency) {
+                    return Integer.compare(b.frequency, a.frequency);
+                } else {
+                    return Long.compare(b.lastUsed, a.lastUsed);
+                }
+            });
+
+            // Limit popular searches size
+            if (popularSearches.size() > MAX_POPULAR_SIZE) {
+                popularSearches = popularSearches.subList(0, MAX_POPULAR_SIZE);
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating popular searches: " + e.getMessage());
         }
     }
 
@@ -202,13 +290,15 @@ public class EnhancedSearchManager {
         try {
             JSONArray jsonArray = new JSONArray();
             for (String query : searchHistory) {
-                jsonArray.put(query);
+                if (query != null && !query.trim().isEmpty()) {
+                    jsonArray.put(query);
+                }
             }
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString(SEARCH_HISTORY_KEY, jsonArray.toString());
             editor.apply();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error saving search history: " + e.getMessage());
         }
     }
 
@@ -216,46 +306,62 @@ public class EnhancedSearchManager {
         try {
             JSONArray jsonArray = new JSONArray();
             for (SearchSuggestion suggestion : popularSearches) {
-                jsonArray.put(suggestion.toJson());
+                if (suggestion != null && suggestion.query != null && !suggestion.query.trim().isEmpty()) {
+                    jsonArray.put(suggestion.toJson());
+                }
             }
             SharedPreferences.Editor editor = prefs.edit();
             editor.putString(POPULAR_SEARCHES_KEY, jsonArray.toString());
             editor.apply();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error saving popular searches: " + e.getMessage());
         }
     }
 
     public List<String> getSearchHistory() {
-        return new ArrayList<>(searchHistory);
+        return new ArrayList<>(searchHistory != null ? searchHistory : new ArrayList<>());
     }
 
     public List<String> getPopularSearches() {
         List<String> popular = new ArrayList<>();
-        for (SearchSuggestion suggestion : popularSearches) {
-            popular.add(suggestion.query);
+        if (popularSearches != null) {
+            for (SearchSuggestion suggestion : popularSearches) {
+                if (suggestion != null && suggestion.query != null && !suggestion.query.trim().isEmpty()) {
+                    popular.add(suggestion.query);
+                }
+            }
         }
         return popular;
     }
 
     public void removeFromHistory(String query) {
-        searchHistory.remove(query);
-        saveSearchHistory();
+        if (searchHistory != null && query != null) {
+            searchHistory.remove(query);
+            saveSearchHistory();
+        }
     }
 
     public void clearSearchHistory() {
-        searchHistory.clear();
-        saveSearchHistory();
+        if (searchHistory != null) {
+            searchHistory.clear();
+            saveSearchHistory();
+        }
     }
 
     public void clearPopularSearches() {
-        popularSearches.clear();
-        savePopularSearches();
+        if (popularSearches != null) {
+            popularSearches.clear();
+            savePopularSearches();
+        }
     }
 
     public void clearAllSearchData() {
-        searchHistory.clear();
-        popularSearches.clear();
+        if (searchHistory != null) {
+            searchHistory.clear();
+        }
+        if (popularSearches != null) {
+            popularSearches.clear();
+        }
         saveSearchData();
     }
 
@@ -267,39 +373,45 @@ public class EnhancedSearchManager {
     public List<String> getSearchSuggestions(String input) {
         List<String> suggestions = new ArrayList<>();
 
-        if (input == null || input.trim().isEmpty()) {
-            // Return recent searches when no input
-            suggestions.addAll(getSearchHistory());
-            return suggestions.subList(0, Math.min(suggestions.size(), 5));
-        }
-
-        String lowercaseInput = input.toLowerCase().trim();
-
-        // First, add matching history items
-        for (String historyItem : searchHistory) {
-            if (historyItem.toLowerCase().contains(lowercaseInput) &&
-                    !suggestions.contains(historyItem)) {
-                suggestions.add(historyItem);
+        try {
+            if (input == null || input.trim().isEmpty()) {
+                // Return recent searches when no input
+                suggestions.addAll(getSearchHistory());
+                return suggestions.subList(0, Math.min(suggestions.size(), 5));
             }
-        }
 
-        // Then, add matching popular searches
-        for (String popularItem : getPopularSearches()) {
-            if (popularItem.toLowerCase().contains(lowercaseInput) &&
-                    !suggestions.contains(popularItem)) {
-                suggestions.add(popularItem);
+            String lowercaseInput = input.toLowerCase().trim();
+
+            // First, add matching history items
+            for (String historyItem : getSearchHistory()) {
+                if (historyItem != null && historyItem.toLowerCase().contains(lowercaseInput) &&
+                        !suggestions.contains(historyItem)) {
+                    suggestions.add(historyItem);
+                }
             }
-        }
 
-        // Limit suggestions
-        return suggestions.subList(0, Math.min(suggestions.size(), 8));
+            // Then, add matching popular searches
+            for (String popularItem : getPopularSearches()) {
+                if (popularItem != null && popularItem.toLowerCase().contains(lowercaseInput) &&
+                        !suggestions.contains(popularItem)) {
+                    suggestions.add(popularItem);
+                }
+            }
+
+            // Limit suggestions
+            return suggestions.subList(0, Math.min(suggestions.size(), 8));
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting search suggestions: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     /**
      * Get predefined search categories/tags
      */
     public List<String> getSearchCategories() {
-        return new ArrayList<>(searchCategories);
+        return new ArrayList<>(searchCategories != null ? searchCategories : new ArrayList<>());
     }
 
     /**
@@ -307,8 +419,16 @@ public class EnhancedSearchManager {
      */
     public int getTotalSearches() {
         int total = 0;
-        for (SearchSuggestion suggestion : popularSearches) {
-            total += suggestion.frequency;
+        try {
+            if (popularSearches != null) {
+                for (SearchSuggestion suggestion : popularSearches) {
+                    if (suggestion != null) {
+                        total += suggestion.frequency;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error calculating total searches: " + e.getMessage());
         }
         return total;
     }
@@ -317,23 +437,55 @@ public class EnhancedSearchManager {
      * Get most popular search query
      */
     public String getMostPopularSearch() {
-        if (popularSearches.isEmpty()) return null;
-        return popularSearches.get(0).query;
+        try {
+            if (popularSearches == null || popularSearches.isEmpty()) return null;
+            SearchSuggestion mostPopular = popularSearches.get(0);
+            return mostPopular != null ? mostPopular.query : null;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting most popular search: " + e.getMessage());
+            return null;
+        }
     }
-
 
     /**
      * Check if a query exists in history
      */
     public boolean isInHistory(String query) {
-        return searchHistory.contains(query);
+        try {
+            return searchHistory != null && query != null && searchHistory.contains(query);
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking history: " + e.getMessage());
+            return false;
+        }
     }
 
     /**
      * Get recent searches (last N items)
      */
     public List<String> getRecentSearches(int count) {
-        int limit = Math.min(count, searchHistory.size());
-        return new ArrayList<>(searchHistory.subList(0, limit));
+        try {
+            if (searchHistory == null || searchHistory.isEmpty()) {
+                return new ArrayList<>();
+            }
+            int limit = Math.min(count, searchHistory.size());
+            return new ArrayList<>(searchHistory.subList(0, limit));
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting recent searches: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Refresh categories from Firebase
+     */
+    public void refreshCategories() {
+        loadSearchCategories(categoryLoadCallback);
+    }
+
+    /**
+     * Check if the manager is properly initialized
+     */
+    public boolean isInitialized() {
+        return searchHistory != null && popularSearches != null;
     }
 }
