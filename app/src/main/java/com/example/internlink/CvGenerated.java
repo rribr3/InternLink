@@ -161,7 +161,7 @@ public class CvGenerated extends AppCompatActivity {
         );
 
         Request request = new Request.Builder()
-                .url("https://d813-194-126-21-22.ngrok-free.app/generate-cv")
+                .url("https://4ba97b69c6b6.ngrok-free.app/generate-cv")
                 .post(requestBody)
                 .build();
 

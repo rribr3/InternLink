@@ -55,11 +55,11 @@ public class CreateStudentProfileActivity extends AppCompatActivity {
     private LinearLayout cvDisplayLayout;
     private TextView cvFileName;
     private ImageView deleteCVIcon;
+    private EditText editSkills;
 
 
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
-    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AFuJmkxv7Ly7RgEOJw1_vCjOkAMvgv32vXu6W_n3LBzsNhzJdGrJNqappNkVvSGxT6wD6kG5nT29PYOAuknN6FJVFVliW6Yx2JfyTDP3zru8xRUNPUNRj-jVSUAvilJG17JWbXjKjVqc2-bXrUaQayYlww2GFAXWFYeQMR2URtUahzzmuBokdXzkhcPvPbbC-REd_VxAdci0Bvi_sR1iSUnCzCEuH2RiMY6YWbUbMkqZ-9Jzl7yogRWyPP_YNsgFm28tPLLyrpbjl3ByXeWwhdhJhodHj4in1uoJfe7z1tSdxaKOJE-timK2L9yHbv-ITw53ZW-uectkq7zF7Db4f6SZRE16yl0Zbjwfat4IuhAfL7KmJ8ZEqblXXHgNV-4n9GQYjRk7b-d0XlXCx-jHpelOB-BqlBEqAXL4gEKvNV9pba9AoGIGX4gM5WW_BkasdFM6bp1YXo_sE8ZgHW9mCVvMSf5oZOVwjEjbpLQO8PFlh1NYkCzKiNsmaHzXQorncYghzAdCIxfhZO7vRWLsKL_c2uHuIN-FYiGVeTUNPH7Ow3tVyV3l7x1togK6fF930_wWMcmP_PVMMEED0yz8b3Jbtexv_KcLBQhIc5SzyPdii2RaNSPhVYk-XcrKX3K9Vmflz1k-mIL7k62aebkuypKgP3ufXSML04S2dTwMd1-BwmZqXwxrefb6AVoJO6jgJXRf6QepT7l0J7rfAWxkGapzao6rkQzIMTNh_jN7Tme107W35cWFPUvuOZF76GgeuvphyRxHbhoeFOuYLvx-slX0kMs6Lv8A9DS5ZGrHFkhcAt6256bc3Ra26rbaHjSmMxO4KjaAWpJRYYvQeukMlRibthSV4FfsNErJXVSbBOj2nR8dghfOi8p7PpjqDSoqJ7edjoreB9KPEp6Y1iJNjkJbL5L7HUmMWmTtgT9TFJ5kiCNCRX7koVo-y64io5pUMY2Zx05S88IeQtycn9gKlF7vdZ19Ad8g9IpZXo6Z2gaxYBQ-woIlxqEw6Fp5IuYcqi5tk7jZBK2RqTHGRWx6DjgrVd4r6SiD0uKyyK5grfDdTi2jAeB0htbCpAQSAtGL8g6Tmmw-MMO0u7RlfWzQou9jopMbfYYKAa8u0SFWkTt426ckoKGCHiYNNJvMgtSJfnG7oJkowx8cXSBpm1LmMbAutIVFRDoW28Co4f6ycrozfGw2cTSa5u96VXI3zcubQw1FNVmYZ3-LVf1d_uUQFotimhAjKPC9aX7dm-nieT8063bvB6SSAoIYBga37somX4JSnArg1o34RhfspCA2ZfkP2O0KSvs_akICpAb-Vxm794JzRQcqDC0CQsKYiQhu8B-HkU3bc2gGvTohCWU4G3Z3kb4rrveOnEa_LURWhEIxig1v5QpXE3WWA5xFLMlOoVacpun0ChT75FXqw3eq_mbLLPonOtZrgpQFL6TZiVtjEnrCtbtH2VRzluS6TVK0dpE";
-
+    private static final String DROPBOX_ACCESS_TOKEN = "sl.u.AF0fzLQa6oq9hMVAGR2MwHrFm6u9USwb3fxWZyfMvmBa63qgEDXUORuy5pYaCPu7MrYtzTogMmaliwTgfG8bUv9eA8U9aIVXMFUhlKNdu7s7BdVEAA8tnSA02MsVakfRLJYTA6xaQlCTiPbiJlHwuOgVNPiUx1OEbqRctZxp3SvAmzxBGzirgMl8oTF1GMDbwum7x1dMOTVqTvPzr3ENqNPtLPnal0qgcu3VTuR8m-F_vKC2nlac40Ebl_E95wMwrz0PzfyO7QGDcfBhCzFNzic8EMLfzkKSL444dHOuneJQuEq4mhSzG_pjI7Z8QyJ8oECn-z5D3ZoULTv3m0CXhjixjfKweIdawQfxbE56jLihjSC6IjD43KONK2kUUOwXLYXmPasoBn8jR3WYxr3qSb9HgslXJVdq_-ApBhFThkiPd0gYJDL8cy8e5eiZKb5IRjASzj9lVX8uDFQBhiGAieqB0ILX4R_mUXqFxuXrvglJwl7S6TjtSp9b9mFutSdCNE12t0RVaUmDIN5OWyU2D6LM5p0HxsjfQwy6t5fWTAVFo8UEaD54LEfVucEMtrDI-rAiKrTghzToqHc1XpyNhOPMfxMz5i6NzCYsiEmTZqUHGrTosfZbNAOQa7Z4zD2uH4F2Fo2jIiPuFIbwsjhco8u4LqgHmH6u69RZBEjY61g5I1nfPE4JDowQbxm1R0YOqdpXzm9zVerayI8CjfGxOE183DoBM6t0T8yY0AdQm4G_ldzMShrZR7cRdNf-Psa3oqlTHjm8lM_CYeNkBC2Qd4HS39QhaR2jBB8_6tUns31wQRvBbFDVNXXgYeVHtVUovVL_7FVd7BJfT-suQiTHiIckRsVgUeUvfE0p7MkvJGfegLsZp_N4V6Y0ltz_JvMbWSkBF6c9MTSxisPzBmjmVIYUYGskGOPFfdLEhYecJbdidNR7Q_xzwgVPnB3oFWrxPRFLpve2ajWL75Zm0qYKk51pUiyqyDa0B-me9DYHDTAwrVguT9GSjBoOxqsWKjc-Yyv3nScUCP95YhPufudxz1rhdfx5aj9DczhFEYa12GmXeJoSatZFn8I_WJWPSfJpvOfc16ubkcQiqeu4SEuJgSb_8cK-ocSY2kLMbbseJey97N5z0tVGIOQ5FxMiA69w3BWfIlKHBrXOR5vGFRmO-xQr9cgXOgpu1k_0WHL8qjGhB9yujRUTnQ5MhJ2NLRsRnr6qPQAynP6Fvs7_8bc4FjkgCxe9aBskZslZYkvgYtw0T45Zxtpl76w74VQPdM93TI4TsNom3GjR6fMu9Ntu48rUJv0lU5nvO-3O36sGsNDHpICi26mniEPKVvMx8xdDg_sLpcf3bwrGlTpDF2Kr2CVmpOSXbtrwFZzNkOtlBylOgOs-gZJaYGuc7TOQUhVtGUI6Qx2KeIxX7FdpJofatKY8Iz95NOHlObmuJHOVy-0DHw";
     private final ActivityResultLauncher<String> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -218,6 +218,7 @@ public class CreateStudentProfileActivity extends AppCompatActivity {
         checkAgree = findViewById(R.id.checkAgree);
         cvDisplayLayout = findViewById(R.id.cvDisplayLayout);
         cvFileName = findViewById(R.id.cvFileName);
+        editSkills = findViewById(R.id.editSkills);
         deleteCVIcon = findViewById(R.id.deleteCVIcon);
         btnSubmit = findViewById(R.id.btnSubmit);
     }
@@ -250,6 +251,7 @@ public class CreateStudentProfileActivity extends AppCompatActivity {
         companyData.put("github", editGitHub.getText().toString().trim());
         companyData.put("email", editEmail.getText().toString().trim());
         companyData.put("phone", editPhone.getText().toString().trim());
+        companyData.put("skills", editSkills.getText().toString().trim());
         companyData.put("role", "student");
         if (logoUrl != null) companyData.put("logoUrl", logoUrl);
         if (uploadedCVUrl != null) companyData.put("cvUrl", uploadedCVUrl);
