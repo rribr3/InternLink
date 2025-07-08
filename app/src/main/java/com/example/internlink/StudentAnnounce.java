@@ -322,6 +322,7 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
     }
 
     // NEW: Load all announcements from announcements_by_role/student
+    // FIXED: Load all announcements from announcements_by_role/student with proper filtering
     private void loadAllStudentAnnouncements(DataSnapshot readsSnapshot, String userId) {
         DatabaseReference studentAnnouncementsRef = FirebaseDatabase.getInstance()
                 .getReference("announcements_by_role")
@@ -340,14 +341,41 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         String targetType = snap.child("targetType").getValue(String.class);
                         String targetUserId = snap.child("targetUserId").getValue(String.class);
                         String recipientId = snap.child("recipientId").getValue(String.class);
+                        String category = snap.child("category").getValue(String.class);
+
+                        // FIXED: Filter warning announcements by targetUserId
+                        if ("disciplinary_action".equals(category)) {
+                            // This is a warning - only show if targeted to current user
+                            if (targetUserId == null || !targetUserId.equals(userId)) {
+                                Log.d("StudentAnnounce", "Skipping warning " + id + " - not targeted to current user (" + userId + ")");
+                                continue;
+                            }
+                            Log.d("StudentAnnounce", "Including warning " + id + " - targeted to current user (" + userId + ")");
+                        }
 
                         // Skip if this is targeted to a specific user and it's not this user
                         if ("specific_user".equals(targetType) && targetUserId != null && !targetUserId.equals(userId)) {
+                            Log.d("StudentAnnounce", "Skipping specific user announcement " + id + " - not targeted to current user");
                             continue;
                         }
 
                         // Skip if this has a recipientId and it's not this user
                         if (recipientId != null && !recipientId.equals(userId)) {
+                            Log.d("StudentAnnounce", "Skipping announcement " + id + " - different recipient");
+                            continue;
+                        }
+
+                        // Check for duplicates before adding
+                        boolean alreadyExists = false;
+                        for (Announcement existing : announcementList) {
+                            if (existing.getId().equals(id)) {
+                                alreadyExists = true;
+                                break;
+                            }
+                        }
+
+                        if (alreadyExists) {
+                            Log.d("StudentAnnounce", "Announcement " + id + " already exists, skipping");
                             continue;
                         }
 
@@ -361,13 +389,23 @@ public class StudentAnnounce extends AppCompatActivity implements AnnouncementAd
                         // Set category based on content
                         if (snap.hasChild("applicant_status")) {
                             announcement.setCategory("application_status");
+                        } else if ("disciplinary_action".equals(category)) {
+                            announcement.setCategory("warning");
+                            String severity = snap.child("severity").getValue(String.class);
+                            String priority = snap.child("priority").getValue(String.class);
+                            if (severity != null) {
+                                announcement.setSeverity(severity);
+                            }
+                            if (priority != null) {
+                                announcement.setPriority(priority);
+                            }
                         } else if (snap.hasChild("category")) {
-                            String category = snap.child("category").getValue(String.class);
                             announcement.setCategory(category);
                         }
 
                         announcementList.add(announcement);
-                        Log.d("StudentAnnounce", "Added student announcement: " + title);
+                        Log.d("StudentAnnounce", "Added student announcement: " + title + " (category: " +
+                                announcement.getCategory() + ", user: " + userId + ")");
 
                     } catch (Exception e) {
                         Log.e("StudentAnnounce", "Error processing student announcement: " + snap.getKey(), e);
