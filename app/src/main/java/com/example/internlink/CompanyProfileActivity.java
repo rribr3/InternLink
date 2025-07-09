@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -44,11 +46,12 @@ import okhttp3.Response;
 
 public class CompanyProfileActivity extends AppCompatActivity {
 
-    private EditText companyName, industry, location, description, mission, vision, email, phone, address, linkedin, twitter, website;
+    private EditText companyName, industry, description, mission, vision, email, phone, address, linkedin, twitter, website;
     private Button btnSave;
     private String COMPANY_ID;
     private DatabaseReference companyRef;
     private MaterialToolbar topAppBar;
+    private AutoCompleteTextView location;
     private ImageView companyLogo;
     private Uri selectedLogoUri = null;
     private static final String IMGBB_API_KEY = "93a9e7c9a933826963d704e128929b30";
@@ -109,9 +112,20 @@ public class CompanyProfileActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
         topAppBar = findViewById(R.id.topAppBar);
         companyLogo = findViewById(R.id.companyLogo);
+        setupLocationDropdown();
 
         companyRef = FirebaseDatabase.getInstance().getReference("users").child(COMPANY_ID);
     }
+    private void setupLocationDropdown() {
+        String[] locations = new String[]{"Local", "International"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                locations
+        );
+        location.setAdapter(adapter);
+    }
+
 
     private void loadCompanyData() {
         companyRef.addListenerForSingleValueEvent(new ValueEventListener() {

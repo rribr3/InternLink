@@ -116,14 +116,17 @@
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        style="@style/InputLayoutStyle">
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-                        <EditText
+                        <AutoCompleteTextView
                             android:id="@+id/editLocation"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:inputType="none"
                             android:hint="Location"
-                            android:inputType="text" />
+                            android:focusable="false"
+                            android:focusableInTouchMode="false"
+                            android:clickable="true"/>
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
