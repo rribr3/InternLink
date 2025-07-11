@@ -226,6 +226,7 @@ public class ViewApplications extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
+        // Create the new application
         Application application = new Application(
                 projectId,
                 user.getUid(),
@@ -243,10 +244,18 @@ public class ViewApplications extends AppCompatActivity {
         String newId = appRef.push().getKey();
         if (newId == null) return;
 
-        appRef.child(newId).setValue(application).addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Toast.makeText(this, "Reapplied successfully!", Toast.LENGTH_SHORT).show();
-                finish();
+        // First delete the original rejected application
+        appRef.child(applicationId).removeValue().addOnCompleteListener(deleteTask -> {
+            if (deleteTask.isSuccessful()) {
+                // Now save the reapplication
+                appRef.child(newId).setValue(application).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Reapplied successfully!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Failed to reapply", Toast.LENGTH_SHORT).show();
+                    }
+                });
             } else {
                 Toast.makeText(this, "Failed to reapply", Toast.LENGTH_SHORT).show();
             }
@@ -523,8 +532,62 @@ public class ViewApplications extends AppCompatActivity {
         if (status == null) status = "Pending";
 
         tvStatus.setText(getStatusTag(status));
-        btnView.setVisibility(("Shortlisted".equalsIgnoreCase(status) || "Accepted".equalsIgnoreCase(status)) ? View.VISIBLE : View.GONE);
-        btnReapply.setVisibility("Rejected".equalsIgnoreCase(status) ? View.VISIBLE : View.GONE);
-        btnWithdraw.setVisibility(!"Rejected".equalsIgnoreCase(status) ? View.VISIBLE : View.GONE);
+
+        // Interview details button - show only for Shortlisted/Accepted
+        btnView.setVisibility(("Shortlisted".equalsIgnoreCase(status) ||
+                "Accepted".equalsIgnoreCase(status)) ? View.VISIBLE : View.GONE);
+
+        // Modify reapply button visibility logic
+        DatabaseReference applicationsRef = FirebaseDatabase.getInstance().getReference("applications");
+        String finalStatus = status;
+
+        // Query to check for any reapplications with this application as parent
+        // AND check if current application is a reapplication
+        DatabaseReference currentAppRef = applicationsRef.child(applicationId);
+        currentAppRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot currentSnapshot) {
+                // First check if current application is a reapplication
+                boolean isCurrentReapplication = currentSnapshot.child("reapplication").exists() &&
+                        Boolean.TRUE.equals(currentSnapshot.child("reapplication").getValue(Boolean.class));
+
+                if (isCurrentReapplication) {
+                    // If current application is a reapplication, hide the reapply button
+                    btnReapply.setVisibility(View.GONE);
+                } else {
+                    // If not a reapplication, check if it has any child reapplications
+                    applicationsRef.orderByChild("parentApplicationId")
+                            .equalTo(applicationId)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    boolean hasReapplications = snapshot.exists();
+
+                                    // Only show reapply button if:
+                                    // 1. Status is Rejected AND
+                                    // 2. No reapplications exist AND
+                                    // 3. This is not a reapplication (already checked above)
+                                    boolean showReapply = "Rejected".equalsIgnoreCase(finalStatus) &&
+                                            !hasReapplications;
+                                    btnReapply.setVisibility(showReapply ? View.VISIBLE : View.GONE);
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+                                    btnReapply.setVisibility(View.GONE);
+                                }
+                            });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                btnReapply.setVisibility(View.GONE);
+            }
+        });
+
+        // Withdraw button - show only for Shortlisted/Accepted
+        btnWithdraw.setVisibility(("Shortlisted".equalsIgnoreCase(status) ||
+                "Accepted".equalsIgnoreCase(status)) ? View.VISIBLE : View.GONE);
     }
 }

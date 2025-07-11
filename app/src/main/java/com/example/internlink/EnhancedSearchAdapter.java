@@ -69,8 +69,9 @@ public class EnhancedSearchAdapter extends RecyclerView.Adapter<EnhancedSearchAd
                 // For now, just show a toast
                 android.widget.Toast.makeText(context, "Selected project: " + result.project.getTitle(), android.widget.Toast.LENGTH_SHORT).show();
             } else {
-                // Handle company click - maybe show company projects
-                android.widget.Toast.makeText(context, "Selected company: " + result.company.name, android.widget.Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, CompanyProfileViewActivity.class);
+                intent.putExtra("COMPANY_ID", result.company.id);
+                context.startActivity(intent);
             }
         });
     }
